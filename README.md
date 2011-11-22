@@ -22,7 +22,7 @@ INSTALL:
 
 	git clone https://github.com/norisatir/go-gtk3
 	cd go-gtk3
-	gomake install
+    gomake install
 
 or:
     goinstall github.com/norisatir/go-gtk3/gtk3
