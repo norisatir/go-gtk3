@@ -9,7 +9,7 @@ THIS IS:
 	Currently implemented is GObject and Conversion between 
 	C and Go types (mainly through GValues).
 
-	Callbacks are implemented with closures, channels and gorutines
+	Callbacks are implemented with closures, channels and goroutines
 	(see gobject/callback.go)
 
 	As of now there are almost no widgets (Window, Button), but they can
