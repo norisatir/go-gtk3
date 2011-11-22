@@ -30,6 +30,7 @@ INSTALL:
 
 
   For demo:
+  
     gomake demo
     cd demo_app
     ./demo
