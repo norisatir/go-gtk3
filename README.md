@@ -29,7 +29,7 @@ INSTALL:
     goinstall github.com/norisatir/go-gtk3/gtk3
 
 
-For demo:
+  For demo:
     gomake demo
     cd demo_app
     ./demo
