@@ -24,6 +24,15 @@ INSTALL:
 	cd go-gtk3
 	gomake install
 
+or:
+    goinstall github.com/norisatir/go-gtk3/gtk3
+
+
+For demo:
+    gomake demo
+    cd demo_app
+    ./demo
+
 
 LICENSE:
 --------

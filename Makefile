@@ -16,8 +16,12 @@ clean:
 	cd gobject && gomake clean
 	cd gdk3 && gomake clean
 	cd gtk3 && gomake clean
+	cd demo_app && gomake clean
 
 fmt_all:
 	gofmt -w ./gobject/*.go
 	gofmt -w ./gdk3/*.go
 	gofmt -w ./gtk3/*.go
+
+demo: install
+	cd demo_app && gomake
