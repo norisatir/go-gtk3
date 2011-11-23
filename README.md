@@ -32,8 +32,9 @@ INSTALL:
   For demo:
   
     gomake demo
-    cd demo_app
-    ./demo
+    cd demo_apps
+    ./demo_apps/gtkapplicaton/gtkapplicaton (With GtkApplicaton as main loop)
+    ./demo_apps/standardmain/standardmain (with standard gtk_main loop)
 
 
 LICENSE:

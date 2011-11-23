@@ -81,7 +81,7 @@ func (self Box) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// To be container-lie
+// To be container-like
 func (self Box) C() *Container {
 	return self.Container
 }

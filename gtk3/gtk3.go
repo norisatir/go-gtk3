@@ -16,4 +16,12 @@ func Init() {
 	C._gtk_init(nil, nil)
 }
 
+func Main() {
+	C.gtk_main()
+}
+
+func MainQuit() {
+	C.gtk_main_quit()
+}
+
 type P map[string]interface{}
