@@ -40,6 +40,14 @@ func NewBox(orientation GtkOrientation, spacing int) *Box {
 	return box
 }
 
+func NewHBox(spacing int) *Box {
+	return NewBox(ORIENTATION_HORIZONTAL, spacing)
+}
+
+func NewVBox(spacing int) *Box {
+	return NewBox(ORIENTATION_VERTICAL, spacing)
+}
+
 // Conversion function for gobject registration map
 func newBoxFromNative(obj unsafe.Pointer) interface{} {
 	var box Box
