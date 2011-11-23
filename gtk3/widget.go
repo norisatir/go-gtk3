@@ -164,3 +164,11 @@ func (self *Widget) AddEvents(events gdk3.GdkEventMask) {
 func (self *Widget) GetEvents() gdk3.GdkEventMask {
 	return gdk3.GdkEventMask(C.gtk_widget_get_events(self.object))
 }
+
+func (self *Widget) Map() {
+	C.gtk_widget_map(self.object)
+}
+
+func (self *Widget) Unmap() {
+	C.gtk_widget_unmap(self.object)
+}
