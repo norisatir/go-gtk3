@@ -11,12 +11,19 @@ func main() {
 	w := gtk3.NewWindow(gtk3.GTK_WINDOW_TOPLEVEL, nil)
 	w.Connect("destroy", gtk3.MainQuit)
 	// Let's set a couple of window properties
-	w.Set(gtk3.P{"title": "Go-GTK3 Demo", "resizable":false})
-	
+	w.Set(gtk3.P{"title": "Go-GTK3 Demo", "resizable":true})
+
+    b2 := gtk3.NewVBox(0)
+    w.Add(b2)
+
+    // Create GtkFrame
+    f := gtk3.NewFrame("Button Play")
+    b2.Add(f)
+
 	// Create GtkBox
 	box := gtk3.NewBox(gtk3.ORIENTATION_VERTICAL, 5)
 	// Add it to window
-	w.Add(box)
+	f.Add(box)
 
 	// Create First Button
 	fbut := gtk3.NewButtonWithLabel("Click Me")

@@ -317,6 +317,20 @@ type gtkTypes struct {
 	WIDGET_HELP_TYPE          g.GType
 }
 
+// GtkShadowType
+type GtkShadowType int
+var GtkShadow gtkShadow
+
+type gtkShadow struct {
+    NONE GtkShadowType
+    IN GtkShadowType
+    OUT GtkShadowType
+    ETCHED_IN GtkShadowType
+    ETCHED_OUT GtkShadowType
+}
+//--------------------------
+
+
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
 	GtkType.ACCEL_GROUP = g.GType(C.gtk_accel_group_get_type())
@@ -620,4 +634,14 @@ func init() {
 	GtkType.TREE_VIEW_COLUMN_SIZING = g.GType(C.gtk_tree_view_column_sizing_get_type())
 	GtkType.UI_MANAGER_ITEM_TYPE = g.GType(C.gtk_ui_manager_item_type_get_type())
 	GtkType.WIDGET_HELP_TYPE = g.GType(C.gtk_widget_help_type_get_type())
+
+    // Initialize GtkShadowType
+    GtkShadow.NONE = GtkShadowType(0)
+    GtkShadow.IN = GtkShadowType(1)
+    GtkShadow.OUT = GtkShadowType(2)
+    GtkShadow.ETCHED_IN = GtkShadowType(3)
+    GtkShadow.ETCHED_OUT = GtkShadowType(4)
+
 }
+
+

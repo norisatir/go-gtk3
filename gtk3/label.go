@@ -75,17 +75,18 @@ func init() {
 	gobject.RegisterGoType(GtkType.LABEL, nativeFromLabel)
 }
 
-// func to be object like
+// To be object like
 func (self Label) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
 func (self Label) Connect(name string, f interface{}, data ...interface{}) {
-	gobject.Connect(self, name, f, data)
+	gobject.Connect(self, name, f, data...)
 }
 
 func (self Label) Set(properties map[string]interface{}) {
 	gobject.Set(self, properties)
+
 }
 
 func (self Label) Get(properties []string) map[string]interface{} {
