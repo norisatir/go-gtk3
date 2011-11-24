@@ -328,7 +328,7 @@ type gtkShadow struct {
     ETCHED_IN GtkShadowType
     ETCHED_OUT GtkShadowType
 }
-//--------------------------
+// End GtkShadow
 
 // GtkStockIDType
 type GtkStockIDType string
@@ -441,6 +441,16 @@ type gtkStock struct {
 	ZOOM_OUT         GtkStockIDType
 }
 // End GtkStock
+
+// GtkPositionType
+type GtkPositionType int
+var GtkPosition gtkPosition
+type gtkPosition struct {
+	POS_LEFT GtkPositionType
+	POS_RIGHT GtkPositionType
+	POS_TOP GtkPositionType
+	POS_BOTTOM GtkPositionType
+}
 
 
 func init() {
@@ -860,6 +870,13 @@ func init() {
 	GtkStock.ZOOM_FIT         = GtkStockIDType("gtk-zoom-fit")
 	GtkStock.ZOOM_IN          = GtkStockIDType("gtk-zoom-in")
 	GtkStock.ZOOM_OUT         = GtkStockIDType("gtk-zoom-out")
+
+
+	// Initialize GtkPosition
+	GtkPosition.POS_LEFT = GtkPositionType(0)
+	GtkPosition.POS_RIGHT = GtkPositionType(1)
+	GtkPosition.POS_TOP = GtkPositionType(2)
+	GtkPosition.POS_BOTTOM = GtkPositionType(3)
 }
 
 

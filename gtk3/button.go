@@ -38,6 +38,21 @@ func NewButtonWithLabel(label string) *Button {
 	return b
 }
 
+func NewButtonFromStock(stockId GtkStockIDType) *Button {
+	 b := NewButtonWithLabel(string(stockId))
+	 b.SetUseStock(true)
+	 return b
+}
+
+func NewButtonWithMnemonic(label string) *Button {
+	b := &Button{}
+	l := gobject.GString(label)
+	o := C.gtk_button_new_with_mnemonic((*C.gchar)(l.GetPtr()))
+	b.Container = NewContainer(unsafe.Pointer(o))
+	b.object = C.to_GtkButton(unsafe.Pointer(o))
+	return b
+}
+
 // Conversion function for gobject registration map
 func newButtonFromNative(obj unsafe.Pointer) interface{} {
 	var button Button
@@ -93,3 +108,68 @@ func (self *Button) GetLabel() string {
 	l := C.gtk_button_get_label(self.object)
 	return gobject.GoString(unsafe.Pointer(l))
 }
+
+func (self *Button) GetUseStock() (bool) {
+	b := C.gtk_button_get_use_stock(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Button) SetUseStock(useStock bool) {
+	gobject.SetProperty(self, "use-stock", useStock)
+}
+
+func (self *Button) GetUseUnderline() (bool) {
+	b := C.gtk_button_get_use_underline(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Button) SetUseUnderline(underline bool) {
+	gobject.SetProperty(self, "use-underline", underline)
+}
+
+func (self *Button) SetFocusOnClick(focusOnClick bool) {
+	gobject.SetProperty(self, "focus-on-click", focusOnClick)
+}
+
+func (self *Button) GetFocusOnClick() (bool) {
+	b := C.gtk_button_get_focus_on_click(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Button) SetAlignment(xalign, yalign float32) {
+	C.gtk_button_set_alignment(self.object, C.gfloat(xalign), C.gfloat(yalign))
+}
+
+func (self *Button) GetAlignment() (float32, float32) {
+	var cx C.gfloat
+	var cy C.gfloat
+	C.gtk_button_get_alignment(self.object, &cx, &cy)
+	return float32(cx), float32(cy)
+}
+
+func (self *Button) SetImage(w WidgetLike) {
+	C.gtk_button_set_image(self.object, w.W().object)
+}
+
+func (self *Button) GetImage() WidgetLike {
+	cw := C.gtk_button_get_image(self.object)
+	widget, err := gobject.ConvertToGo(unsafe.Pointer(&cw))
+	if err != nil {
+		return widget.(WidgetLike)
+	}
+
+	return nil
+}
+
+func (self *Button) SetImagePosition(position GtkPositionType) {
+	C.gtk_button_set_image_position(self.object, C.GtkPositionType(position))
+}
+
+func (self *Button) GetImagePosition() (GtkPositionType) {
+	return GtkPositionType(C.gtk_button_get_image_position(self.object))
+}
+
+func (self *Button) Clicked() {
+	C.gtk_button_clicked(self.object)
+}
+//TODO: gtk_button_get_event_window
