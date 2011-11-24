@@ -38,8 +38,8 @@ func NewButtonWithLabel(label string) *Button {
 	return b
 }
 
-func NewButtonFromStock(stockId GtkStockIDType) *Button {
-	 b := NewButtonWithLabel(string(stockId))
+func NewButtonFromStock(stockId string) *Button {
+	 b := NewButtonWithLabel(stockId)
 	 b.SetUseStock(true)
 	 return b
 }

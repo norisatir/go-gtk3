@@ -18,6 +18,10 @@ const (
 	GTK_WINDOW_POPUP    GtkWindowType = 1
 )
 
+type WindowLike interface {
+	Wnd() *Window
+}
+
 type Window struct {
 	object *C.GtkWindow
 	*Container
