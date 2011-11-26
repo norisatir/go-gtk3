@@ -65,7 +65,7 @@ func (self gobject) Get(properties []string) map[string]interface{} {
 }
 
 func New(typ GType, properties map[string]interface{}) ObjectLike {
-	obj := gobject{}                                                    
+	obj := gobject{}
 	obj.object = C.new_GObject(C.GType(typ))
 
 	Set(obj, properties)
@@ -209,7 +209,6 @@ func createClosure(f interface{}, data ...interface{}) ClosureFunc {
 		return res[0].Bool()
 	}
 }
-
 
 func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError) {
 	s_id := uint64(SignalLookup(name, GetTypeFromInstance(obj.ToNative())))

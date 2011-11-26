@@ -12,8 +12,8 @@ static inline GtkDialog* _dialog_new_with_buttons(const gchar* title,
 	GtkWidget* w = gtk_dialog_new_with_buttons(title, parent, flags, firstbutt, resid, NULL);
 	return to_GtkDialog(w);
 }
-												  
-												  
+
+
 
 */
 import "C"
@@ -50,9 +50,9 @@ func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *
 	defer fb.Free()
 
 	firstId := butAndID[0].Response
-	
+
 	o := C._dialog_new_with_buttons((*C.gchar)(t.GetPtr()), parent.object, C.GtkDialogFlags(flags),
-								(*C.gchar)(fb.GetPtr()), C.gint(firstId))
+		(*C.gchar)(fb.GetPtr()), C.gint(firstId))
 
 	w := newWindowFromNative(unsafe.Pointer(o))
 	d.Window = w.(*Window)
@@ -60,7 +60,6 @@ func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *
 	d.AddButtons(butAndID)
 	return d
 }
-
 
 // Conversion function for gobject registration map
 func newDialogFromNative(obj unsafe.Pointer) interface{} {
@@ -87,14 +86,13 @@ func init() {
 	gobject.RegisterGoType(GtkType.DIALOG, nativeFromDialog)
 }
 
-
 // To be object-like
 func (self Dialog) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Dialog) Connect(name string, f interface{}, data ...interface{}) {
-	gobject.Connect(self, name, f, data...)
+func (self Dialog) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self Dialog) Set(properties map[string]interface{}) {
@@ -110,9 +108,8 @@ func (self Dialog) Wnd() *Window {
 	return self.Window
 }
 
-
 // Dialog interface
-func (self *Dialog) Run() (int){
+func (self *Dialog) Run() int {
 	i := C.gtk_dialog_run(self.object)
 	return int(i)
 }
@@ -125,7 +122,7 @@ func (self *Dialog) AddButton(buttonText string, responseId int) *Button {
 	s := gobject.GString(buttonText)
 	defer s.Free()
 	b := C.gtk_dialog_add_button(self.object, (*C.gchar)(s.GetPtr()), C.gint(responseId))
-	btn,err := gobject.ConvertToGo(unsafe.Pointer(&b))
+	btn, err := gobject.ConvertToGo(unsafe.Pointer(&b))
 	if err == nil {
 		return btn.(*Button)
 	}
@@ -152,7 +149,7 @@ func (self *Dialog) SetResponseSensitive(responseId int, setting bool) {
 	C.gtk_dialog_set_response_sensitive(self.object, C.gint(responseId), *((*C.gboolean)(b.GetPtr())))
 }
 
-func (self *Dialog) GetResponseForWidget(w WidgetLike) (int) {
+func (self *Dialog) GetResponseForWidget(w WidgetLike) int {
 	i := C.gtk_dialog_get_response_for_widget(self.object, w.W().object)
 	return int(i)
 }
@@ -160,7 +157,7 @@ func (self *Dialog) GetResponseForWidget(w WidgetLike) (int) {
 func (self *Dialog) GetWidgetForResponse(responseId int) WidgetLike {
 	cw := C.gtk_dialog_get_widget_for_response(self.object, C.gint(responseId))
 	if cw != nil {
-		w,err := gobject.ConvertToGo(unsafe.Pointer(cw))
+		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
 		if err == nil {
 			return w.(WidgetLike)
 		}
@@ -171,7 +168,7 @@ func (self *Dialog) GetWidgetForResponse(responseId int) WidgetLike {
 func (self *Dialog) GetActionArea() WidgetLike {
 	cw := C.gtk_dialog_get_action_area(self.object)
 	if cw != nil {
-		w,err := gobject.ConvertToGo(unsafe.Pointer(cw))
+		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
 		if err == nil {
 			return w.(WidgetLike)
 		}
@@ -182,7 +179,7 @@ func (self *Dialog) GetActionArea() WidgetLike {
 func (self *Dialog) GetContentArea() WidgetLike {
 	cw := C.gtk_dialog_get_content_area(self.object)
 	if cw != nil {
-		w,err := gobject.ConvertToGo(unsafe.Pointer(cw))
+		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
 		if err != nil {
 			return w.(WidgetLike)
 		}

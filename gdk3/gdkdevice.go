@@ -33,8 +33,8 @@ func (self Device) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Device) Connect(name string, f interface{}, data ...interface{}) {
-	gobject.Connect(self, name, f, data)
+func (self Device) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data)
 }
 
 func (self Device) Set(properties map[string]interface{}) {

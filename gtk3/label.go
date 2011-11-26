@@ -80,8 +80,8 @@ func (self Label) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Label) Connect(name string, f interface{}, data ...interface{}) {
-	gobject.Connect(self, name, f, data...)
+func (self Label) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self Label) Set(properties map[string]interface{}) {

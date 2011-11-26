@@ -29,7 +29,7 @@ type P map[string]interface{}
 
 // Convinient map for buttons and id's
 type ButID struct {
-	Text string
+	Text     string
 	Response int
 }
 type B []ButID

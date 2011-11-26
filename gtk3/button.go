@@ -39,9 +39,9 @@ func NewButtonWithLabel(label string) *Button {
 }
 
 func NewButtonFromStock(stockId string) *Button {
-	 b := NewButtonWithLabel(stockId)
-	 b.SetUseStock(true)
-	 return b
+	b := NewButtonWithLabel(stockId)
+	b.SetUseStock(true)
+	return b
 }
 
 func NewButtonWithMnemonic(label string) *Button {
@@ -80,8 +80,8 @@ func (self Button) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Button) Connect(s string, f interface{}, datas ...interface{}) {
-	gobject.Connect(self, s, f, datas...)
+func (self Button) Connect(s string, f interface{}, datas ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, s, f, datas...)
 }
 
 func (self Button) Set(properties map[string]interface{}) {
@@ -109,7 +109,7 @@ func (self *Button) GetLabel() string {
 	return gobject.GoString(unsafe.Pointer(l))
 }
 
-func (self *Button) GetUseStock() (bool) {
+func (self *Button) GetUseStock() bool {
 	b := C.gtk_button_get_use_stock(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
@@ -118,7 +118,7 @@ func (self *Button) SetUseStock(useStock bool) {
 	gobject.SetProperty(self, "use-stock", useStock)
 }
 
-func (self *Button) GetUseUnderline() (bool) {
+func (self *Button) GetUseUnderline() bool {
 	b := C.gtk_button_get_use_underline(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
@@ -131,7 +131,7 @@ func (self *Button) SetFocusOnClick(focusOnClick bool) {
 	gobject.SetProperty(self, "focus-on-click", focusOnClick)
 }
 
-func (self *Button) GetFocusOnClick() (bool) {
+func (self *Button) GetFocusOnClick() bool {
 	b := C.gtk_button_get_focus_on_click(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
@@ -165,7 +165,7 @@ func (self *Button) SetImagePosition(position GtkPositionType) {
 	C.gtk_button_set_image_position(self.object, C.GtkPositionType(position))
 }
 
-func (self *Button) GetImagePosition() (GtkPositionType) {
+func (self *Button) GetImagePosition() GtkPositionType {
 	return GtkPositionType(C.gtk_button_get_image_position(self.object))
 }
 

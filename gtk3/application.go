@@ -62,8 +62,8 @@ func (self Application) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Application) Connect(s string, f interface{}, datas ...interface{}) {
-	gobject.Connect(self, s, f, datas...)
+func (self Application) Connect(s string, f interface{}, datas ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, s, f, datas...)
 }
 
 func (self Application) Set(properties map[string]interface{}) {

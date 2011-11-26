@@ -47,8 +47,8 @@ func (self Widget) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Widget) Connect(s string, f interface{}, datas ...interface{}) {
-	gobject.Connect(self, s, f, datas...)
+func (self Widget) Connect(s string, f interface{}, datas ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, s, f, datas...)
 }
 
 func (self Widget) Set(properties map[string]interface{}) {

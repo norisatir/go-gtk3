@@ -319,159 +319,165 @@ type gtkTypes struct {
 
 // GtkShadowType
 type GtkShadowType int
+
 var GtkShadow gtkShadow
 
 type gtkShadow struct {
-    NONE GtkShadowType
-    IN GtkShadowType
-    OUT GtkShadowType
-    ETCHED_IN GtkShadowType
-    ETCHED_OUT GtkShadowType
+	NONE       GtkShadowType
+	IN         GtkShadowType
+	OUT        GtkShadowType
+	ETCHED_IN  GtkShadowType
+	ETCHED_OUT GtkShadowType
 }
 // End GtkShadow
 
 // string
 var GtkStock gtkStock
+
 type gtkStock struct {
-	ABOUT            string
-	ADD              string
-	APPLY            string
-	BOLD             string
-	CANCEL           string
-	CAPS_LOCK_WARNING string
-	CDROM            string
-	CLEAR            string
-	CLOSE            string
-	COLOR_PICKER     string
-	CONNECT          string
-	CONVERT          string
-	COPY             string
-	CUT              string
-	DELETE           string
-	DIALOG_AUTHENTICATION string
-	DIALOG_INFO      string
-	DIALOG_WARNING   string
-	DIALOG_ERROR     string
-	DIALOG_QUESTION  string
-	DIRECTORY        string
-	DISCARD          string
-	DISCONNECT       string
-	DND              string
-	DND_MULTIPLE     string
-	EDIT             string
-	EXECUTE          string
-	FILE             string
-	FIND             string
-	FIND_AND_REPLACE string
-	FLOPPY           string
-	FULLSCREEN       string
-	GOTO_BOTTOM      string
-	GOTO_FIRST       string
-	GOTO_LAST        string
-	GOTO_TOP         string
-	GO_BACK          string
-	GO_DOWN          string
-	GO_FORWARD       string
-	GO_UP            string
-	HARDDISK         string
-	HELP             string
-	HOME             string
-	INDEX            string
-	INDENT           string
-	INFO             string
-	ITALIC           string
-	JUMP_TO          string
-	JUSTIFY_CENTER   string
-	JUSTIFY_FILL     string
-	JUSTIFY_LEFT     string
-	JUSTIFY_RIGHT    string
-	LEAVE_FULLSCREEN string
-	MISSING_IMAGE    string
-	MEDIA_FORWARD    string
-	MEDIA_NEXT       string
-	MEDIA_PAUSE      string
-	MEDIA_PLAY       string
-	MEDIA_PREVIOUS   string
-	MEDIA_RECORD     string
-	MEDIA_REWIND     string
-	MEDIA_STOP       string
-	NETWORK          string
-	NEW              string
-	NO               string
-	OK               string
-	OPEN             string
-	ORIENTATION_PORTRAIT string
-	ORIENTATION_LANDSCAPE string
+	ABOUT                         string
+	ADD                           string
+	APPLY                         string
+	BOLD                          string
+	CANCEL                        string
+	CAPS_LOCK_WARNING             string
+	CDROM                         string
+	CLEAR                         string
+	CLOSE                         string
+	COLOR_PICKER                  string
+	CONNECT                       string
+	CONVERT                       string
+	COPY                          string
+	CUT                           string
+	DELETE                        string
+	DIALOG_AUTHENTICATION         string
+	DIALOG_INFO                   string
+	DIALOG_WARNING                string
+	DIALOG_ERROR                  string
+	DIALOG_QUESTION               string
+	DIRECTORY                     string
+	DISCARD                       string
+	DISCONNECT                    string
+	DND                           string
+	DND_MULTIPLE                  string
+	EDIT                          string
+	EXECUTE                       string
+	FILE                          string
+	FIND                          string
+	FIND_AND_REPLACE              string
+	FLOPPY                        string
+	FULLSCREEN                    string
+	GOTO_BOTTOM                   string
+	GOTO_FIRST                    string
+	GOTO_LAST                     string
+	GOTO_TOP                      string
+	GO_BACK                       string
+	GO_DOWN                       string
+	GO_FORWARD                    string
+	GO_UP                         string
+	HARDDISK                      string
+	HELP                          string
+	HOME                          string
+	INDEX                         string
+	INDENT                        string
+	INFO                          string
+	ITALIC                        string
+	JUMP_TO                       string
+	JUSTIFY_CENTER                string
+	JUSTIFY_FILL                  string
+	JUSTIFY_LEFT                  string
+	JUSTIFY_RIGHT                 string
+	LEAVE_FULLSCREEN              string
+	MISSING_IMAGE                 string
+	MEDIA_FORWARD                 string
+	MEDIA_NEXT                    string
+	MEDIA_PAUSE                   string
+	MEDIA_PLAY                    string
+	MEDIA_PREVIOUS                string
+	MEDIA_RECORD                  string
+	MEDIA_REWIND                  string
+	MEDIA_STOP                    string
+	NETWORK                       string
+	NEW                           string
+	NO                            string
+	OK                            string
+	OPEN                          string
+	ORIENTATION_PORTRAIT          string
+	ORIENTATION_LANDSCAPE         string
 	ORIENTATION_REVERSE_LANDSCAPE string
-	ORIENTATION_REVERSE_PORTRAIT string
-	PAGE_SETUP       string
-	PASTE            string
-	PREFERENCES      string
-	PRINT            string
-	PRINT_ERROR      string
-	PRINT_PAUSED     string
-	PRINT_PREVIEW    string
-	PRINT_REPORT     string
-	PRINT_WARNING    string
-	PROPERTIES       string
-	QUIT             string
-	REDO             string
-	REFRESH          string
-	REMOVE           string
-	REVERT_TO_SAVED  string
-	SAVE             string
-	SAVE_AS          string
-	SELECT_ALL       string
-	SELECT_COLOR     string
-	SELECT_FONT      string
-	SORT_ASCENDING   string
-	SORT_DESCENDING  string
-	SPELL_CHECK      string
-	STOP             string
-	STRIKETHROUGH    string
-	UNDELETE         string
-	UNDERLINE        string
-	UNDO             string
-	UNINDENT         string
-	YES              string
-	ZOOM_100         string
-	ZOOM_FIT         string
-	ZOOM_IN          string
-	ZOOM_OUT         string
+	ORIENTATION_REVERSE_PORTRAIT  string
+	PAGE_SETUP                    string
+	PASTE                         string
+	PREFERENCES                   string
+	PRINT                         string
+	PRINT_ERROR                   string
+	PRINT_PAUSED                  string
+	PRINT_PREVIEW                 string
+	PRINT_REPORT                  string
+	PRINT_WARNING                 string
+	PROPERTIES                    string
+	QUIT                          string
+	REDO                          string
+	REFRESH                       string
+	REMOVE                        string
+	REVERT_TO_SAVED               string
+	SAVE                          string
+	SAVE_AS                       string
+	SELECT_ALL                    string
+	SELECT_COLOR                  string
+	SELECT_FONT                   string
+	SORT_ASCENDING                string
+	SORT_DESCENDING               string
+	SPELL_CHECK                   string
+	STOP                          string
+	STRIKETHROUGH                 string
+	UNDELETE                      string
+	UNDERLINE                     string
+	UNDO                          string
+	UNINDENT                      string
+	YES                           string
+	ZOOM_100                      string
+	ZOOM_FIT                      string
+	ZOOM_IN                       string
+	ZOOM_OUT                      string
 }
 // End GtkStock
 
 // GtkPositionType
 type GtkPositionType int
+
 var GtkPosition gtkPosition
+
 type gtkPosition struct {
-	POS_LEFT GtkPositionType
-	POS_RIGHT GtkPositionType
-	POS_TOP GtkPositionType
+	POS_LEFT   GtkPositionType
+	POS_RIGHT  GtkPositionType
+	POS_TOP    GtkPositionType
 	POS_BOTTOM GtkPositionType
 }
 // End GtkPositionType
 
 // GtkDialogFlags
 var GtkDialogFlags gtkDialogFlags
+
 type gtkDialogFlags struct {
-	MODAL int
+	MODAL               int
 	DESTROY_WITH_PARENT int
 }
 // End GtkDialogFlags
 var GtkResponse gtkResponse
+
 type gtkResponse struct {
-	NONE int
-	REJECT int
-	ACCEPT int
+	NONE         int
+	REJECT       int
+	ACCEPT       int
 	DELETE_EVENT int
-	OK int
-	CANCEL int
-	CLOSE int
-	YES int
-	NO int
-	APPLY int
-	HELP int
+	OK           int
+	CANCEL       int
+	CLOSE        int
+	YES          int
+	NO           int
+	APPLY        int
+	HELP         int
 }
 
 func init() {
@@ -778,120 +784,119 @@ func init() {
 	GtkType.UI_MANAGER_ITEM_TYPE = g.GType(C.gtk_ui_manager_item_type_get_type())
 	GtkType.WIDGET_HELP_TYPE = g.GType(C.gtk_widget_help_type_get_type())
 
-    // Initialize GtkShadowType
-    GtkShadow.NONE = GtkShadowType(0)
-    GtkShadow.IN = GtkShadowType(1)
-    GtkShadow.OUT = GtkShadowType(2)
-    GtkShadow.ETCHED_IN = GtkShadowType(3)
-    GtkShadow.ETCHED_OUT = GtkShadowType(4)
+	// Initialize GtkShadowType
+	GtkShadow.NONE = GtkShadowType(0)
+	GtkShadow.IN = GtkShadowType(1)
+	GtkShadow.OUT = GtkShadowType(2)
+	GtkShadow.ETCHED_IN = GtkShadowType(3)
+	GtkShadow.ETCHED_OUT = GtkShadowType(4)
 
 	// Initialize GtkStock
-	GtkStock.ABOUT            = "gtk-about"
-	GtkStock.ADD              = "gtk-add"
-	GtkStock.APPLY            = "gtk-apply"
-	GtkStock.BOLD             = "gtk-bold"
-	GtkStock.CANCEL           = "gtk-cancel"
+	GtkStock.ABOUT = "gtk-about"
+	GtkStock.ADD = "gtk-add"
+	GtkStock.APPLY = "gtk-apply"
+	GtkStock.BOLD = "gtk-bold"
+	GtkStock.CANCEL = "gtk-cancel"
 	GtkStock.CAPS_LOCK_WARNING = "gtk-caps-lock-warning"
-	GtkStock.CDROM            = "gtk-cdrom"
-	GtkStock.CLEAR            = "gtk-clear"
-	GtkStock.CLOSE            = "gtk-close"
-	GtkStock.COLOR_PICKER     = "gtk-color-picker"
-	GtkStock.CONNECT          = "gtk-connect"
-	GtkStock.CONVERT          = "gtk-convert"
-	GtkStock.COPY             = "gtk-copy"
-	GtkStock.CUT              = "gtk-cut"
-	GtkStock.DELETE           = "gtk-delete"
+	GtkStock.CDROM = "gtk-cdrom"
+	GtkStock.CLEAR = "gtk-clear"
+	GtkStock.CLOSE = "gtk-close"
+	GtkStock.COLOR_PICKER = "gtk-color-picker"
+	GtkStock.CONNECT = "gtk-connect"
+	GtkStock.CONVERT = "gtk-convert"
+	GtkStock.COPY = "gtk-copy"
+	GtkStock.CUT = "gtk-cut"
+	GtkStock.DELETE = "gtk-delete"
 	GtkStock.DIALOG_AUTHENTICATION = "gtk-dialog-authentication"
-	GtkStock.DIALOG_INFO      = "gtk-dialog-info"
-	GtkStock.DIALOG_WARNING   = "gtk-dialog-warning"
-	GtkStock.DIALOG_ERROR     = "gtk-dialog-error"
-	GtkStock.DIALOG_QUESTION  = "gtk-dialog-question"
-	GtkStock.DIRECTORY        = "gtk-directory"
-	GtkStock.DISCARD          = "gtk-discard"
-	GtkStock.DISCONNECT       = "gtk-disconnect"
-	GtkStock.DND              = "gtk-dnd"
-	GtkStock.DND_MULTIPLE     = "gtk-dnd-multiple"
-	GtkStock.EDIT             = "gtk-edit"
-	GtkStock.EXECUTE          = "gtk-execute"
-	GtkStock.FILE             = "gtk-file"
-	GtkStock.FIND             = "gtk-find"
+	GtkStock.DIALOG_INFO = "gtk-dialog-info"
+	GtkStock.DIALOG_WARNING = "gtk-dialog-warning"
+	GtkStock.DIALOG_ERROR = "gtk-dialog-error"
+	GtkStock.DIALOG_QUESTION = "gtk-dialog-question"
+	GtkStock.DIRECTORY = "gtk-directory"
+	GtkStock.DISCARD = "gtk-discard"
+	GtkStock.DISCONNECT = "gtk-disconnect"
+	GtkStock.DND = "gtk-dnd"
+	GtkStock.DND_MULTIPLE = "gtk-dnd-multiple"
+	GtkStock.EDIT = "gtk-edit"
+	GtkStock.EXECUTE = "gtk-execute"
+	GtkStock.FILE = "gtk-file"
+	GtkStock.FIND = "gtk-find"
 	GtkStock.FIND_AND_REPLACE = "gtk-find-and-replace"
-	GtkStock.FLOPPY           = "gtk-floppy"
-	GtkStock.FULLSCREEN       = "gtk-fullscreen"
-	GtkStock.GOTO_BOTTOM      = "gtk-goto-bottom"
-	GtkStock.GOTO_FIRST       = "gtk-goto-first"
-	GtkStock.GOTO_LAST        = "gtk-goto-last"
-	GtkStock.GOTO_TOP         = "gtk-goto-top"
-	GtkStock.GO_BACK          = "gtk-go-back"
-	GtkStock.GO_DOWN          = "gtk-go-down"
-	GtkStock.GO_FORWARD       = "gtk-go-forward"
-	GtkStock.GO_UP            = "gtk-go-up"
-	GtkStock.HARDDISK         = "gtk-harddisk"
-	GtkStock.HELP             = "gtk-help"
-	GtkStock.HOME             = "gtk-home"
-	GtkStock.INDEX            = "gtk-index"
-	GtkStock.INDENT           = "gtk-indent"
-	GtkStock.INFO             = "gtk-info"
-	GtkStock.ITALIC           = "gtk-italic"
-	GtkStock.JUMP_TO          = "gtk-jump-to"
-	GtkStock.JUSTIFY_CENTER   = "gtk-justify-center"
-	GtkStock.JUSTIFY_FILL     = "gtk-justify-fill"
-	GtkStock.JUSTIFY_LEFT     = "gtk-justify-left"
-	GtkStock.JUSTIFY_RIGHT    = "gtk-justify-right"
+	GtkStock.FLOPPY = "gtk-floppy"
+	GtkStock.FULLSCREEN = "gtk-fullscreen"
+	GtkStock.GOTO_BOTTOM = "gtk-goto-bottom"
+	GtkStock.GOTO_FIRST = "gtk-goto-first"
+	GtkStock.GOTO_LAST = "gtk-goto-last"
+	GtkStock.GOTO_TOP = "gtk-goto-top"
+	GtkStock.GO_BACK = "gtk-go-back"
+	GtkStock.GO_DOWN = "gtk-go-down"
+	GtkStock.GO_FORWARD = "gtk-go-forward"
+	GtkStock.GO_UP = "gtk-go-up"
+	GtkStock.HARDDISK = "gtk-harddisk"
+	GtkStock.HELP = "gtk-help"
+	GtkStock.HOME = "gtk-home"
+	GtkStock.INDEX = "gtk-index"
+	GtkStock.INDENT = "gtk-indent"
+	GtkStock.INFO = "gtk-info"
+	GtkStock.ITALIC = "gtk-italic"
+	GtkStock.JUMP_TO = "gtk-jump-to"
+	GtkStock.JUSTIFY_CENTER = "gtk-justify-center"
+	GtkStock.JUSTIFY_FILL = "gtk-justify-fill"
+	GtkStock.JUSTIFY_LEFT = "gtk-justify-left"
+	GtkStock.JUSTIFY_RIGHT = "gtk-justify-right"
 	GtkStock.LEAVE_FULLSCREEN = "gtk-leave-fullscreen"
-	GtkStock.MISSING_IMAGE    = "gtk-missing-image"
-	GtkStock.MEDIA_FORWARD    = "gtk-media-forward"
-	GtkStock.MEDIA_NEXT       = "gtk-media-next"
-	GtkStock.MEDIA_PAUSE      = "gtk-media-pause"
-	GtkStock.MEDIA_PLAY       = "gtk-media-play"
-	GtkStock.MEDIA_PREVIOUS   = "gtk-media-previous"
-	GtkStock.MEDIA_RECORD     = "gtk-media-record"
-	GtkStock.MEDIA_REWIND     = "gtk-media-rewind"
-	GtkStock.MEDIA_STOP       = "gtk-media-stop"
-	GtkStock.NETWORK          = "gtk-network"
-	GtkStock.NEW              = "gtk-new"
-	GtkStock.NO               = "gtk-no"
-	GtkStock.OK               = "gtk-ok"
-	GtkStock.OPEN             = "gtk-open"
+	GtkStock.MISSING_IMAGE = "gtk-missing-image"
+	GtkStock.MEDIA_FORWARD = "gtk-media-forward"
+	GtkStock.MEDIA_NEXT = "gtk-media-next"
+	GtkStock.MEDIA_PAUSE = "gtk-media-pause"
+	GtkStock.MEDIA_PLAY = "gtk-media-play"
+	GtkStock.MEDIA_PREVIOUS = "gtk-media-previous"
+	GtkStock.MEDIA_RECORD = "gtk-media-record"
+	GtkStock.MEDIA_REWIND = "gtk-media-rewind"
+	GtkStock.MEDIA_STOP = "gtk-media-stop"
+	GtkStock.NETWORK = "gtk-network"
+	GtkStock.NEW = "gtk-new"
+	GtkStock.NO = "gtk-no"
+	GtkStock.OK = "gtk-ok"
+	GtkStock.OPEN = "gtk-open"
 	GtkStock.ORIENTATION_PORTRAIT = "gtk-orientation-portrait"
 	GtkStock.ORIENTATION_LANDSCAPE = "gtk-orientation-landscape"
 	GtkStock.ORIENTATION_REVERSE_LANDSCAPE = "gtk-orientation-reverse-landscape"
 	GtkStock.ORIENTATION_REVERSE_PORTRAIT = "gtk-orientation-reverse-portrait"
-	GtkStock.PAGE_SETUP       = "gtk-page-setup"
-	GtkStock.PASTE            = "gtk-paste"
-	GtkStock.PREFERENCES      = "gtk-preferences"
-	GtkStock.PRINT            = "gtk-print"
-	GtkStock.PRINT_ERROR      = "gtk-print-error"
-	GtkStock.PRINT_PAUSED     = "gtk-print-paused"
-	GtkStock.PRINT_PREVIEW    = "gtk-print-preview"
-	GtkStock.PRINT_REPORT     = "gtk-print-report"
-	GtkStock.PRINT_WARNING    = "gtk-print-warning"
-	GtkStock.PROPERTIES       = "gtk-properties"
-	GtkStock.QUIT             = "gtk-quit"
-	GtkStock.REDO             = "gtk-redo"
-	GtkStock.REFRESH          = "gtk-refresh"
-	GtkStock.REMOVE           = "gtk-remove"
-	GtkStock.REVERT_TO_SAVED  = "gtk-revert-to-saved"
-	GtkStock.SAVE             = "gtk-save"
-	GtkStock.SAVE_AS          = "gtk-save-as"
-	GtkStock.SELECT_ALL       = "gtk-select-all"
-	GtkStock.SELECT_COLOR     = "gtk-select-color"
-	GtkStock.SELECT_FONT      = "gtk-select-font"
-	GtkStock.SORT_ASCENDING   = "gtk-sort-ascending"
-	GtkStock.SORT_DESCENDING  = "gtk-sort-descending"
-	GtkStock.SPELL_CHECK      = "gtk-spell-check"
-	GtkStock.STOP             = "gtk-stop"
-	GtkStock.STRIKETHROUGH    = "gtk-strikethrough"
-	GtkStock.UNDELETE         = "gtk-undelete"
-	GtkStock.UNDERLINE        = "gtk-underline"
-	GtkStock.UNDO             = "gtk-undo"
-	GtkStock.UNINDENT         = "gtk-unindent"
-	GtkStock.YES              = "gtk-yes"
-	GtkStock.ZOOM_100         = "gtk-zoom-100"
-	GtkStock.ZOOM_FIT         = "gtk-zoom-fit"
-	GtkStock.ZOOM_IN          = "gtk-zoom-in"
-	GtkStock.ZOOM_OUT         = "gtk-zoom-out"
-
+	GtkStock.PAGE_SETUP = "gtk-page-setup"
+	GtkStock.PASTE = "gtk-paste"
+	GtkStock.PREFERENCES = "gtk-preferences"
+	GtkStock.PRINT = "gtk-print"
+	GtkStock.PRINT_ERROR = "gtk-print-error"
+	GtkStock.PRINT_PAUSED = "gtk-print-paused"
+	GtkStock.PRINT_PREVIEW = "gtk-print-preview"
+	GtkStock.PRINT_REPORT = "gtk-print-report"
+	GtkStock.PRINT_WARNING = "gtk-print-warning"
+	GtkStock.PROPERTIES = "gtk-properties"
+	GtkStock.QUIT = "gtk-quit"
+	GtkStock.REDO = "gtk-redo"
+	GtkStock.REFRESH = "gtk-refresh"
+	GtkStock.REMOVE = "gtk-remove"
+	GtkStock.REVERT_TO_SAVED = "gtk-revert-to-saved"
+	GtkStock.SAVE = "gtk-save"
+	GtkStock.SAVE_AS = "gtk-save-as"
+	GtkStock.SELECT_ALL = "gtk-select-all"
+	GtkStock.SELECT_COLOR = "gtk-select-color"
+	GtkStock.SELECT_FONT = "gtk-select-font"
+	GtkStock.SORT_ASCENDING = "gtk-sort-ascending"
+	GtkStock.SORT_DESCENDING = "gtk-sort-descending"
+	GtkStock.SPELL_CHECK = "gtk-spell-check"
+	GtkStock.STOP = "gtk-stop"
+	GtkStock.STRIKETHROUGH = "gtk-strikethrough"
+	GtkStock.UNDELETE = "gtk-undelete"
+	GtkStock.UNDERLINE = "gtk-underline"
+	GtkStock.UNDO = "gtk-undo"
+	GtkStock.UNINDENT = "gtk-unindent"
+	GtkStock.YES = "gtk-yes"
+	GtkStock.ZOOM_100 = "gtk-zoom-100"
+	GtkStock.ZOOM_FIT = "gtk-zoom-fit"
+	GtkStock.ZOOM_IN = "gtk-zoom-in"
+	GtkStock.ZOOM_OUT = "gtk-zoom-out"
 
 	// Initialize GtkPosition
 	GtkPosition.POS_LEFT = GtkPositionType(0)
@@ -915,7 +920,5 @@ func init() {
 	GtkResponse.NO = -9
 	GtkResponse.APPLY = -10
 	GtkResponse.HELP = -11
-	
+
 }
-
-

@@ -67,7 +67,7 @@ type ClosureFunc func(args []interface{}) bool
 
 // This gets returned by RegisterHandler
 type ClosureElement struct {
-	id uint64
+	id      uint64
 	closure *list.Element
 }
 
@@ -120,7 +120,7 @@ func RegisterHandler(obj ObjectLike, name string, id uint64, f ClosureFunc) *Clo
 	defer s.Free()
 	C.connect_to_signal(obj.ToNative(),
 		(*C.gchar)(s.GetPtr()), C.guint64(id))
-	
+
 	return &ClosureElement{id, el}
 }
 
