@@ -61,10 +61,18 @@ static inline void free_array(GArray* ar) {
 */
 import "C"
 import "unsafe"
+import "container/list"
 
 type ClosureFunc func(args []interface{}) bool
 
-var _closures map[uint64][]ClosureFunc
+// This gets returned by RegisterHandler
+type ClosureElement struct {
+	id uint64
+	closure *list.Element
+}
+
+//var _closures map[uint64][]ClosureFunc
+var _closures map[uint64]*list.List
 
 // Signal struct
 type Signal struct {
@@ -84,9 +92,10 @@ func queueManager() {
 	}
 }
 func run(done chan bool, sig Signal) {
-	if handlers, ok := _closures[sig.id]; ok {
-		for _, h := range handlers {
-			if ok := h(sig.args); !ok {
+	if l, ok := _closures[sig.id]; ok {
+		for h := l.Front(); h != nil; h = h.Next() {
+			handler := h.Value.(ClosureFunc)
+			if ok := handler(sig.args); !ok {
 				break
 			}
 		}
@@ -94,25 +103,42 @@ func run(done chan bool, sig Signal) {
 	done <- true
 }
 
-func RegisterHandler(obj ObjectLike, name string, id uint64, f ClosureFunc) {
+// Return list element which holds our closure (and with which we can disconnect it)
+func RegisterHandler(obj ObjectLike, name string, id uint64, f ClosureFunc) *ClosureElement {
 	// if id exists, then add closure to the end
 	if _, ok := _closures[id]; ok {
-		_closures[id] = append(_closures[id], f)
-		return
+		el := _closures[id].PushBack(f)
+		return &ClosureElement{id, el}
 	}
 
-	// Not found, so create new slice of closures
-	_closures[id] = make([]ClosureFunc, 1)
-	_closures[id][0] = f
+	// Not found, so create new list of closures
+	_closures[id] = list.New()
+	el := _closures[id].PushBack(f)
 
 	// Register handler in gobject system
 	s := GString(name)
 	defer s.Free()
 	C.connect_to_signal(obj.ToNative(),
 		(*C.gchar)(s.GetPtr()), C.guint64(id))
+	
+	return &ClosureElement{id, el}
 }
+
+// Removes handler from list (and entire map element,
+// if list is empty - no closures anymore)
+func RemoveHandler(cel *ClosureElement) {
+	if l, ok := _closures[cel.id]; ok {
+		l.Remove(cel.closure)
+
+		// if list now empty, remove map element
+		if l.Len() == 0 {
+			_closures[cel.id] = nil, false
+		}
+	}
+}
+
 func init() {
-	_closures = make(map[uint64][]ClosureFunc)
+	_closures = make(map[uint64]*list.List)
 	emitedSignals = make(chan Signal, 100)
 	doneMarshal = make(chan bool)
 	go queueManager()

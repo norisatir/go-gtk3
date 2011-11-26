@@ -35,7 +35,7 @@ func GetTypeFromInstance(obj unsafe.Pointer) GType {
 // to be compatible with all gobject functions - public interfaces of gobject
 type ObjectLike interface {
 	ToNative() unsafe.Pointer
-	Connect(s string, f interface{}, data ...interface{})
+	Connect(s string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError)
 	Set(map[string]interface{})
 	Get([]string) map[string]interface{}
 }
@@ -52,8 +52,8 @@ func (self gobject) ToNative() unsafe.Pointer {
 	return self.object
 }
 
-func (self gobject) Connect(s string, f interface{}, datas ...interface{}) {
-	Connect(self, s, f, datas...)
+func (self gobject) Connect(s string, f interface{}, datas ...interface{}) (*ClosureElement, *SignalError) {
+	return Connect(self, s, f, datas...)
 }
 
 func (self gobject) Set(properties map[string]interface{}) {
@@ -65,7 +65,7 @@ func (self gobject) Get(properties []string) map[string]interface{} {
 }
 
 func New(typ GType, properties map[string]interface{}) ObjectLike {
-	obj := gobject{}
+	obj := gobject{}                                                    
 	obj.object = C.new_GObject(C.GType(typ))
 
 	Set(obj, properties)
@@ -209,14 +209,16 @@ func createClosure(f interface{}, data ...interface{}) ClosureFunc {
 		return res[0].Bool()
 	}
 }
-func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) *SignalError {
+
+
+func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError) {
 	s_id := uint64(SignalLookup(name, GetTypeFromInstance(obj.ToNative())))
 
 	if s_id == 0 {
-		return &SignalError{"Signal not found"}
+		return nil, &SignalError{"Signal not found"}
 	}
 	uid := getUniqueID(obj, s_id)
 	c := createClosure(f, data...)
-	RegisterHandler(obj, name, uid, c)
-	return nil
+	cloEl := RegisterHandler(obj, name, uid, c)
+	return cloEl, nil
 }
