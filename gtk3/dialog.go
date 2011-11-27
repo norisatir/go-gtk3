@@ -50,14 +50,18 @@ func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *
 	defer fb.Free()
 
 	firstId := butAndID[0].Response
+	var wparent *C.GtkWindow = nil
+	if parent != nil {
+		wparent = parent.object
+	} 
 
-	o := C._dialog_new_with_buttons((*C.gchar)(t.GetPtr()), parent.object, C.GtkDialogFlags(flags),
+	o := C._dialog_new_with_buttons((*C.gchar)(t.GetPtr()), wparent, C.GtkDialogFlags(flags),
 		(*C.gchar)(fb.GetPtr()), C.gint(firstId))
 
 	w := newWindowFromNative(unsafe.Pointer(o))
 	d.Window = w.(*Window)
 	d.object = o
-	d.AddButtons(butAndID)
+	d.AddButtons(butAndID[1:])
 	return d
 }
 
@@ -108,10 +112,11 @@ func (self Dialog) Wnd() *Window {
 	return self.Window
 }
 
+
 // Dialog interface
 func (self *Dialog) Run() int {
-	i := C.gtk_dialog_run(self.object)
-	return int(i)
+	response := C.gtk_dialog_run(self.object)
+	return int(response)
 }
 
 func (self *Dialog) Response(responseId int) {
