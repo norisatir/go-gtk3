@@ -10,26 +10,16 @@ import "C"
 import "unsafe"
 import "github.com/norisatir/go-gtk3/gobject"
 
-type GtkOrientation int
-
-const (
-	ORIENTATION_HORIZONTAL GtkOrientation = 0
-	ORIENTATION_VERTICAL   GtkOrientation = 1
-)
-
-type GtkPackType int
-
-const (
-	PACK_START GtkPackType = 0
-	PACK_END   GtkPackType = 1
-)
+type BoxLike interface {
+	CBox() *Box
+}
 
 type Box struct {
 	object *C.GtkBox
 	*Container
 }
 
-func NewBox(orientation GtkOrientation, spacing int) *Box {
+func NewBox(orientation int, spacing int) *Box {
 	box := &Box{}
 
 	o := C.gtk_box_new(C.GtkOrientation(orientation), C.gint(spacing))
@@ -41,11 +31,11 @@ func NewBox(orientation GtkOrientation, spacing int) *Box {
 }
 
 func NewHBox(spacing int) *Box {
-	return NewBox(ORIENTATION_HORIZONTAL, spacing)
+	return NewBox(GtkOrientation.HORIZONTAL, spacing)
 }
 
 func NewVBox(spacing int) *Box {
-	return NewBox(ORIENTATION_VERTICAL, spacing)
+	return NewBox(GtkOrientation.VERTICAL, spacing)
 }
 
 // Conversion function for gobject registration map
@@ -133,17 +123,17 @@ func (self *Box) ReorderChild(w WidgetLike, position int) {
 	C.gtk_box_reorder_child(self.object, w.W().object, C.gint(position))
 }
 
-func (self *Box) QueryChildPacking(w WidgetLike) (expand bool, fill bool, padding uint, ptype GtkPackType) {
+func (self *Box) QueryChildPacking(w WidgetLike) (expand bool, fill bool, padding uint, ptype int) {
 	var e C.gboolean
 	var f C.gboolean
 	var p C.guint
 	var t C.GtkPackType
 	C.gtk_box_query_child_packing(self.object, w.W().object, &e, &f, &p, &t)
 
-	return gobject.GoBool(unsafe.Pointer(&e)), gobject.GoBool(unsafe.Pointer(&f)), uint(p), GtkPackType(t)
+	return gobject.GoBool(unsafe.Pointer(&e)), gobject.GoBool(unsafe.Pointer(&f)), uint(p), int(t)
 }
 
-func (self *Box) SetChildPacking(w WidgetLike, expand bool, fill bool, padding int, ptype GtkPackType) {
+func (self *Box) SetChildPacking(w WidgetLike, expand bool, fill bool, padding int, ptype int) {
 	e := gobject.GBool(expand)
 	f := gobject.GBool(fill)
 	defer e.Free()

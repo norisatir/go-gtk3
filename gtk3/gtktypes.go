@@ -508,6 +508,35 @@ type gtkButtons struct {
 }
 // End GtkButtons
 
+// GtkOrientation
+var GtkOrientation gtkOrientation
+
+type gtkOrientation struct {
+	HORIZONTAL int
+	VERTICAL   int
+}
+// End GtkOrientation
+
+// GtkPackType
+var GtkPack gtkPack
+
+type gtkPack struct {
+	PACK_START int
+	PACK_END   int
+}
+// End GtkPackType
+
+// GtkButtonBoxStyle
+var GtkButtonBoxStyle gtkButtonBoxStyle
+
+type gtkButtonBoxStyle struct {
+	SPREAD int
+	EDGE   int
+	START  int
+	END    int
+	CENTER int
+}
+
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
 	GtkType.ACCEL_GROUP = g.GType(C.gtk_accel_group_get_type())
@@ -964,4 +993,18 @@ func init() {
 	GtkButtons.YES_NO = 4
 	GtkButtons.OK_CANCEL = 5
 
+	// Initialize GtkOrientation
+	GtkOrientation.HORIZONTAL = 0
+	GtkOrientation.VERTICAL = 1
+
+	// Initialize GtkPackType
+	GtkPack.PACK_START = 0
+	GtkPack.PACK_END = 1
+
+	// Initialize GtkButtonBoxStyle
+	GtkButtonBoxStyle.SPREAD = 1
+	GtkButtonBoxStyle.EDGE = 2
+	GtkButtonBoxStyle.START = 3
+	GtkButtonBoxStyle.END = 4
+	GtkButtonBoxStyle.CENTER = 5
 }
