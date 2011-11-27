@@ -26,7 +26,7 @@ func main() {
 	// Create First Button
 	fbut := gtk3.NewButtonWithLabel("Click Me")
 	box.PackStart(fbut, false, false, 0)
-	fbut.Connect("clicked", func() { box.ReorderChild(fbut, 2)})
+	fbut.Connect("clicked", my_dialog, w)
 
 	// Another one
 	fbut2 := gtk3.NewButtonWithLabel("Disable my upper brother")
@@ -50,4 +50,13 @@ func main() {
 
 func but_disabled(b3 *gtk3.Button, b1 *gtk3.Button) {
 	b3.SetLabel("Damn it. Enable him")
+}
+
+func my_dialog(w *gtk3.Window) {
+	// NewDialog
+	d := gtk3.NewMessageDialog(w, gtk3.GtkDialogFlags.DESTROY_WITH_PARENT, gtk3.GtkMessage.INFO, gtk3.GtkButtons.CLOSE, "")
+	d.SetMarkup("<span foreground=\"blue\" size=\"x-large\">Blue text</span> is <i>cool</i>!")
+	d.FormatSecondaryMarkup("<span foreground=\"red\"> So is red!</span>")
+	d.Run()
+	d.Destroy()
 }
