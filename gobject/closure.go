@@ -66,12 +66,11 @@ type ClosureFunc func(args []interface{}) bool
 
 // This gets returned by RegisterHandler
 type ClosureElement struct {
-	id      int64
+	id         int64
 	handler_id uint32
 }
 
 var _closures map[int64]ClosureFunc
-
 
 // RegisterHandler registers closure and returns ClosureElement with info for removal
 func RegisterHandler(obj ObjectLike, name string, id int64, f ClosureFunc) *ClosureElement {

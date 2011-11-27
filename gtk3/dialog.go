@@ -53,7 +53,7 @@ func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *
 	var wparent *C.GtkWindow = nil
 	if parent != nil {
 		wparent = parent.object
-	} 
+	}
 
 	o := C._dialog_new_with_buttons((*C.gchar)(t.GetPtr()), wparent, C.GtkDialogFlags(flags),
 		(*C.gchar)(fb.GetPtr()), C.gint(firstId))
@@ -111,7 +111,6 @@ func (self Dialog) Get(properties []string) map[string]interface{} {
 func (self Dialog) Wnd() *Window {
 	return self.Window
 }
-
 
 // Dialog interface
 func (self *Dialog) Run() int {
