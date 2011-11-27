@@ -22,11 +22,11 @@ static inline void destroy_id(gpointer data, GClosure* closure) {
 	free(data);
 }
 
-static inline gulong connect_to_signal(void* obj, gchar* name, guint64 id) {
-	guint64 *pguint64 = (guint64*)malloc(sizeof(guint64));
-	*pguint64 = id;
+static inline gulong connect_to_signal(void* obj, gchar* name, gint64 id) {
+	gint64 *pgint64 = (gint64*)malloc(sizeof(gint64));
+	*pgint64 = id;
 	GClosure* c = g_cclosure_new_swap(G_CALLBACK(func_handler),
-									(gpointer)pguint64,
+									(gpointer)pgint64,
 									destroy_id);
 
 	g_closure_set_marshal(c, simple_go_marshal);
@@ -61,93 +61,49 @@ static inline void free_array(GArray* ar) {
 */
 import "C"
 import "unsafe"
-import "container/list"
 
 type ClosureFunc func(args []interface{}) bool
 
 // This gets returned by RegisterHandler
 type ClosureElement struct {
-	id      uint64
-	closure *list.Element
+	id      int64
+	handler_id uint32
 }
 
-//var _closures map[uint64][]ClosureFunc
-var _closures map[uint64]*list.List
+var _closures map[int64]ClosureFunc
 
-// Signal struct
-type Signal struct {
-	id   uint64
-	args []interface{}
-}
 
-var emitedSignals chan Signal
-var doneMarshal chan bool
-
-func queueManager() {
-	var done = make(chan bool)
-	for s := range emitedSignals {
-		go run(done, s)
-		<-done
-		doneMarshal <- true
-	}
-}
-func run(done chan bool, sig Signal) {
-	if l, ok := _closures[sig.id]; ok {
-		for h := l.Front(); h != nil; h = h.Next() {
-			handler := h.Value.(ClosureFunc)
-			if ok := handler(sig.args); !ok {
-				break
-			}
-		}
-	}
-	done <- true
-}
-
-// Return list element which holds our closure (and with which we can disconnect it)
-func RegisterHandler(obj ObjectLike, name string, id uint64, f ClosureFunc) *ClosureElement {
-	// if id exists, then add closure to the end
-	if _, ok := _closures[id]; ok {
-		el := _closures[id].PushBack(f)
-		return &ClosureElement{id, el}
-	}
-
-	// Not found, so create new list of closures
-	_closures[id] = list.New()
-	el := _closures[id].PushBack(f)
+// RegisterHandler registers closure and returns ClosureElement with info for removal
+func RegisterHandler(obj ObjectLike, name string, id int64, f ClosureFunc) *ClosureElement {
+	// Register handler to our gobject system
+	_closures[id] = f
 
 	// Register handler in gobject system
 	s := GString(name)
 	defer s.Free()
-	C.connect_to_signal(obj.ToNative(),
-		(*C.gchar)(s.GetPtr()), C.guint64(id))
+	h_id := C.connect_to_signal(obj.ToNative(),
+		(*C.gchar)(s.GetPtr()), C.gint64(id))
 
-	return &ClosureElement{id, el}
+	return &ClosureElement{id, uint32(h_id)}
 }
 
-// Removes handler from list (and entire map element,
-// if list is empty - no closures anymore)
-func RemoveHandler(cel *ClosureElement) {
-	if l, ok := _closures[cel.id]; ok {
-		l.Remove(cel.closure)
-
-		// if list now empty, remove map element
-		if l.Len() == 0 {
-			_closures[cel.id] = nil, false
-		}
+// RemoveHandler removes closure from our map and from gobject signal system
+func RemoveHandler(obj ObjectLike, cel *ClosureElement) {
+	if _, ok := _closures[cel.id]; ok {
+		_closures[cel.id] = nil, false
+		C.g_signal_handler_disconnect(C.gpointer(obj.ToNative()), C.gulong(cel.handler_id))
 	}
+
 }
 
 func init() {
-	_closures = make(map[uint64]*list.List)
-	emitedSignals = make(chan Signal, 100)
-	doneMarshal = make(chan bool)
-	go queueManager()
+	_closures = make(map[int64]ClosureFunc)
 }
 
 // SimpleGoMarshal
 // Our true callback which gets called
 // for all connected signals.
-// It emits unique id of closure to queue manager.
+// It call appropriate closure which it finds in closures map
 //export simple_go_marshal
 func simple_go_marshal(closure unsafe.Pointer,
 	returnValue unsafe.Pointer,
@@ -157,7 +113,7 @@ func simple_go_marshal(closure unsafe.Pointer,
 	marshalData unsafe.Pointer) {
 
 	c := (*C.GClosure)(closure)
-	id := uint64(*((*C.guint64)(c.data)))
+	id := int64(*((*C.gint64)(c.data)))
 
 	argslice := make([]interface{}, int(n_param_values))
 	array := C.g_array_from_GValues(paramValues, n_param_values)
@@ -169,12 +125,13 @@ func simple_go_marshal(closure unsafe.Pointer,
 		if e == nil {
 			argslice[i] = t
 		} else {
-			argslice = nil
+			argslice[i] = nil
 		}
 	}
 
-	emitedSignals <- Signal{id, argslice}
-	<-doneMarshal
+	if h, ok := _closures[id]; ok {
+		h(argslice)
+	}
 
 	C.free_array(array)
 }

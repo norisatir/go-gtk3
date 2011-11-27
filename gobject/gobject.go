@@ -26,6 +26,7 @@ static inline GType _get_type_from_instance(void* o) {
 import "C"
 import "unsafe"
 import "reflect"
+import "time"
 
 func GetTypeFromInstance(obj unsafe.Pointer) GType {
 	return GType(C._get_type_from_instance(obj))
@@ -153,10 +154,8 @@ func SignalLookup(name string, objectType GType) uint32 {
 	return uint32(s)
 }
 
-func getUniqueID(obj ObjectLike, signal_id uint64) uint64 {
-	oid := uint64(uintptr(obj.ToNative()))
-	oid = oid << 32
-	return oid | signal_id
+func getUniqueID() int64 {
+	return time.Nanoseconds()
 }
 
 type SignalError struct {
@@ -211,12 +210,12 @@ func createClosure(f interface{}, data ...interface{}) ClosureFunc {
 }
 
 func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError) {
-	s_id := uint64(SignalLookup(name, GetTypeFromInstance(obj.ToNative())))
+	s_id := SignalLookup(name, GetTypeFromInstance(obj.ToNative()))
 
 	if s_id == 0 {
 		return nil, &SignalError{"Signal not found"}
 	}
-	uid := getUniqueID(obj, s_id)
+	uid := getUniqueID()
 	c := createClosure(f, data...)
 	cloEl := RegisterHandler(obj, name, uid, c)
 	return cloEl, nil
