@@ -464,6 +464,8 @@ type gtkDialogFlags struct {
 	DESTROY_WITH_PARENT int
 }
 // End GtkDialogFlags
+
+// GtkResponse
 var GtkResponse gtkResponse
 
 type gtkResponse struct {
@@ -479,6 +481,32 @@ type gtkResponse struct {
 	APPLY        int
 	HELP         int
 }
+// End GtkResponse
+
+// GtkMessageType
+var GtkMessage gtkMessage
+
+type gtkMessage struct {
+	INFO     int
+	WARNING  int
+	QUESTION int
+	ERROR    int
+	OTHER    int
+}
+// End GtkMessageType
+
+// GtkButtons
+var GtkButtons gtkButtons
+
+type gtkButtons struct {
+	NONE      int
+	OK        int
+	CLOSE     int
+	CANCEL    int
+	YES_NO    int
+	OK_CANCEL int
+}
+// End GtkButtons
 
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -920,5 +948,20 @@ func init() {
 	GtkResponse.NO = -9
 	GtkResponse.APPLY = -10
 	GtkResponse.HELP = -11
+
+	// Initialize GtkMessage
+	GtkMessage.INFO = 0
+	GtkMessage.WARNING = 1
+	GtkMessage.QUESTION = 2
+	GtkMessage.ERROR = 3
+	GtkMessage.OTHER = 4
+
+	// Initialize GtkButtons
+	GtkButtons.NONE = 0
+	GtkButtons.OK = 1
+	GtkButtons.CLOSE = 2
+	GtkButtons.CANCEL = 3
+	GtkButtons.YES_NO = 4
+	GtkButtons.OK_CANCEL = 5
 
 }

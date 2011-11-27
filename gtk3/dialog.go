@@ -4,6 +4,7 @@ package gtk3
 #include <gtk/gtk.h>
 
 static inline GtkDialog* to_GtkDialog(void* obj) { return GTK_DIALOG(obj); }
+
 static inline GtkDialog* _dialog_new_with_buttons(const gchar* title,
 												  GtkWindow* parent,
 												  GtkDialogFlags flags,
@@ -19,6 +20,10 @@ static inline GtkDialog* _dialog_new_with_buttons(const gchar* title,
 import "C"
 import "unsafe"
 import "github.com/norisatir/go-gtk3/gobject"
+
+type DialogLike interface {
+	D() *Dialog
+}
 
 type Dialog struct {
 	object *C.GtkDialog
@@ -184,7 +189,7 @@ func (self *Dialog) GetContentArea() WidgetLike {
 	cw := C.gtk_dialog_get_content_area(self.object)
 	if cw != nil {
 		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
-		if err != nil {
+		if err == nil {
 			return w.(WidgetLike)
 		}
 	}
