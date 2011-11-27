@@ -12,6 +12,10 @@ import "C"
 import "unsafe"
 import "github.com/norisatir/go-gtk3/gobject"
 
+type ButtonLike interface {
+	B() *Button
+}
+
 type Button struct {
 	object *C.GtkButton
 	*Container
