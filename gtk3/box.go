@@ -40,7 +40,7 @@ func NewVBox(spacing int) *Box {
 
 // Conversion function for gobject registration map
 func newBoxFromNative(obj unsafe.Pointer) interface{} {
-	var box Box
+	box := Box{}
 	box.object = C.to_GtkBox(obj)
 	box.Container = NewContainer(unsafe.Pointer(box.object))
 	return &box

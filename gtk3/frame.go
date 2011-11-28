@@ -31,7 +31,7 @@ func NewFrame(label string) *Frame {
 
 // Conversion function for gobject registration map
 func newFrameFromNative(obj unsafe.Pointer) interface{} {
-	var f Frame
+	f := Frame{}
 	f.object = C.to_GtkFrame(obj)
 	f.Container = NewContainer(unsafe.Pointer(f.object))
 	return &f

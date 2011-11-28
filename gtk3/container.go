@@ -13,7 +13,7 @@ import "github.com/norisatir/go-gtk3/gobject"
 
 // New Container from widget
 func NewContainer(o unsafe.Pointer) *Container {
-	var con Container
+	con := Container{}
 	con.Widget = NewWidget(o)
 	con.object = C.to_GtkContainer(o)
 	return &con

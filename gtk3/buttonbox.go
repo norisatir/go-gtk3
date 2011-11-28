@@ -20,7 +20,7 @@ func NewButtonBox(orientation int) *ButtonBox {
 
 	o := C.gtk_button_box_new(C.GtkOrientation(orientation))
 
-	bb.Box = newBoxFromNative(unsafe.Pointer(&o)).(*Box)
+	bb.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
 	bb.object = C.to_GtkButtonBox(unsafe.Pointer(o))
 
 	return bb
@@ -28,7 +28,7 @@ func NewButtonBox(orientation int) *ButtonBox {
 
 // Conversion function for gobject registration map
 func newButtonBoxFromNative(obj unsafe.Pointer) interface{} {
-	var bbox ButtonBox
+	bbox := ButtonBox{}
 	bbox.object = C.to_GtkButtonBox(obj)
 	bbox.Box = newBoxFromNative(obj).(*Box)
 	return &bbox
