@@ -21,7 +21,7 @@ func main() {
     b2.Add(f)
 
 	// Create GtkBox
-	box := gtk3.NewBox(gtk3.ORIENTATION_VERTICAL, 5)
+	box := gtk3.NewBox(gtk3.GtkOrientation.VERTICAL, 5)
 	// Add it to window
 	f.Add(box)
 

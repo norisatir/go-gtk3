@@ -10,15 +10,15 @@ static inline GtkMessageDialog* _new_message_dialog(GtkWindow* parent,
 													GtkMessageType typ,
 													GtkButtonsType buttons,
 													const gchar* message) {
-	GtkWidget* w = gtk_message_dialog_new(parent, flags, typ, buttons, message);
+	GtkWidget* w = gtk_message_dialog_new(parent, flags, typ, buttons, message, NULL);
 	return to_GtkMessageDialog((void*)w);
 }
 
 static inline void _gtk_message_dialog_format_secondary_text(GtkMessageDialog* md, const gchar* message) {
-	gtk_message_dialog_format_secondary_text(md, message);
+	gtk_message_dialog_format_secondary_text(md, message, NULL);
 }
 static inline void _gtk_message_dialog_format_secondary_markup(GtkMessageDialog* md, const gchar* message) {
-	gtk_message_dialog_format_secondary_markup(md, message);
+	gtk_message_dialog_format_secondary_markup(md, message, NULL);
 }
 
 */

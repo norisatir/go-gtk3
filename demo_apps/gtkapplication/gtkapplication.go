@@ -20,7 +20,7 @@ func main() {
     
 	
 	// Create GtkBox
-	box := gtk3.NewBox(gtk3.ORIENTATION_VERTICAL, 5)
+	box := gtk3.NewBox(gtk3.GtkOrientation.VERTICAL, 5)
     f.Add(box)
 
 	// Create First Button

@@ -89,7 +89,7 @@ func RegisterHandler(obj ObjectLike, name string, id int64, f ClosureFunc) *Clos
 // RemoveHandler removes closure from our map and from gobject signal system
 func RemoveHandler(obj ObjectLike, cel *ClosureElement) {
 	if _, ok := _closures[cel.id]; ok {
-		_closures[cel.id] = nil, false
+		delete(_closures, cel.id)
 		C.g_signal_handler_disconnect(C.gpointer(obj.ToNative()), C.gulong(cel.handler_id))
 	}
 
