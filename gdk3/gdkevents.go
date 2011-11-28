@@ -112,8 +112,7 @@ func newEventFromNative(obj unsafe.Pointer) interface{} {
 
 func init() {
 	//Register GdkEvent to gobject (In Go)
-	t := C.gdk_event_get_type()
-	gobject.RegisterCType(gobject.GType(t), newEventFromNative)
+	gobject.RegisterCType(GdkType.EVENT, newEventFromNative)
 	init_events()
 	init_mask()
 }
@@ -257,7 +256,4 @@ func init_events() {
 	EventType.OWNER_CHANGE = GdkEventType(34)
 	EventType.GRAB_BROKEN = GdkEventType(35)
 	EventType.DAMAGE = GdkEventType(36)
-}
-
-func Init() {
 }
