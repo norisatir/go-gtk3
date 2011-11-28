@@ -9,13 +9,10 @@ THIS IS:
 	Currently implemented is GObject and Conversion between 
 	C and Go types (mainly through GValues).
 
-	Callbacks are implemented with closures, channels and goroutines
+	Callbacks are implemented with closures
 	(see gobject/callback.go)
 
-	As of now there are almost no widgets (Window, Button), but they can
-	be easily implemented (see button.go, window.go in gtk3 folder)
-
-	Everything else soon...
+    Widgets are comming fast....
 
 INSTALL:
 --------
@@ -33,8 +30,7 @@ INSTALL:
   
     gomake demo
     cd demo_apps
-    ./demo_apps/gtkapplicaton/gtkapplicaton (With GtkApplicaton as main loop)
-    ./demo_apps/standardmain/standardmain (with standard gtk_main loop)
+    (There should be four demo apps in subdirectories)
 
 
 LICENSE:
