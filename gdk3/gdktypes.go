@@ -31,18 +31,18 @@ func init() {
 
 // Rectangle
 type Rectangle struct {
-	x, y int
-	width, height int
+	X, Y int
+	Width, Height int
 }
 
 func CreateRectangle(obj unsafe.Pointer) Rectangle {
 	cr := *((*C.GdkRectangle)(obj))
 
 	r := Rectangle{}
-	r.x = int(cr.x)
-	r.y = int(cr.y)
-	r.width = int(cr.width)
-	r.height = int(cr.height)
+	r.X = int(cr.x)
+	r.Y = int(cr.y)
+	r.Width = int(cr.width)
+	r.Height = int(cr.height)
 
 	return r
 }
@@ -55,10 +55,10 @@ func newRectangleFromNative(obj unsafe.Pointer) interface{} {
 
 func nativeRectangle(rec Rectangle) *C.GdkRectangle {
 	var cr C.GdkRectangle
-	cr.x = C.int(rec.x)
-	cr.y = C.int(rec.y)
-	cr.width = C.int(rec.width)
-	cr.height = C.int(rec.height)
+	cr.x = C.int(rec.X)
+	cr.y = C.int(rec.Y)
+	cr.width = C.int(rec.Width)
+	cr.height = C.int(rec.Height)
 
 	return &cr
 }
