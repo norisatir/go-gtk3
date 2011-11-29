@@ -53,19 +53,27 @@ func (self Container) W() *Widget {
 }
 
 // interfaces
-func (self Container) Add(w WidgetLike) {
+func (self *Container) Add(w WidgetLike) {
 	C.gtk_container_add(self.object, w.W().object)
 }
 
-func (self Container) Remove(w WidgetLike) {
+func (self *Container) Remove(w WidgetLike) {
 	C.gtk_container_remove(self.object, w.W().object)
 }
 
-func (self Container) GetFocusChild() WidgetLike {
+func (self *Container) GetFocusChild() WidgetLike {
 	w := C.gtk_container_get_focus_child(self.object)
 	i, err := gobject.ConvertToGo(unsafe.Pointer(w))
-	if err != nil {
+	if err == nil {
 		return i.(WidgetLike)
 	}
 	return nil
+}
+
+func (self *Container) GetBorderWidth() (uint) {
+	return uint(C.gtk_container_get_border_width(self.object))
+}
+
+func (self *Container) SetBorderWidth(width uint) {
+	C.gtk_container_set_border_width(self.object, C.guint(width))
 }
