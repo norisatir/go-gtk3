@@ -534,6 +534,20 @@ type gtkButtonBoxStyle struct {
 	END    int
 	CENTER int
 }
+// End GtkButtonBoxStyle
+
+// GtkIconSize
+var GtkIconSize gtkIconSize
+
+type gtkIconSize struct {
+	INVALID int
+	MENU int
+	SMALL_TOOLBAR int
+	LARGE_TOOLBAR int
+	BUTTON int
+	DND int
+	DIALOG int
+}
 
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1005,4 +1019,13 @@ func init() {
 	GtkButtonBoxStyle.START = 3
 	GtkButtonBoxStyle.END = 4
 	GtkButtonBoxStyle.CENTER = 5
+
+	// Initialize GtkIconSize
+	GtkIconSize.INVALID = 0
+	GtkIconSize.MENU = 1
+	GtkIconSize.SMALL_TOOLBAR = 2
+	GtkIconSize.LARGE_TOOLBAR = 3
+	GtkIconSize.BUTTON = 4
+	GtkIconSize.DND = 5
+	GtkIconSize.DIALOG = 6
 }
