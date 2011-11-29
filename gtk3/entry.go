@@ -5,6 +5,20 @@ package gtk3
 
 static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
 
+static void _gtk_entry_set_placeholder_text(GtkEntry* entry, const gchar* text) {
+#if GTK_CHECK_VERSION(3,2,0)
+	gtk_entry_set_placeholder_text(entry, text);
+#endif
+}
+
+static const gchar* _gtk_entry_get_placeholder_text(GtkEntry* entry) {
+#if GTK_CHECK_VERSION(3,2,0)
+	return gtk_entry_get_placeholder_text(entry);
+#else
+	return NULL;
+#endif
+}
+
 */
 import "C"
 import "unsafe"
@@ -112,4 +126,87 @@ func (self *Entry) SetVisibility(visible bool) {
 	b := gobject.GBool(visible)
 	defer b.Free()
 	C.gtk_entry_set_visibility(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Entry) SetInvisiblechar(char rune) {
+	C.gtk_entry_set_invisible_char(self.object, C.gunichar(char))
+}
+
+func (self *Entry) UnsetInvisibleChar() {
+	C.gtk_entry_unset_invisible_char(self.object)
+}
+
+func (self *Entry) SetMaxLength(max int) {
+	C.gtk_entry_set_max_length(self.object, C.gint(max))
+}
+
+func (self *Entry) GetActivatesDefault() bool {
+	b := C.gtk_entry_get_activates_default(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Entry) GetHasFrame() bool {
+	b := C.gtk_entry_get_has_frame(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//TODO: gtk_entry_get_inner_border
+
+func (self *Entry) GetWidthChars() int {
+	return int(C.gtk_entry_get_width_chars(self.object))
+}
+
+func (self *Entry) SetActivatesDefault(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_entry_set_activates_default(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Entry) SetHasFrame(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_entry_set_has_frame(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+//TODO: gtk_entry_set_inner_border
+
+func (self *Entry) SetWidthChars(nChars int) {
+	C.gtk_entry_set_width_chars(self.object, C.gint(nChars))
+}
+
+func (self *Entry) GetInvisibleChar() rune {
+	return rune(C.gtk_entry_get_invisible_char(self.object))
+}
+
+func (self *Entry) SetAlignment(xalign float32) {
+	C.gtk_entry_set_alignment(self.object, C.gfloat(xalign))
+}
+
+func (self *Entry) GetAlignment() float32 {
+	return float32(C.gtk_entry_get_alignment(self.object))
+}
+
+func (self *Entry) SetPlaceholderText(text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+	C._gtk_entry_set_placeholder_text(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Entry) GetPlaceholderText() string {
+	s := C._gtk_entry_get_placeholder_text(self.object)
+	if s == nil {
+		return ""
+	}
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *Entry) SetOverwriteMode(overwrite bool) {
+	b := gobject.GBool(overwrite)
+	defer b.Free()
+	C.gtk_entry_set_overwrite_mode(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Entry) GetOverwriteMode() bool {
+	b := C.gtk_entry_get_overwrite_mode(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
