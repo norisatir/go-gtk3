@@ -165,12 +165,12 @@ func (self *Button) GetImage() WidgetLike {
 	return nil
 }
 
-func (self *Button) SetImagePosition(position GtkPositionType) {
+func (self *Button) SetImagePosition(position int) {
 	C.gtk_button_set_image_position(self.object, C.GtkPositionType(position))
 }
 
-func (self *Button) GetImagePosition() GtkPositionType {
-	return GtkPositionType(C.gtk_button_get_image_position(self.object))
+func (self *Button) GetImagePosition() int {
+	return int(C.gtk_button_get_image_position(self.object))
 }
 
 func (self *Button) Clicked() {

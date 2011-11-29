@@ -444,15 +444,13 @@ type gtkStock struct {
 // End GtkStock
 
 // GtkPositionType
-type GtkPositionType int
-
 var GtkPosition gtkPosition
 
 type gtkPosition struct {
-	POS_LEFT   GtkPositionType
-	POS_RIGHT  GtkPositionType
-	POS_TOP    GtkPositionType
-	POS_BOTTOM GtkPositionType
+	LEFT   int
+	RIGHT  int
+	TOP    int
+	BOTTOM int
 }
 // End GtkPositionType
 
@@ -956,10 +954,10 @@ func init() {
 	GtkStock.ZOOM_OUT = "gtk-zoom-out"
 
 	// Initialize GtkPosition
-	GtkPosition.POS_LEFT = GtkPositionType(0)
-	GtkPosition.POS_RIGHT = GtkPositionType(1)
-	GtkPosition.POS_TOP = GtkPositionType(2)
-	GtkPosition.POS_BOTTOM = GtkPositionType(3)
+	GtkPosition.LEFT = 0
+	GtkPosition.RIGHT = 1
+	GtkPosition.TOP = 2
+	GtkPosition.BOTTOM = 3
 
 	// Initialize GtkDialogFlags
 	GtkDialogFlags.MODAL = 1 << 0
