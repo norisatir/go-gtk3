@@ -10,7 +10,6 @@ import "C"
 import "unsafe"
 import "github.com/norisatir/go-gtk3/gobject"
 
-
 type EntryBuffer struct {
 	object *C.GtkEntryBuffer
 }
@@ -46,13 +45,11 @@ func nativeFromEntryBuffer(eb interface{}) *gobject.GValue {
 	return nil
 }
 
-
 func init() {
 	// Register GtkEntryBuffer to gobject
 	gobject.RegisterCType(GtkType.ENTRY_BUFFER, newEntryBufferFromNative)
 	gobject.RegisterGoType(GtkType.ENTRY_BUFFER, nativeFromEntryBuffer)
 }
-
 
 // To be object-like
 func (self EntryBuffer) ToNative() unsafe.Pointer {
@@ -71,10 +68,9 @@ func (self EntryBuffer) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-
 // EntryBuffer interface
 
-func (self *EntryBuffer) GetText() (string) {
+func (self *EntryBuffer) GetText() string {
 	s := C.gtk_entry_buffer_get_text(self.object)
 	return gobject.GoString(unsafe.Pointer(s))
 }

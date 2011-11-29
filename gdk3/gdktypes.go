@@ -11,9 +11,9 @@ import g "github.com/norisatir/go-gtk3/gobject"
 var GdkType gdkTypes
 
 type gdkTypes struct {
-	DEVICE g.GType
+	DEVICE    g.GType
 	RECTANGLE g.GType
-	EVENT g.GType
+	EVENT     g.GType
 }
 
 func init() {
@@ -26,12 +26,11 @@ func init() {
 	g.RegisterCType(GdkType.RECTANGLE, newRectangleFromNative)
 }
 
-
 // Basic Types
 
 // Rectangle
 type Rectangle struct {
-	X, Y int
+	X, Y          int
 	Width, Height int
 }
 

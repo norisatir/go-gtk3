@@ -11,7 +11,6 @@ import "unsafe"
 import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
 
-
 type Entry struct {
 	object *C.GtkEntry
 	*Widget
@@ -89,7 +88,7 @@ func (self *Entry) SetText(text string) {
 	C.gtk_entry_set_text(self.object, (*C.gchar)(s.GetPtr()))
 }
 
-func (self *Entry) GetText() (string) {
+func (self *Entry) GetText() string {
 	s := C.gtk_entry_get_text(self.object)
 	return gobject.GoString(unsafe.Pointer(s))
 }
@@ -101,7 +100,7 @@ func (self *Entry) GetTextLength() uint {
 func (self *Entry) GetTextArea() gdk3.Rectangle {
 	var crec C.GdkRectangle
 	C.gtk_entry_get_text_area(self.object, &crec)
-	
+
 	rec, err := gobject.ConvertToGo(unsafe.Pointer(&crec), gdk3.GdkType.RECTANGLE)
 	if err == nil {
 		return rec.(gdk3.Rectangle)

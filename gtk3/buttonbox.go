@@ -5,6 +5,21 @@ package gtk3
 
 static inline GtkButtonBox* to_GtkButtonBox(void* obj) { return GTK_BUTTON_BOX(obj); }
 
+static void _gtk_button_box_set_child_non_homogeneous(GtkButtonBox *widget, GtkWidget* child,
+														gboolean non_homogeneous) {
+#if GTK_CHECK_VERSION(3,2,0)
+	gtk_button_box_set_child_non_homogeneous(widget, child, non_homogeneous);
+#endif
+}
+
+static gboolean _gtk_button_box_get_child_non_homogeneous(GtkButtonBox *widget, GtkWidget* child) {
+#if GTK_CHECK_VERSION(3,2,0)
+	return gtk_button_box_get_child_non_homogeneous(widget, child);
+#else
+	return NULL;
+#endif
+}
+
 */
 import "C"
 import "unsafe"
@@ -83,7 +98,7 @@ func (self *ButtonBox) GetChildSecondary(w WidgetLike) bool {
 }
 
 func (self *ButtonBox) GetChildNonHomogeneous(w WidgetLike) bool {
-	cb := C.gtk_button_box_get_child_non_homogeneous(self.object, w.W().object)
+	cb := C._gtk_button_box_get_child_non_homogeneous(self.object, w.W().object)
 	return gobject.GoBool(unsafe.Pointer(&cb))
 }
 
@@ -100,5 +115,5 @@ func (self *ButtonBox) SetChildSecondary(w WidgetLike, isSecondary bool) {
 func (self *ButtonBox) SetChildNonHomogeneous(w WidgetLike, nonHomogeneous bool) {
 	cb := gobject.GBool(nonHomogeneous)
 	defer cb.Free()
-	C.gtk_button_box_set_child_non_homogeneous(self.object, w.W().object, *((*C.gboolean)(cb.GetPtr())))
+	C._gtk_button_box_set_child_non_homogeneous(self.object, w.W().object, *((*C.gboolean)(cb.GetPtr())))
 }
