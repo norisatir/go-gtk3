@@ -84,12 +84,12 @@ func (self Grid) C() *Container {
 // Grid interface
 func (self *Grid) Attach(w WidgetLike, left, top, width, height int) {
 	C.gtk_grid_attach(self.object, w.W().object, C.gint(left), C.gint(top),
-					C.gint(width), C.gint(height))
+		C.gint(width), C.gint(height))
 }
 
 func (self *Grid) AttachNextTo(child WidgetLike, sibling WidgetLike, side, width, height int) {
 	C.gtk_grid_attach_next_to(self.object, child.W().object, sibling.W().object, C.GtkPositionType(side),
-						C.gint(width), C.gint(height))
+		C.gint(width), C.gint(height))
 }
 
 func (self *Grid) GetChildAt(left, top int) WidgetLike {
@@ -124,7 +124,7 @@ func (self *Grid) SetRowHomogeneous(homogeneous bool) {
 	C.gtk_grid_set_row_homogeneous(self.object, *((*C.gboolean)(b.GetPtr())))
 }
 
-func (self *Grid) GetRowHomogeneous() (bool) {
+func (self *Grid) GetRowHomogeneous() bool {
 	b := C.gtk_grid_get_row_homogeneous(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
@@ -133,7 +133,7 @@ func (self *Grid) SetRowSpacing(spacing uint) {
 	C.gtk_grid_set_row_spacing(self.object, C.guint(spacing))
 }
 
-func (self *Grid) GetRowSpacing() (uint) {
+func (self *Grid) GetRowSpacing() uint {
 	return uint(C.gtk_grid_get_row_spacing(self.object))
 }
 
@@ -143,7 +143,7 @@ func (self *Grid) SetColumnHomogeneous(homogeneous bool) {
 	C.gtk_grid_set_column_homogeneous(self.object, *((*C.gboolean)(b.GetPtr())))
 }
 
-func (self *Grid) GetColumnHomogeneous() (bool) {
+func (self *Grid) GetColumnHomogeneous() bool {
 	b := C.gtk_grid_get_column_homogeneous(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
@@ -152,7 +152,6 @@ func (self *Grid) SetColumnSpacing(spacing uint) {
 	C.gtk_grid_set_column_spacing(self.object, C.guint(spacing))
 }
 
-func (self *Grid) GetColumnSpacing() (uint) {
+func (self *Grid) GetColumnSpacing() uint {
 	return uint(C.gtk_grid_get_column_spacing(self.object))
 }
-

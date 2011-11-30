@@ -540,13 +540,47 @@ type gtkButtonBoxStyle struct {
 var GtkIconSize gtkIconSize
 
 type gtkIconSize struct {
-	INVALID int
-	MENU int
+	INVALID       int
+	MENU          int
 	SMALL_TOOLBAR int
 	LARGE_TOOLBAR int
-	BUTTON int
-	DND int
-	DIALOG int
+	BUTTON        int
+	DND           int
+	DIALOG        int
+}
+// End GtkIconSize
+
+// GApplicatonFlags
+var GApplicationFlags gApplicationFlags
+
+type gApplicationFlags struct {
+	FLAGS_NONE           int
+	IS_SERVICE           int
+	IS_LAUNCHER          int
+	HANDLES_OPEN         int
+	HANDLES_COMMAND_LINE int
+	SEND_ENVIRONMENT     int
+	NON_UNIQUE           int
+}
+// End GApplicationFlags
+
+// GtkJustification
+var GtkJustification gtkJustification
+
+type gtkJustification struct {
+	LEFT   int
+	RIGHT  int
+	CENTER int
+	FILL   int
+}
+// End GtkJustification
+
+// GtkWindowType
+var GtkWindowType gtkWindowType
+
+type gtkWindowType struct {
+	TOPLEVEL int
+	POPUP    int
 }
 
 func init() {
@@ -1028,4 +1062,23 @@ func init() {
 	GtkIconSize.BUTTON = 4
 	GtkIconSize.DND = 5
 	GtkIconSize.DIALOG = 6
+
+	// Initialize GApplicationFlags
+	GApplicationFlags.FLAGS_NONE = 0
+	GApplicationFlags.IS_SERVICE = 1 << 0
+	GApplicationFlags.IS_LAUNCHER = 1 << 1
+	GApplicationFlags.HANDLES_OPEN = 1 << 2
+	GApplicationFlags.HANDLES_COMMAND_LINE = 1 << 3
+	GApplicationFlags.SEND_ENVIRONMENT = 1 << 4
+	GApplicationFlags.NON_UNIQUE = 1 << 5
+
+	// Initialize GtkJustification
+	GtkJustification.LEFT = 0
+	GtkJustification.RIGHT = 1
+	GtkJustification.CENTER = 2
+	GtkJustification.FILL = 3
+
+	// Initialize GtkWindowType
+	GtkWindowType.TOPLEVEL = 0
+	GtkWindowType.POPUP = 1
 }

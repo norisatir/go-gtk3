@@ -70,7 +70,7 @@ func (self *Container) GetFocusChild() WidgetLike {
 	return nil
 }
 
-func (self *Container) GetBorderWidth() (uint) {
+func (self *Container) GetBorderWidth() uint {
 	return uint(C.gtk_container_get_border_width(self.object))
 }
 

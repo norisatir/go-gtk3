@@ -34,7 +34,6 @@ func NewVSeparator() *Separator {
 	return NewSeparator(GtkOrientation.VERTICAL)
 }
 
-
 // Conversion function for gobject registration map
 func newSeparatorFromNative(obj unsafe.Pointer) interface{} {
 	sep := &Separator{}

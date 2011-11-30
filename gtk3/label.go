@@ -10,15 +10,6 @@ import "C"
 import "unsafe"
 import "github.com/norisatir/go-gtk3/gobject"
 
-type GtkJustification int
-
-const (
-	JUSTIFY_LEFT   GtkJustification = 0
-	JUSTIFY_RIGHT  GtkJustification = 1
-	JUSTIFY_CENTER GtkJustification = 2
-	JUSTIFY_FILL   GtkJustification = 3
-)
-
 type Label struct {
 	object *C.GtkLabel
 	*Widget
@@ -126,7 +117,7 @@ func (self *Label) SetPattern(str string) {
 	C.gtk_label_set_pattern(self.object, (*C.gchar)(s.GetPtr()))
 }
 
-func (self *Label) SetJustify(jtype GtkJustification) {
+func (self *Label) SetJustify(jtype int) {
 	C.gtk_label_set_justify(self.object, C.GtkJustification(jtype))
 }
 
@@ -192,9 +183,9 @@ func (self *Label) SetTextWithMnemonic(text string) {
 
 //TODO: gtk_label_get_attributes
 
-func (self *Label) GetJustify() GtkJustification {
+func (self *Label) GetJustify() int {
 	j := C.gtk_label_get_justify(self.object)
-	return GtkJustification(j)
+	return int(j)
 }
 
 //TODO: gtk_label_get_ellipsize

@@ -4,10 +4,10 @@ import "github.com/norisatir/go-gtk3/gtk3"
 
 
 func main() {
-	app := gtk3.NewApplication("si.go-gtk3.demoapp", gtk3.G_APPLICATION_FLAGS_NONE)
+	app := gtk3.NewApplication("si.go-gtk3.demoapp", gtk3.GApplicationFlags.FLAGS_NONE)
 
 	// Create windows
-	w := gtk3.NewWindow(gtk3.GTK_WINDOW_TOPLEVEL, nil)
+	w := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL, nil)
 	// Add window to GTKApplication
 	app.AddWindow(w)
 	// Let's set a couple of window properties

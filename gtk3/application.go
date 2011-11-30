@@ -21,19 +21,6 @@ import "C"
 import "unsafe"
 import "github.com/norisatir/go-gtk3/gobject"
 
-// Application Flags
-type GApplicationFlags int
-
-const (
-	G_APPLICATION_FLAGS_NONE           = 0
-	G_APPLICATION_IS_SERVICE           = 1 << 0
-	G_APPLICATION_IS_LAUNCHER          = 1 << 1
-	G_APPLICATION_HANDLES_OPEN         = 1 << 2
-	G_APPLICATION_HANDLES_COMMAND_LINE = 1 << 3
-	G_APPLICATION_SEND_ENVIRONMENT     = 1 << 4
-	G_APPLICATION_NON_UNIQUE           = 1 << 5
-)
-
 // Convert from Native to Go type
 func appFromNative(app unsafe.Pointer) interface{} {
 	ga := C.to_GtkApplication(app)
@@ -97,7 +84,7 @@ func (self *Application) Run() {
 }
 
 // Create new application
-func NewApplication(id string, flags GApplicationFlags) *Application {
+func NewApplication(id string, flags int) *Application {
 	cid := gobject.GString(id)
 	defer cid.Free()
 	app := C.gtk_application_new((*C.gchar)(cid.GetPtr()), C.GApplicationFlags(flags))

@@ -10,14 +10,6 @@ import "C"
 import "github.com/norisatir/go-gtk3/gobject"
 import "unsafe"
 
-// GtkWindowType
-type GtkWindowType int
-
-const (
-	GTK_WINDOW_TOPLEVEL GtkWindowType = 0
-	GTK_WINDOW_POPUP    GtkWindowType = 1
-)
-
 type WindowLike interface {
 	Wnd() *Window
 }
@@ -28,7 +20,7 @@ type Window struct {
 }
 
 // Create new window
-func NewWindow(wtype GtkWindowType, properties map[string]interface{}) (w *Window) {
+func NewWindow(wtype int, properties map[string]interface{}) (w *Window) {
 	w = &Window{}
 
 	o := C.gtk_window_new(C.GtkWindowType(wtype))
