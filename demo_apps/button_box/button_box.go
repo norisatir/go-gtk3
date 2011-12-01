@@ -53,10 +53,10 @@ func DoButtonBox() *gtk3.Window {
 	frame_vert.Add(hbox)
 
 
-	vbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Spread", 30, gtk3.GtkButtonBoxStyle.SPREAD), true, true, 0)
-	vbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Edge", 30, gtk3.GtkButtonBoxStyle.EDGE), true, true, 5)
-	vbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Start", 30, gtk3.GtkButtonBoxStyle.START), true, true, 5)
-	vbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "End", 30, gtk3.GtkButtonBoxStyle.END), true, true, 5)
+	hbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Spread", 30, gtk3.GtkButtonBoxStyle.SPREAD), true, true, 0)
+	hbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Edge", 30, gtk3.GtkButtonBoxStyle.EDGE), true, true, 5)
+	hbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Start", 30, gtk3.GtkButtonBoxStyle.START), true, true, 5)
+	hbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "End", 30, gtk3.GtkButtonBoxStyle.END), true, true, 5)
 
 	return window
 }
