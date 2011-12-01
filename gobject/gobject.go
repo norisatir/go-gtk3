@@ -12,6 +12,8 @@ package gobject
 static inline GObject* to_GObject(void* o) { return G_OBJECT(o); }
 static inline void* new_GObject(GType typ) { return g_object_new(typ, NULL); }
 
+static inline const gchar* getTypeName(void * o) { return G_OBJECT_TYPE_NAME(o); }
+
 static inline GObjectClass* get_object_class(void* o) {
 	return G_OBJECT_GET_CLASS(o);
 }
@@ -20,6 +22,16 @@ static inline GType _get_type_from_instance(void* o) {
     return G_TYPE_FROM_INSTANCE(o);
 }
 
+extern void weak_ref_callback(gpointer data, GObject* object);
+
+static void _g_object_weak_ref(GObject* object) {
+	g_object_weak_ref(object, weak_ref_callback, NULL);
+}
+
+static void _g_clear_object(void* object) {
+	GObject* o = G_OBJECT(object);
+	g_clear_object(o);
+}
 
 */
 // #cgo pkg-config: gobject-2.0
@@ -27,6 +39,7 @@ import "C"
 import "unsafe"
 import "reflect"
 import "time"
+import "fmt"
 
 func GetTypeFromInstance(obj unsafe.Pointer) GType {
 	return GType(C._get_type_from_instance(obj))
@@ -53,8 +66,8 @@ func (self gobject) ToNative() unsafe.Pointer {
 	return self.object
 }
 
-func (self gobject) Connect(s string, f interface{}, datas ...interface{}) (*ClosureElement, *SignalError) {
-	return Connect(self, s, f, datas...)
+func (self gobject) Connect(name string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError) {
+	return Connect(self, name, f, data...)
 }
 
 func (self gobject) Set(properties map[string]interface{}) {
@@ -169,6 +182,11 @@ func (self SignalError) Error() string {
 func createClosure(f interface{}, data ...interface{}) ClosureFunc {
 	cfunc := reflect.ValueOf(f)
 
+	// cfunc is not function, then there is nothing to do
+	if cfunc.Kind() != reflect.Func {
+		return nil
+	}
+
 	// Test number and type of return arguments
 	// If return value is bool and is the only one, then
 	// return that value to handler.
@@ -219,4 +237,28 @@ func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) (*
 	c := createClosure(f, data...)
 	cloEl := RegisterHandler(obj, name, uid, c)
 	return cloEl, nil
+}
+
+func IsObjectFloating(obj ObjectLike) bool {
+	b := C.g_object_is_floating(C.gpointer(obj.ToNative()))
+	return GoBool(unsafe.Pointer(&b))
+}
+
+func RefSink(obj ObjectLike) {
+	C.g_object_ref_sink(C.gpointer(obj.ToNative()))
+}
+
+func ClearObject(obj ObjectLike) {
+	C._g_clear_object(obj.ToNative())
+}
+
+func WeakRef(obj ObjectLike) {
+	o := C.to_GObject(obj.ToNative())
+	C._g_object_weak_ref(o)
+}
+//export weak_ref_callback
+func weak_ref_callback(data unsafe.Pointer, obj unsafe.Pointer) {
+	tn := C.getTypeName(obj)
+	s := GoString(unsafe.Pointer(tn))
+	fmt.Println("Finalizing...",s)
 }
