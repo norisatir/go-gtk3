@@ -22,6 +22,7 @@ static const gchar* _gtk_entry_get_placeholder_text(GtkEntry* entry) {
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
 
@@ -32,33 +33,51 @@ type Entry struct {
 
 func NewEntry() *Entry {
 	e := &Entry{}
-
 	o := C.gtk_entry_new()
-
-	e.Widget = NewWidget(unsafe.Pointer(o))
 	e.object = C.to_GtkEntry(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(e) {
+		gobject.RefSink(e)
+	}
+	e.Widget = NewWidget(unsafe.Pointer(o))
+	entryFinalizer(e)
 
 	return e
 }
 
 func NewEntryWithBuffer(eb *EntryBuffer) *Entry {
 	e := &Entry{}
-
 	o := C.gtk_entry_new_with_buffer(eb.object)
-
-	e.Widget = NewWidget(unsafe.Pointer(o))
 	e.object = C.to_GtkEntry(unsafe.Pointer(o))
 
+	if gobject.IsObjectFloating(e) {
+		gobject.RefSink(e)
+	}
+	e.Widget = NewWidget(unsafe.Pointer(o))
+	entryFinalizer(e)
+
 	return e
+}
+
+// Clear Entry struct when it goes out of reach
+func entryFinalizer(e *Entry) {
+	runtime.SetFinalizer(e, func(e *Entry) { gobject.Unref(e) })
 }
 
 // Conversion function for gobject registration map
 func newEntryFromNative(obj unsafe.Pointer) interface{} {
 	e := &Entry{}
 	e.object = C.to_GtkEntry(obj)
-	e.Widget = NewWidget(obj)
 
-	return &e
+	if gobject.IsObjectFloating(e) {
+		gobject.RefSink(e)
+	} else {
+		gobject.Ref(e)
+	}
+	e.Widget = NewWidget(obj)
+	entryFinalizer(e)
+
+	return e
 }
 
 func nativeFromEntry(entry interface{}) *gobject.GValue {
@@ -74,6 +93,23 @@ func init() {
 	// Register GtkEntry to gobject
 	gobject.RegisterCType(GtkType.ENTRY, newEntryFromNative)
 	gobject.RegisterGoType(GtkType.ENTRY, nativeFromEntry)
+}
+
+// To be Object-like
+func (self Entry) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Entry) Connect(name string ,f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Entry) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Entry) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
 }
 
 // To be widget-like

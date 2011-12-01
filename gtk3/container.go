@@ -9,15 +9,9 @@ static GtkContainer* to_GtkContainer(void *obj) { return GTK_CONTAINER(obj); }
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
-// New Container from widget
-func NewContainer(o unsafe.Pointer) *Container {
-	con := Container{}
-	con.Widget = NewWidget(o)
-	con.object = C.to_GtkContainer(o)
-	return &con
-}
 // Container-like interface must have method Container
 type ContainerLike interface {
 	C() *Container
@@ -30,13 +24,35 @@ type Container struct {
 	*Widget
 }
 
-// To-be objectlike
+// New Container from widget
+func NewContainer(o unsafe.Pointer) *Container {
+	con := &Container{}
+	con.object = C.to_GtkContainer(o)
+
+	if gobject.IsObjectFloating(con) {
+		gobject.RefSink(con)
+	} else {
+		gobject.Ref(con)
+	}
+	con.Widget = NewWidget(o)
+	containerFinalizer(con)
+
+	return con
+}
+
+// Finelizer for Container struct
+func containerFinalizer(c *Container) {
+	runtime.SetFinalizer(c, func(c *Container) { gobject.Unref(c) })
+}
+
+
+// To be Object-like
 func (self Container) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Container) Connect(s string, f interface{}, datas ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, s, f, datas...)
+func (self Container) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self Container) Set(properties map[string]interface{}) {

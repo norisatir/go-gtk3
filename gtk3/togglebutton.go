@@ -10,6 +10,7 @@ static inline GtkToggleButton* to_GtkToggleButton(void* obj) {
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type ToggleButton struct {
@@ -20,11 +21,14 @@ type ToggleButton struct {
 // Create and return new toggle button
 func NewToggleButton() *ToggleButton {
 	b := &ToggleButton{}
-
 	o := C.gtk_toggle_button_new()
-
-	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
 	b.object = C.to_GtkToggleButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
+	toggleButtonFinalizer(b)
 
 	return b
 }
@@ -35,23 +39,40 @@ func NewToggleButtonWithLabel(label string) *ToggleButton {
 	defer l.Free()
 
 	o := C.gtk_toggle_button_new_with_label((*C.gchar)(l.GetPtr()))
-
-	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
 	b.object = C.to_GtkToggleButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
+	toggleButtonFinalizer(b)
+
 	return b
+}
+
+// Clear ToggleButton when it goes out of reach
+func toggleButtonFinalizer(b *ToggleButton) {
+	runtime.SetFinalizer(b, func(b *ToggleButton) { gobject.Unref(b) })
 }
 
 // Conversion function for gobject registration map
 func newToggleButtonFromNative(obj unsafe.Pointer) interface{} {
-	var tbutton ToggleButton
-	tbutton.object = C.to_GtkToggleButton(obj)
-	tbutton.Button = newButtonFromNative(obj).(*Button)
+	b := &ToggleButton{}
+	b.object = C.to_GtkToggleButton(obj)
 
-	return &tbutton
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	} else {
+		gobject.Ref(b)
+	}
+	b.Button = newButtonFromNative(obj).(*Button)
+	toggleButtonFinalizer(b)
+
+	return b
 }
 
 func nativeFromToggleButton(b interface{}) *gobject.GValue {
-	if but, ok := b.(ToggleButton); ok {
+	if but, ok := b.(*ToggleButton); ok {
 		gv := gobject.CreateCGValue(GtkType.TOGGLE_BUTTON, but.ToNative())
 		return gv
 	}

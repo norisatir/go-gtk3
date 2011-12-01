@@ -5,13 +5,12 @@ package gtk3
 
 static inline GtkMessageDialog* to_GtkMessageDialog(void* obj) { return GTK_MESSAGE_DIALOG(obj); }
 
-static inline GtkMessageDialog* _new_message_dialog(GtkWindow* parent,
+static inline GtkWidget* _new_message_dialog(GtkWindow* parent,
 													GtkDialogFlags flags,
 													GtkMessageType typ,
 													GtkButtonsType buttons,
 													const gchar* message) {
-	GtkWidget* w = gtk_message_dialog_new(parent, flags, typ, buttons, message, NULL);
-	return to_GtkMessageDialog((void*)w);
+	return gtk_message_dialog_new(parent, flags, typ, buttons, message, NULL);
 }
 
 static inline void _gtk_message_dialog_format_secondary_text(GtkMessageDialog* md, const gchar* message) {
@@ -24,6 +23,7 @@ static inline void _gtk_message_dialog_format_secondary_markup(GtkMessageDialog*
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 import "fmt"
 
@@ -51,23 +51,40 @@ func NewMessageDialog(parent *Window, flags int, mtype int, buttons int, message
 		pwin = parent.object
 	}
 
-	mdiag.object = C._new_message_dialog(pwin, C.GtkDialogFlags(flags), C.GtkMessageType(mtype), C.GtkButtonsType(buttons),
+	o := C._new_message_dialog(pwin, C.GtkDialogFlags(flags), C.GtkMessageType(mtype), C.GtkButtonsType(buttons),
 		(*C.gchar)(cmessage.GetPtr()))
-	mdiag.Dialog = newDialogFromNative(unsafe.Pointer(mdiag.object)).(*Dialog)
+	mdiag.object = C.to_GtkMessageDialog(unsafe.Pointer(o))
+	if gobject.IsObjectFloating(mdiag) {
+		gobject.RefSink(mdiag)
+	}
+	mdiag.Dialog = newDialogFromNative(unsafe.Pointer(o)).(*Dialog)
+	messageDialogFinalizer(mdiag)
 
 	return mdiag
 }
 
+// Clear MessageDialog struct when it goes out of reach
+func messageDialogFinalizer(d *MessageDialog) {
+	runtime.SetFinalizer(d, func(d *MessageDialog) { gobject.Unref(d) })
+}
+
 // Conversion function for gobject registration map
 func newMessageDialogFromNative(obj unsafe.Pointer) interface{} {
-	var dialog MessageDialog
-	dialog.object = C.to_GtkMessageDialog(obj)
-	dialog.Dialog = newDialogFromNative(obj).(*Dialog)
-	return &dialog
+	d := &MessageDialog{}
+	d.object = C.to_GtkMessageDialog(obj)
+
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
+	} else {
+		gobject.Ref(d)
+	}
+	d.Dialog = newDialogFromNative(obj).(*Dialog)
+	messageDialogFinalizer(d)
+	return d
 }
 
 func nativeFromMessageDialog(d interface{}) *gobject.GValue {
-	dialog, ok := d.(MessageDialog)
+	dialog, ok := d.(*MessageDialog)
 	if ok {
 		gv := gobject.CreateCGValue(GtkType.MESSAGE_DIALOG, dialog.ToNative())
 		return gv

@@ -23,6 +23,7 @@ static gboolean _gtk_button_box_get_child_non_homogeneous(GtkButtonBox *widget, 
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type ButtonBox struct {
@@ -32,21 +33,35 @@ type ButtonBox struct {
 
 func NewButtonBox(orientation int) *ButtonBox {
 	bb := &ButtonBox{}
-
 	o := C.gtk_button_box_new(C.GtkOrientation(orientation))
-
-	bb.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
 	bb.object = C.to_GtkButtonBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(bb) {
+		gobject.RefSink(bb)
+	}
+	bb.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
+	buttonBoxFinalizer(bb)
 
 	return bb
 }
 
+// Clear ButtonBox structure when it goes out of reach
+func buttonBoxFinalizer(bb *ButtonBox) {
+	runtime.SetFinalizer(bb, func(bb *ButtonBox) { gobject.Unref(bb) })
+}
+
 // Conversion function for gobject registration map
 func newButtonBoxFromNative(obj unsafe.Pointer) interface{} {
-	bbox := ButtonBox{}
-	bbox.object = C.to_GtkButtonBox(obj)
-	bbox.Box = newBoxFromNative(obj).(*Box)
-	return &bbox
+	bb := &ButtonBox{}
+	bb.object = C.to_GtkButtonBox(obj)
+
+	if gobject.IsObjectFloating(bb) {
+		gobject.RefSink(bb)
+	}
+	bb.Box = newBoxFromNative(obj).(*Box)
+	buttonBoxFinalizer(bb)
+	
+	return bb
 }
 
 func nativeFromButtonBox(b interface{}) *gobject.GValue {

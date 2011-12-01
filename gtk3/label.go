@@ -8,6 +8,7 @@ static inline GtkLabel* to_GtkLabel(void* obj) { return GTK_LABEL(obj); }
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type Label struct {
@@ -22,9 +23,13 @@ func NewLabel(str string) *Label {
 	defer s.Free()
 
 	o := C.gtk_label_new((*C.gchar)(s.GetPtr()))
-
-	l.Widget = NewWidget(unsafe.Pointer(o))
 	l.object = C.to_GtkLabel(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(l) {
+		gobject.RefSink(l)
+	}
+	l.Widget = NewWidget(unsafe.Pointer(o))
+	labelFinalizer(l)
 
 	return l
 }
@@ -36,22 +41,40 @@ func NewLabelWithMnemonic(str string) *Label {
 	defer s.Free()
 
 	o := C.gtk_label_new_with_mnemonic((*C.gchar)(s.GetPtr()))
-
-	l.Widget = NewWidget(unsafe.Pointer(o))
 	l.object = C.to_GtkLabel(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(l) {
+		gobject.RefSink(l)
+	}
+	l.Widget = NewWidget(unsafe.Pointer(o))
+	labelFinalizer(l)
 
 	return l
 }
+
+// Clear label struct when it goes out of reach
+func labelFinalizer(l *Label) {
+	runtime.SetFinalizer(l, func(l *Label) { gobject.Unref(l) })
+}
+
 // Conversion function for gobject registration map
 func newLabelFromNative(obj unsafe.Pointer) interface{} {
-	var l Label
+	l := &Label{}
 	l.object = C.to_GtkLabel(obj)
+
+	if gobject.IsObjectFloating(l) {
+		gobject.RefSink(l)
+	} else {
+		gobject.Ref(l)
+	}
 	l.Widget = NewWidget(unsafe.Pointer(l.object))
-	return &l
+	labelFinalizer(l)
+
+	return l
 }
 
 func nativeFromLabel(label interface{}) *gobject.GValue {
-	l, ok := label.(Label)
+	l, ok := label.(*Label)
 	if ok {
 		gv := gobject.CreateCGValue(GtkType.LABEL, l.ToNative())
 		return gv

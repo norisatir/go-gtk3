@@ -8,6 +8,7 @@ static inline GtkFrame* to_GtkFrame(void* obj) { return GTK_FRAME(obj); }
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type Frame struct {
@@ -22,23 +23,40 @@ func NewFrame(label string) *Frame {
 	defer s.Free()
 
 	o := C.gtk_frame_new((*C.gchar)(s.GetPtr()))
-
-	f.Container = NewContainer(unsafe.Pointer(o))
 	f.object = C.to_GtkFrame(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(f) {
+		gobject.RefSink(f)
+	}
+	f.Container = NewContainer(unsafe.Pointer(o))
+	frameFinalizer(f)
 
 	return f
 }
 
+// Clear Frame struct when it goes out of reach
+func frameFinalizer(f *Frame) {
+	runtime.SetFinalizer(f, func(f *Frame) { gobject.Unref(f) })
+}
+
 // Conversion function for gobject registration map
 func newFrameFromNative(obj unsafe.Pointer) interface{} {
-	f := Frame{}
+	f := &Frame{}
 	f.object = C.to_GtkFrame(obj)
+
+	if gobject.IsObjectFloating(f) {
+		gobject.RefSink(f)
+	} else {
+		gobject.Ref(f)
+	}
 	f.Container = NewContainer(unsafe.Pointer(f.object))
-	return &f
+	frameFinalizer(f)
+
+	return f
 }
 
 func nativeFromFrame(frame interface{}) *gobject.GValue {
-	f, ok := frame.(Frame)
+	f, ok := frame.(*Frame)
 	if ok {
 		gv := gobject.CreateCGValue(GtkType.FRAME, f.ToNative())
 		return gv

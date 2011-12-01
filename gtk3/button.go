@@ -10,6 +10,7 @@ static GtkButton* to_GtkButton(void* obj) {
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type ButtonLike interface {
@@ -24,21 +25,32 @@ type Button struct {
 //Create and return new button Structure
 func NewButton() *Button {
 	b := &Button{}
-
 	o := C.gtk_button_new()
-
-	b.Container = NewContainer(unsafe.Pointer(o))
-
 	b.object = C.to_GtkButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Container = NewContainer(unsafe.Pointer(o))
+	buttonFinalizer(b)
+
 	return b
 }
 
 func NewButtonWithLabel(label string) *Button {
 	b := &Button{}
 	l := gobject.GString(label)
+	defer l.Free()
+
 	o := C.gtk_button_new_with_label((*C.gchar)(l.GetPtr()))
-	b.Container = NewContainer(unsafe.Pointer(o))
 	b.object = C.to_GtkButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Container = NewContainer(unsafe.Pointer(o))
+	buttonFinalizer(b)
+
 	return b
 }
 
@@ -51,22 +63,42 @@ func NewButtonFromStock(stockId string) *Button {
 func NewButtonWithMnemonic(label string) *Button {
 	b := &Button{}
 	l := gobject.GString(label)
+	defer l.Free()
 	o := C.gtk_button_new_with_mnemonic((*C.gchar)(l.GetPtr()))
-	b.Container = NewContainer(unsafe.Pointer(o))
 	b.object = C.to_GtkButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Container = NewContainer(unsafe.Pointer(o))
+	buttonFinalizer(b)
+
 	return b
+}
+
+// Unref button, when Button structer goes out of reach
+func buttonFinalizer(b *Button) {
+	runtime.SetFinalizer(b, func(b *Button) { gobject.Unref(b) })
 }
 
 // Conversion function for gobject registration map
 func newButtonFromNative(obj unsafe.Pointer) interface{} {
-	var button Button
-	button.object = C.to_GtkButton(obj)
-	button.Container = NewContainer(unsafe.Pointer(obj))
-	return &button
+	b := &Button{}
+	b.object = C.to_GtkButton(obj)
+	
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	} else {
+		gobject.Ref(b)
+	}
+	b.Container = NewContainer(obj)
+	buttonFinalizer(b)
+
+	return b
 }
 
 func nativeFromButton(b interface{}) *gobject.GValue {
-	if but, ok := b.(Button); ok {
+	if but, ok := b.(*Button); ok {
 		gv := gobject.CreateCGValue(GtkType.BUTTON, but.ToNative())
 		return gv
 	}
@@ -84,8 +116,8 @@ func (self Button) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Button) Connect(s string, f interface{}, datas ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, s, f, datas...)
+func (self Button) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self Button) Set(properties map[string]interface{}) {
@@ -104,7 +136,7 @@ func (self Button) C() *Container {
 // Button interface
 func (self *Button) SetLabel(label string) {
 	s := gobject.GString(label)
-	//defer s.Free()
+	defer s.Free()
 	C.gtk_button_set_label(self.object, (*C.gchar)(s.GetPtr()))
 }
 

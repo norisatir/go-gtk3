@@ -9,6 +9,7 @@ static GtkWidget* to_GtkWidget(void* obj) { return GTK_WIDGET(obj); }
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
 
@@ -33,13 +34,27 @@ type WidgetLike interface {
 	gobject.ObjectLike
 }
 
-func NewWidget(o unsafe.Pointer) *Widget {
-	return &Widget{C.to_GtkWidget(o)}
-}
-
 // Widget Type
 type Widget struct {
 	object *C.GtkWidget
+}
+
+func NewWidget(o unsafe.Pointer) *Widget {
+	w := &Widget{C.to_GtkWidget(o)}
+
+	if gobject.IsObjectFloating(w) {
+		gobject.RefSink(w)
+	} else {
+		gobject.Ref(w)
+	}
+	widgetFinalizer(w)
+
+	return w
+}
+
+// Clear Widget struct when it goes out of reach
+func widgetFinalizer(w *Widget) {
+	runtime.SetFinalizer(w, func(w *Widget) { gobject.Unref(w) })
 }
 
 // To be object-like
@@ -47,8 +62,8 @@ func (self Widget) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Widget) Connect(s string, f interface{}, datas ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, s, f, datas...)
+func (self Widget) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self Widget) Set(properties map[string]interface{}) {
@@ -74,6 +89,7 @@ func (self *Widget) ShowAll() {
 
 func (self *Widget) Destroy() {
 	C.gtk_widget_destroy(self.object)
+	runtime.SetFinalizer(self, nil)
 }
 
 func (self *Widget) InDestruction() bool {

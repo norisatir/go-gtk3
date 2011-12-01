@@ -8,6 +8,7 @@ static inline GtkBox* to_GtkBox(void* obj) { return GTK_BOX(obj); }
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type BoxLike interface {
@@ -21,11 +22,14 @@ type Box struct {
 
 func NewBox(orientation int, spacing int) *Box {
 	box := &Box{}
-
 	o := C.gtk_box_new(C.GtkOrientation(orientation), C.gint(spacing))
-
-	box.Container = NewContainer(unsafe.Pointer(o))
 	box.object = C.to_GtkBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(box) {
+		gobject.RefSink(box)
+	}
+	box.Container = NewContainer(unsafe.Pointer(o))
+	boxFinalizer(box)
 
 	return box
 }
@@ -38,16 +42,28 @@ func NewVBox(spacing int) *Box {
 	return NewBox(GtkOrientation.VERTICAL, spacing)
 }
 
+// Clear Box struct when it goes out of reach
+func boxFinalizer(box *Box) {
+	runtime.SetFinalizer(box, func(box *Box) { gobject.Unref(box) })
+}
 // Conversion function for gobject registration map
 func newBoxFromNative(obj unsafe.Pointer) interface{} {
-	box := Box{}
+	box := &Box{}
 	box.object = C.to_GtkBox(obj)
-	box.Container = NewContainer(unsafe.Pointer(box.object))
-	return &box
+
+	if gobject.IsObjectFloating(box) {
+		gobject.RefSink(box)
+	} else {
+		gobject.Ref(box)
+	}
+	box.Container = NewContainer(obj)
+	boxFinalizer(box)
+
+	return box
 }
 
 func nativeFromBox(b interface{}) *gobject.GValue {
-	box, ok := b.(Box)
+	box, ok := b.(*Box)
 	if ok {
 		gv := gobject.CreateCGValue(GtkType.BOX, box.ToNative())
 		return gv

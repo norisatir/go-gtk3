@@ -19,6 +19,7 @@ static inline GtkDialog* _dialog_new_with_buttons(const gchar* title,
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type DialogLike interface {
@@ -33,10 +34,14 @@ type Dialog struct {
 func NewDialog() *Dialog {
 	d := &Dialog{}
 	o := C.gtk_dialog_new()
-
-	w := newWindowFromNative(unsafe.Pointer(o))
-	d.Window = w.(*Window)
 	d.object = C.to_GtkDialog(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
+	}
+	d.Window = newWindowFromNative(unsafe.Pointer(o)).(*Window)
+	dialogFinalizer(d)
+
 	return d
 }
 
@@ -46,7 +51,6 @@ func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *
 		return nil
 	}
 
-	d := &Dialog{}
 	t := gobject.GString(title)
 	defer t.Free()
 
@@ -55,32 +59,50 @@ func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *
 	defer fb.Free()
 
 	firstId := butAndID[0].Response
+
 	var wparent *C.GtkWindow = nil
 	if parent != nil {
 		wparent = parent.object
 	}
 
+	d := &Dialog{}
 	o := C._dialog_new_with_buttons((*C.gchar)(t.GetPtr()), wparent, C.GtkDialogFlags(flags),
 		(*C.gchar)(fb.GetPtr()), C.gint(firstId))
+	d.object = C.to_GtkDialog(unsafe.Pointer(o))
 
-	w := newWindowFromNative(unsafe.Pointer(o))
-	d.Window = w.(*Window)
-	d.object = o
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
+	}
+	d.Window = newWindowFromNative(unsafe.Pointer(o)).(*Window)
+	dialogFinalizer(d)
 	d.AddButtons(butAndID[1:])
+
 	return d
+}
+
+// Clear Dialog struct when it goes out of reach
+func dialogFinalizer(d *Dialog) {
+	runtime.SetFinalizer(d, func(d *Dialog) { gobject.Unref(d) })
 }
 
 // Conversion function for gobject registration map
 func newDialogFromNative(obj unsafe.Pointer) interface{} {
-	var dialog Dialog
-	dialog.object = C.to_GtkDialog(obj)
-	w := newWindowFromNative(obj)
-	dialog.Window = w.(*Window)
-	return &dialog
+	d := &Dialog{}
+	d.object = C.to_GtkDialog(obj)
+
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
+	} else {
+		gobject.Ref(d)
+	}
+	d.Window = newWindowFromNative(obj).(*Window)
+	dialogFinalizer(d)
+
+	return d
 }
 
 func nativeFromDialog(d interface{}) *gobject.GValue {
-	dialog, ok := d.(Dialog)
+	dialog, ok := d.(*Dialog)
 	if ok {
 		gv := gobject.CreateCGValue(GtkType.DIALOG, dialog.ToNative())
 		return gv

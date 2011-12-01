@@ -8,6 +8,7 @@ static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BU
 */
 import "C"
 import "unsafe"
+import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type EntryBuffer struct {
@@ -15,24 +16,40 @@ type EntryBuffer struct {
 }
 
 func NewEntryBuffer(initial_chars string) *EntryBuffer {
-	e := EntryBuffer{}
+	e := &EntryBuffer{}
 
 	s := gobject.GString(initial_chars)
 	defer s.Free()
 
 	o := C.gtk_entry_buffer_new((*C.gchar)(s.GetPtr()), C.gint(len(initial_chars)))
-
 	e.object = C.to_GtkEntryBuffer(unsafe.Pointer(o))
 
-	return &e
+	if gobject.IsObjectFloating(e) {
+		gobject.RefSink(e)
+	}
+	entryBufferFinalizer(e)
+
+	return e
+
+}
+
+// Clear EntryBuffer struct when it goes out of reach
+func entryBufferFinalizer(e *EntryBuffer) {
+	runtime.SetFinalizer(e, func(e *EntryBuffer) { gobject.Unref(e) })
 }
 
 // Conversion function for gobject registration map
 func newEntryBufferFromNative(obj unsafe.Pointer) interface{} {
-	var e EntryBuffer
+	e := &EntryBuffer{}
 	e.object = C.to_GtkEntryBuffer(obj)
 
-	return &e
+	if gobject.IsObjectFloating(e) {
+		gobject.RefSink(e)
+	} else {
+		gobject.Ref(e)
+	}
+
+	return e
 }
 
 func nativeFromEntryBuffer(eb interface{}) *gobject.GValue {

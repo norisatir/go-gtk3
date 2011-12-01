@@ -7,8 +7,9 @@ static GtkWindow* to_GtkWindow(void* obj) { return GTK_WINDOW(obj); }
 
 */
 import "C"
-import "github.com/norisatir/go-gtk3/gobject"
 import "unsafe"
+import "runtime"
+import "github.com/norisatir/go-gtk3/gobject"
 
 type WindowLike interface {
 	Wnd() *Window
@@ -20,27 +21,43 @@ type Window struct {
 }
 
 // Create new window
-func NewWindow(wtype int, properties map[string]interface{}) (w *Window) {
+func NewWindow(windowType int) (w *Window) {
 	w = &Window{}
-
-	o := C.gtk_window_new(C.GtkWindowType(wtype))
-
-	w.Container = NewContainer(unsafe.Pointer(o))
-
+	o := C.gtk_window_new(C.GtkWindowType(windowType))
 	w.object = C.to_GtkWindow(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(w) {
+		gobject.RefSink(w)
+	}
+	w.Container = NewContainer(unsafe.Pointer(o))
+	windowFinalizer(w)
+
 	return w
+}
+
+// Clear Window struct when it goes out of reach
+func windowFinalizer(w *Window) {
+	runtime.SetFinalizer(w, func(w *Window) { gobject.Unref(w) })
 }
 
 // Conversion function for gobject registration map
 func newWindowFromNative(obj unsafe.Pointer) interface{} {
-	var window Window
-	window.object = C.to_GtkWindow(obj)
-	window.Container = NewContainer(unsafe.Pointer(window.object))
-	return &window
+	w := &Window{}
+	w.object = C.to_GtkWindow(obj)
+
+	if gobject.IsObjectFloating(w) {
+		gobject.RefSink(w)
+	} else {
+		gobject.Ref(w)
+	}
+	w.Container = NewContainer(obj)
+	windowFinalizer(w)
+
+	return w
 }
 
 func nativeFromWindow(w interface{}) *gobject.GValue {
-	win, ok := w.(Window)
+	win, ok := w.(*Window)
 	if ok {
 		gv := gobject.CreateCGValue(GtkType.WINDOW, win.ToNative())
 		return gv
@@ -59,8 +76,8 @@ func (self Window) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Window) Connect(s string, f interface{}, datas ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, s, f, datas...)
+func (self Window) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self Window) Set(properties map[string]interface{}) {
