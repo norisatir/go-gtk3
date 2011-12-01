@@ -1,7 +1,6 @@
 package main
 
 import "github.com/norisatir/go-gtk3/gtk3"
-import "github.com/norisatir/go-gtk3/gobject"
 
 func DoEntryBuffer() *gtk3.Dialog {
 	dialog := gtk3.NewDialogWithButtons("GtkEntryBuffer",
@@ -32,8 +31,6 @@ func DoEntryBuffer() *gtk3.Dialog {
 	vbox.PackStart(entry, false, false, 0)
 
 	dialog.ShowAll()
-
-	gobject.Unref(buffer)
 
 	return dialog
 }

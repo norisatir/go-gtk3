@@ -26,7 +26,7 @@ func CreateBBox(orientation int, title string, spacing int, layout int) *gtk3.Fr
 
 
 func DoButtonBox() *gtk3.Window {
-	window := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL, nil)
+	window := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL)
 	window.SetTitle("Button Boxes")
 	window.Connect("destroy", gtk3.MainQuit)
 

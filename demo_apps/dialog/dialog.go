@@ -6,7 +6,7 @@ import "github.com/norisatir/go-gtk3/gtk3"
 func main() {
 	gtk3.Init()
 
-	window := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL, nil)
+	window := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL)
 	window.SetTitle("Dialogs")
 	window.Connect("destroy", gtk3.MainQuit)
 	window.SetBorderWidth(8)

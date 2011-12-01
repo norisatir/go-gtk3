@@ -8,7 +8,7 @@ func main() {
 	gtk3.Init()
 
 	// Create windows
-	w := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL, nil)
+	w := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL)
 	w.Connect("destroy", gtk3.MainQuit)
 	// Let's set a couple of window properties
 	w.Set(gtk3.P{"title": "Go-GTK3 Demo", "resizable":true})
