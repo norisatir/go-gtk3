@@ -260,5 +260,5 @@ func WeakRef(obj ObjectLike) {
 func weak_ref_callback(data unsafe.Pointer, obj unsafe.Pointer) {
 	tn := C.getTypeName(obj)
 	s := GoString(unsafe.Pointer(tn))
-	fmt.Println("Finalizing...",s)
+	fmt.Println("Finalizing...", s)
 }

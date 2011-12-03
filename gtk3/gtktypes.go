@@ -318,16 +318,14 @@ type gtkTypes struct {
 }
 
 // GtkShadowType
-type GtkShadowType int
-
 var GtkShadow gtkShadow
 
 type gtkShadow struct {
-	NONE       GtkShadowType
-	IN         GtkShadowType
-	OUT        GtkShadowType
-	ETCHED_IN  GtkShadowType
-	ETCHED_OUT GtkShadowType
+	NONE       int
+	IN         int
+	OUT        int
+	ETCHED_IN  int
+	ETCHED_OUT int
 }
 // End GtkShadow
 
@@ -581,6 +579,37 @@ var GtkWindowType gtkWindowType
 type gtkWindowType struct {
 	TOPLEVEL int
 	POPUP    int
+}
+// End GtkWindowType
+
+// GtkSensitivityType
+var GtkSensitivity gtkSensitivity
+
+type gtkSensitivity struct {
+	AUTO int
+	ON   int
+	OFF  int
+}
+// End GtkSensitivity
+
+// GtkPolicyType
+var GtkPolicy gtkPolicy
+
+type gtkPolicy struct {
+	ALWAYS    int
+	AUTOMATIC int
+	NEVER     int
+}
+// End GtkPolicyType
+
+// GtkCornerType
+var GtkCorner gtkCorner
+
+type gtkCorner struct {
+	TOP_LEFT     int
+	BOTTOM_LEFT  int
+	TOP_RIGHT    int
+	BOTTOM_RIGHT int
 }
 
 func init() {
@@ -888,11 +917,11 @@ func init() {
 	GtkType.WIDGET_HELP_TYPE = g.GType(C.gtk_widget_help_type_get_type())
 
 	// Initialize GtkShadowType
-	GtkShadow.NONE = GtkShadowType(0)
-	GtkShadow.IN = GtkShadowType(1)
-	GtkShadow.OUT = GtkShadowType(2)
-	GtkShadow.ETCHED_IN = GtkShadowType(3)
-	GtkShadow.ETCHED_OUT = GtkShadowType(4)
+	GtkShadow.NONE = 0
+	GtkShadow.IN = 1
+	GtkShadow.OUT = 2
+	GtkShadow.ETCHED_IN = 3
+	GtkShadow.ETCHED_OUT = 4
 
 	// Initialize GtkStock
 	GtkStock.ABOUT = "gtk-about"
@@ -1081,4 +1110,20 @@ func init() {
 	// Initialize GtkWindowType
 	GtkWindowType.TOPLEVEL = 0
 	GtkWindowType.POPUP = 1
+
+	// Initialize GtkSensitivity
+	GtkSensitivity.AUTO = 0
+	GtkSensitivity.ON = 1
+	GtkSensitivity.OFF = 2
+
+	// Initialize GtkPolicy
+	GtkPolicy.ALWAYS = 0
+	GtkPolicy.AUTOMATIC = 1
+	GtkPolicy.NEVER = 2
+
+	// Initialize GtkCorner
+	GtkCorner.TOP_LEFT = 0
+	GtkCorner.BOTTOM_LEFT = 1
+	GtkCorner.TOP_RIGHT = 2
+	GtkCorner.BOTTOM_RIGHT = 3
 }
