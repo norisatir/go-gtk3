@@ -1324,13 +1324,13 @@ func gridFinalizer(g *Grid) {
 func newGridFromNative(obj unsafe.Pointer) interface{} {
 	grid := &Grid{}
 	grid.object = C.to_GtkGrid(obj)
-	grid.Container = NewContainer(obj)
 
 	if gobject.IsObjectFloating(grid) {
 		gobject.RefSink(grid)
 	} else {
 		gobject.Ref(grid)
 	}
+	grid.Container = NewContainer(obj)
 	gridFinalizer(grid)
 
 	return grid
