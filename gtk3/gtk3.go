@@ -134,6 +134,12 @@ static inline void _gtk_message_dialog_format_secondary_markup(GtkMessageDialog*
 }
 // End GtkMessageDialog funcs }}}
 
+// GtkTreePath funcs {{{
+static inline gint _gtk_tree_path_get_indice(gint* indices, int index) {
+	return *(indices + index);
+}
+//End GtkTreePath func }}}
+
 */
 // #cgo pkg-config: gtk+-3.0
 import "C"
@@ -3546,6 +3552,130 @@ func (self *ScrolledWindow) SetMinContentHeight(height int) {
 //////////////////////////////
 // END GtkScrolledWindow
 ////////////////////////////// }}}
+
+// GtkTreePath {{{
+//////////////////////////////
+
+// GtkTreePath type
+type TreePath struct {
+	object *C.GtkTreePath
+}
+
+func NewTreePath() *TreePath {
+	tp := &TreePath{}
+	tp.object = C.gtk_tree_path_new()
+	treePathFinalizer(tp)
+
+	return tp
+}
+
+func NewTreePathFromString(path string) *TreePath {
+	tp := &TreePath{}
+
+	s := gobject.GString(path)
+	defer s.Free()
+
+	tp.object = C.gtk_tree_path_new_from_string((*C.gchar)(s.GetPtr()))
+	treePathFinalizer(tp)
+
+	return tp
+}
+
+func NewTreePathFirst() *TreePath {
+	tp := &TreePath{}
+	tp.object = C.gtk_tree_path_new_first()
+	treePathFinalizer(tp)
+
+	return tp
+}
+
+//TODO: NewTreePathFromIndices
+
+
+// Clear TreePath struct when it goes out of scope
+func treePathFinalizer(tp *TreePath) {
+	runtime.SetFinalizer(tp, func(tp *TreePath) { tp.free() })
+}
+
+// TreePath Interface
+func (self *TreePath) free() {
+	C.gtk_tree_path_free(self.object)
+}
+
+func (self *TreePath) ToString() string {
+	s := C.gtk_tree_path_to_string(self.object)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *TreePath) AppendIndex(index int) {
+	C.gtk_tree_path_append_index(self.object, C.gint(index))
+}
+
+func (self *TreePath) PrependIndex(index int) {
+	C.gtk_tree_path_prepend_index(self.object, C.gint(index))
+}
+
+func (self *TreePath) GetDepth() int {
+	return int(C.gtk_tree_path_get_depth(self.object))
+}
+
+func (self *TreePath) GetIndices() []int {
+	cind := C.gtk_tree_path_get_indices(self.object)
+	depth := self.GetDepth()
+	gind := make([]int, depth)
+
+	for i := 0; i < depth; i++ {
+		indice := int(C._gtk_tree_path_get_indice(cind, C.int(i)))
+		gind[i] = indice
+	}
+
+	return gind
+}
+
+func (self *TreePath) Copy() *TreePath {
+	tp := &TreePath{}
+	tp.object = C.gtk_tree_path_copy(self.object)
+	treePathFinalizer(tp)
+
+	return tp
+}
+
+func (self *TreePath) Compare(tp *TreePath) int {
+	return int(C.gtk_tree_path_compare(self.object, tp.object))
+}
+
+func (self *TreePath) Next() {
+	C.gtk_tree_path_next(self.object)
+}
+
+func (self *TreePath) Prev() bool {
+	b := C.gtk_tree_path_prev(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreePath) Up() bool {
+	b := C.gtk_tree_path_up(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreePath) Down() {
+	C.gtk_tree_path_down(self.object)
+}
+
+func (self *TreePath) IsAncestor(descendant *TreePath) bool {
+	b := C.gtk_tree_path_is_ancestor(self.object, descendant.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreePath) IsDescendant(ancestor *TreePath) bool {
+	b := C.gtk_tree_path_is_descendant(self.object, ancestor.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+//////////////////////////////
+// END GtkTreePath
+////////////////////////////// }}}
+
+
 
 // GTK3 MODULE init function {{{
 func init() {
