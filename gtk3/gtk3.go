@@ -32,6 +32,7 @@ static inline GtkRange* to_GtkRange(void* obj) { return GTK_RANGE(obj); }
 static inline GtkScrollbar* to_GtkScrollbar(void* obj) { return GTK_SCROLLBAR(obj); }
 static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SCROLLED_WINDOW(obj); }
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
+static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -141,6 +142,21 @@ static inline gint _gtk_tree_path_get_indice(gint* indices, int index) {
 }
 //End GtkTreePath func }}}
 
+// Gtk*Store funcs {{{
+static inline GType* gtype_array_new(int n) {
+	return g_new0(GType, n);
+}
+
+static inline void gtype_array_free(GType* types) {
+	g_free(types);
+}
+
+static inline void gtype_array_set_element(GType* types, int n, GType type) {
+	types[n] = type;
+}
+
+//End Gtk*Store func }}}
+
 */
 // #cgo pkg-config: gtk+-3.0
 import "C"
@@ -167,12 +183,15 @@ func MainQuit() {
 // Convinient map for properties
 type P map[string]interface{}
 
-// Convinient map for buttons and id's
+// Convinient struct and map for buttons and id's (See Dialog)
 type ButID struct {
 	Text     string
 	Response int
 }
 type B []ButID
+
+// Convinient map for Columns and values (See ListStore)
+type V map[int]interface{}
 
 ////////////////////////////// }}}
 
@@ -3855,6 +3874,173 @@ func (self *TreeModel) GetStringFromIter(iter *TreeIter) string {
 // END GtkTreeModel
 ////////////////////////////// }}}
 
+// GtkListStore {{{
+//////////////////////////////
+
+// GtkListStore type
+type ListStore struct {
+	object *C.GtkListStore
+	*TreeModel
+}
+
+func NewListStore(gtypeSlice []gobject.GType) *ListStore {
+	count := len(gtypeSlice)
+	if count == 0 {
+		return nil
+	}
+
+	arr := C.gtype_array_new(C.int(count))
+	defer C.gtype_array_free(arr)
+
+	for i,gtype := range gtypeSlice {
+		C.gtype_array_set_element(arr, C.int(i), C.GType(gtype))
+	}
+
+	ls := &ListStore{}
+	ls.object = C.gtk_list_store_newv(C.gint(count), arr)
+
+	if gobject.IsObjectFloating(ls) {
+		gobject.RefSink(ls)
+	}
+	ls.TreeModel = NewTreeModel(unsafe.Pointer(ls.object))
+	listStoreFinalizer(ls)
+
+	return ls
+}
+
+// Clear ListStore struct when it goes out of reach
+func listStoreFinalizer(ls *ListStore) {
+	runtime.SetFinalizer(ls, func(ls *ListStore) { gobject.Unref(ls) })
+}
+
+// Conversion functions
+func newListStoreFromNative(obj unsafe.Pointer) interface{} {
+	ls := &ListStore{}
+	ls.object = C.to_GtkListStore(obj)
+
+	if gobject.IsObjectFloating(ls) {
+		gobject.RefSink(ls)
+	} else {
+		gobject.Ref(ls)
+	}
+	ls.TreeModel = NewTreeModel(obj)
+	listStoreFinalizer(ls)
+
+	return ls
+}
+
+func nativeFromListStore(ls interface{}) *gobject.GValue {
+	listStore, ok := ls.(*ListStore)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.LIST_STORE, listStore.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self ListStore) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ListStore) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ListStore) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self ListStore) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// ListStore implements TreeModel
+func (self ListStore) ITreeModel() *TreeModel {
+	return self.TreeModel
+}
+
+// ListStore interface
+
+func (self *ListStore) SetValue(iter *TreeIter, column int, value interface{}) {
+	cval := gobject.ConvertToC(value)
+
+	// If value cannot be converted to fundamnetal
+	// gobject value, then we don't do anything
+	if cval == nil {
+		return
+	}
+	defer cval.Free()
+	
+	C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
+}
+
+func (self *ListStore) SetValues(iter *TreeIter, values map[int]interface{}) {
+	for k,v := range values {
+		self.SetValue(iter, k, v)
+	}
+}
+
+func (self *ListStore) Remove(iter *TreeIter) bool {
+	b := C.gtk_list_store_remove(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ListStore) Insert(iter *TreeIter, position int) {
+	C.gtk_list_store_insert(self.object, &iter.object, C.gint(position))
+}
+
+func (self *ListStore) InsertBefore(iter, sibling *TreeIter) {
+	var cSibling *C.GtkTreeIter = nil
+	
+	if sibling != nil {
+		cSibling = &sibling.object
+	}
+	C.gtk_list_store_insert_before(self.object, &iter.object, cSibling)
+}
+
+func (self *ListStore) InsertAfter(iter, sibling *TreeIter) {
+	var cSibling *C.GtkTreeIter = nil
+	
+	if sibling != nil {
+		cSibling = &sibling.object
+	}
+	C.gtk_list_store_insert_after(self.object, &iter.object, cSibling)
+}
+
+func (self *ListStore) InsertWithValues(iter *TreeIter, position int, values map[int]interface{}) {
+	self.Insert(iter, position)
+	self.SetValues(iter, values)
+}
+
+func (self *ListStore) Prepend(iter *TreeIter) {
+	C.gtk_list_store_prepend(self.object, &iter.object)
+}
+
+func (self *ListStore) Append(iter *TreeIter) {
+	C.gtk_list_store_append(self.object, &iter.object)
+}
+
+func (self *ListStore) Clear() {
+	C.gtk_list_store_clear(self.object)
+}
+
+//TODO: gtk_list_store_reorder
+
+func (self *ListStore) Swap(a, b *TreeIter) {
+	C.gtk_list_store_swap(self.object, &a.object, &b.object)
+}
+
+func (self *ListStore) MoveBefore(iter, position *TreeIter) {
+	C.gtk_list_store_move_before(self.object, &iter.object, &position.object)
+}
+
+func (self *ListStore) MoveAfter(iter, position *TreeIter) {
+	C.gtk_list_store_move_after(self.object, &iter.object, &position.object)
+}
+//////////////////////////////
+// END GtkListStore
+////////////////////////////// }}}
 
 // GTK3 MODULE init function {{{
 func init() {
@@ -3933,5 +4119,9 @@ func init() {
 	// Register GtkScrolledWindow type
 	gobject.RegisterCType(GtkType.SCROLLED_WINDOW, newScrolledWindowFromNative)
 	gobject.RegisterGoType(GtkType.SCROLLED_WINDOW, nativeFromScrolledWindow)
+
+	// Register GtkListStore type
+	gobject.RegisterCType(GtkType.LIST_STORE, newListStoreFromNative)
+	gobject.RegisterGoType(GtkType.LIST_STORE, nativeFromListStore)
 }
 // End init function }}}
