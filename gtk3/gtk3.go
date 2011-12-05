@@ -38,6 +38,8 @@ static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GT
 static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
 static inline GtkCellRendererSpinner* to_GtkCellRendererSpinner(void* obj) { return GTK_CELL_RENDERER_SPINNER(obj); }
 static inline GtkCellRendererToggle* to_GtkCellRendererToggle(void* obj) { return GTK_CELL_RENDERER_TOGGLE(obj); }
+static inline GtkCellRendererPixbuf* to_GtkCellRendererPixbuf(void* obj) { return GTK_CELL_RENDERER_PIXBUF(obj); }
+static inline GtkCellRendererAccel* to_GtkCellRendererAccel(void* obj) { return GTK_CELL_RENDERER_ACCEL(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -4599,6 +4601,159 @@ func (self *CellRendererToggle) SetActivatable(setting bool) {
 }
 //////////////////////////////
 // END GtkCellRendererToggle
+////////////////////////////// }}}
+
+// GtkCellRendererPixbuf {{{
+//////////////////////////////
+
+// GtkCellRendererPixbuf type
+type CellRendererPixbuf struct {
+	object *C.GtkCellRendererPixbuf
+	*CellRenderer
+}
+
+func NewCellRendererPixbuf() *CellRendererPixbuf {
+	cl := &CellRendererPixbuf{}
+	o := C.gtk_cell_renderer_pixbuf_new()
+	cl.object = C.to_GtkCellRendererPixbuf(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(unsafe.Pointer(o)).(*CellRenderer)
+	cellRendererPixbufFinalizer(cl)
+
+	return cl
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererPixbufFinalizer(cl *CellRendererPixbuf) {
+	runtime.SetFinalizer(cl, func(cl *CellRendererPixbuf) { gobject.Unref(cl) })
+}
+
+
+// Conversion functions
+func newCellRendererPixbufFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRendererPixbuf{}
+	cl.object = C.to_GtkCellRendererPixbuf(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(obj).(*CellRenderer)
+	cellRendererPixbufFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRendererPixbuf(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRendererPixbuf)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER_PIXBUF, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRendererPixbuf) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRendererPixbuf) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRendererPixbuf) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRendererPixbuf) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be CellRendererLike
+func (self CellRendererPixbuf) CRenderer() *CellRenderer {
+	return self.CellRenderer
+}
+//////////////////////////////
+// END GtkCellRendererPixbuf
+////////////////////////////// }}}
+
+// GtkCellRendererAccel {{{
+//////////////////////////////
+
+// GtkCellRendererAccel type
+type CellRendererAccel struct {
+	object *C.GtkCellRendererAccel
+	*CellRendererText
+}
+
+func NewCellRendererAccel() *CellRendererAccel {
+	cl := &CellRendererAccel{}
+	o := C.gtk_cell_renderer_accel_new()
+	cl.object = C.to_GtkCellRendererAccel(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	}
+	cl.CellRendererText = newCellRendererTextFromNative(unsafe.Pointer(o)).(*CellRendererText)
+	cellRendererAccelFinalizer(cl)
+
+	return cl
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererAccelFinalizer(cl *CellRendererAccel) {
+	runtime.SetFinalizer(cl, func(cl *CellRendererAccel) { gobject.Unref(cl) })
+}
+
+
+// Conversion functions
+func newCellRendererAccelFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRendererAccel{}
+	cl.object = C.to_GtkCellRendererAccel(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cl.CellRendererText = newCellRendererTextFromNative(obj).(*CellRendererText)
+	cellRendererAccelFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRendererAccel(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRendererAccel)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER_ACCEL, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRendererAccel) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRendererAccel) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRendererAccel) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRendererAccel) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+//////////////////////////////
+// END GtkCellRendererAccel
 ////////////////////////////// }}}
 
 // GTK3 MODULE init function {{{

@@ -655,6 +655,15 @@ type gtkSizeRequestMode struct {
 }
 // End GtkSizeRequestMode  }}}
 
+// GtkCellRendererAccelMode {{{
+var GtkCellRendererAccelMode gtkCellRendererAccelMode
+
+type gtkCellRendererAccelMode struct {
+	GTK int
+	OTHER int
+}
+// End GtkCellRendererAccelMode }}}
+
 
 // GTK3 module init func {{{
 func init() {
@@ -1192,4 +1201,8 @@ func init() {
 	GtkSizeRequestMode.HEIGHT_FOR_WIDTH = 0
 	GtkSizeRequestMode.WIDTH_FOR_HEIGHT = 1
 	GtkSizeRequestMode.CONSTANT_SIZE = 2
+
+	// Initialize GtkCellRendererAccelMode
+	GtkCellRendererAccelMode.GTK = 0
+	GtkCellRendererAccelMode.OTHER = 1
 } /// }}}
