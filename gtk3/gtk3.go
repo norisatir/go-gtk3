@@ -31,6 +31,7 @@ static inline GtkAdjustment* to_GtkAdjustment(void* obj) { return GTK_ADJUSTMENT
 static inline GtkRange* to_GtkRange(void* obj) { return GTK_RANGE(obj); }
 static inline GtkScrollbar* to_GtkScrollbar(void* obj) { return GTK_SCROLLBAR(obj); }
 static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SCROLLED_WINDOW(obj); }
+static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -214,6 +215,11 @@ type DialogLike interface {
 // Range-like interface must have method R()
 type RangeLike interface {
 	R() *Range
+}
+
+// TreeModel like interface must have method ITreeModel()
+type TreeModelLike interface {
+    ITreeModel() *TreeModel
 }
 //////////////////////////////
 // END Interfaces
@@ -3675,6 +3681,179 @@ func (self *TreePath) IsDescendant(ancestor *TreePath) bool {
 // END GtkTreePath
 ////////////////////////////// }}}
 
+// GtkTreeRowReference {{{
+//////////////////////////////
+
+// GtkTreeRowReference type
+type TreeRowReference struct {
+	object *C.GtkTreeRowReference
+}
+
+//func NewTreeRowReference() *TreeRowReference {
+
+// Clear TreeRowReference when it goes out of reach
+func treeRowReferenceFinalizer(trr *TreeRowReference) {
+	runtime.SetFinalizer(trr, func(trr *TreeRowReference) { trr.free() })
+}
+
+// TreeRowReference interface
+func (self *TreeRowReference) free() {
+	C.gtk_tree_row_reference_free(self.object)
+}
+//////////////////////////////
+// END TreeRowReference
+////////////////////////////// }}}
+
+// GtkTreeIter {{{
+//////////////////////////////
+
+// GtkTreeRowReference type
+type TreeIter struct {
+	object C.GtkTreeIter
+}
+
+func (self *TreeIter) Copy() *TreeIter {
+	ti := C.gtk_tree_iter_copy(&self.object)
+	gti := &TreeIter{*ti}
+	C.gtk_tree_iter_free(ti)
+
+	return gti
+}
+
+
+//////////////////////////////
+// END GtkTreeIter
+////////////////////////////// }}}
+
+// GtkTreeModel {{{
+//////////////////////////////
+
+// GtkTreeModel type
+type TreeModel struct {
+	object *C.GtkTreeModel
+}
+
+func NewTreeModel(ctm unsafe.Pointer) *TreeModel {
+    tm := &TreeModel{}
+    tm.object = C.to_GtkTreeModel(ctm)
+
+    if gobject.IsObjectFloating(tm) {
+        gobject.RefSink(tm)
+    } else {
+        gobject.Ref(tm)
+    }
+    treeModelFinalizer(tm)
+
+    return tm
+}
+
+// Clear TreeModel struct when it goes out of scope
+func treeModelFinalizer(tm *TreeModel) {
+    runtime.SetFinalizer(tm, func(tm *TreeModel) { gobject.Unref(tm) })
+}
+
+// To be object-like
+func (self TreeModel) ToNative() unsafe.Pointer {
+    return unsafe.Pointer(self.object)
+}
+
+func (self TreeModel) Connect(name string, f interface{}, data... interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+    return gobject.Connect(self, name, f, data...)
+}
+
+func (self TreeModel) Set(properties map[string]interface{}) {
+}
+
+func (self TreeModel) Get(properties []string) map[string]interface{} {
+    return nil
+}
+
+// TreeModel interface
+
+func (self *TreeModel) GetFlags() int {
+    return int(C.gtk_tree_model_get_flags(self.object))
+}
+
+func (self *TreeModel) GetNColumns() int {
+    return int(C.gtk_tree_model_get_n_columns(self.object))
+}
+
+//TODO: gtk_tree_model_get_column_type
+
+func (self *TreeModel) GetIter(iter *TreeIter, path *TreePath) bool {
+    b := C.gtk_tree_model_get_iter(self.object, &iter.object, path.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) GetIterFromString(iter *TreeIter, pathString string) bool {
+    s := gobject.GString(pathString)
+    defer s.Free()
+    b := C.gtk_tree_model_get_iter_from_string(self.object, &iter.object, (*C.gchar)(s.GetPtr()))
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) GetIterFirst(iter *TreeIter) bool {
+    b := C.gtk_tree_model_get_iter_first(self.object, &iter.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) GetPath(iter *TreeIter) *TreePath {
+    p := C.gtk_tree_model_get_path(self.object, &iter.object)
+    path := &TreePath{p}
+    treePathFinalizer(path)
+
+    return path
+}
+
+//TODO: gtk_tree_model_get_value
+
+func (self *TreeModel) IterNext(iter *TreeIter) bool {
+    b := C.gtk_tree_model_iter_next(self.object, &iter.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) IterPrevious(iter *TreeIter) bool {
+    b := C.gtk_tree_model_iter_previous(self.object, &iter.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) IterChildren(iter *TreeIter, parent *TreeIter) bool {
+    b := C.gtk_tree_model_iter_children(self.object, &iter.object, &parent.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) IterHasChild(iter *TreeIter) bool {
+    b := C.gtk_tree_model_iter_has_child(self.object, &iter.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) IterNChildren(iter *TreeIter) int {
+    return int(C.gtk_tree_model_iter_n_children(self.object, &iter.object))
+}
+
+func (self *TreeModel) IterNthChild(iter *TreeIter, parent *TreeIter, n int) bool {
+    b := C.gtk_tree_model_iter_nth_child(self.object, &iter.object, &parent.object, C.gint(n))
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) IterParent(iter *TreeIter, child *TreeIter) bool {
+    b := C.gtk_tree_model_iter_parent(self.object, &iter.object, &child.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeModel) GetStringFromIter(iter *TreeIter) string {
+    s := C.gtk_tree_model_get_string_from_iter(self.object, &iter.object)
+    return gobject.GoString(unsafe.Pointer(&s))
+}
+
+//TODO: gtk_tree_model_ref_node
+//TODO: gtk_tree_model_unref_node
+//TODO: gtk_tree_model_get_valist
+//TODO: gtk_tree_model_foreach
+//...
+//////////////////////////////
+// END GtkTreeModel
+////////////////////////////// }}}
 
 
 // GTK3 MODULE init function {{{

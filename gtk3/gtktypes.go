@@ -611,6 +611,14 @@ type gtkCorner struct {
 	TOP_RIGHT    int
 	BOTTOM_RIGHT int
 }
+// End GtkCornerType
+
+var GtkTreeModelFlags gtkTreeModelFlags
+
+type gtkTreeModelFlags struct {
+    ITERS_PERSIST int
+    LIST_ONLY int
+}
 
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1126,4 +1134,8 @@ func init() {
 	GtkCorner.BOTTOM_LEFT = 1
 	GtkCorner.TOP_RIGHT = 2
 	GtkCorner.BOTTOM_RIGHT = 3
+
+    // Initialize GtkTreeModelFlags
+    GtkTreeModelFlags.ITERS_PERSIST = 1 << 0
+    GtkTreeModelFlags.LIST_ONLY = 1 << 1
 }
