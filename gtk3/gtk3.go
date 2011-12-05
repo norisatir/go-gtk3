@@ -35,6 +35,7 @@ static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(o
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
+static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -4324,6 +4325,85 @@ func (self *CellRendererText) SetFixedHeigthFromFont(numberOfRows int) {
 
 //////////////////////////////
 // END GtkCellRendererText
+////////////////////////////// }}}
+
+// GtkCellRendererProgress {{{
+//////////////////////////////
+
+// GtkCellRendererProgress type
+type CellRendererProgress struct {
+	object *C.GtkCellRendererProgress
+	*CellRenderer
+}
+
+func NewCellRendererProgress() *CellRendererProgress {
+	cl := &CellRendererProgress{}
+	o := C.gtk_cell_renderer_progress_new()
+	cl.object = C.to_GtkCellRendererProgress(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(unsafe.Pointer(o)).(*CellRenderer)
+	cellRendererProgressFinalizer(cl)
+
+	return cl
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererProgressFinalizer(cl *CellRendererProgress) {
+	runtime.SetFinalizer(cl, func(cl *CellRendererProgress) { gobject.Unref(cl) })
+}
+
+
+// Conversion functions
+func newCellRendererProgressFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRendererProgress{}
+	cl.object = C.to_GtkCellRendererProgress(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(obj).(*CellRenderer)
+	cellRendererProgressFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRendererProgress(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRendererProgress)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER_PROGRESS, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRendererProgress) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRendererProgress) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRendererProgress) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRendererProgress) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be CellRendererLike
+func (self CellRendererProgress) CRenderer() *CellRenderer {
+	return self.CellRenderer
+}
+//////////////////////////////
+// END GtkCellRendererProgress
 ////////////////////////////// }}}
 
 // GTK3 MODULE init function {{{
