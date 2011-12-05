@@ -40,6 +40,7 @@ static inline GtkCellRendererSpinner* to_GtkCellRendererSpinner(void* obj) { ret
 static inline GtkCellRendererToggle* to_GtkCellRendererToggle(void* obj) { return GTK_CELL_RENDERER_TOGGLE(obj); }
 static inline GtkCellRendererPixbuf* to_GtkCellRendererPixbuf(void* obj) { return GTK_CELL_RENDERER_PIXBUF(obj); }
 static inline GtkCellRendererAccel* to_GtkCellRendererAccel(void* obj) { return GTK_CELL_RENDERER_ACCEL(obj); }
+static inline GtkCellRendererCombo* to_GtkCellRendererCombo(void* obj) { return GTK_CELL_RENDERER_COMBO(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -4754,6 +4755,80 @@ func (self CellRendererAccel) Get(properties []string) map[string]interface{} {
 }
 //////////////////////////////
 // END GtkCellRendererAccel
+////////////////////////////// }}}
+
+// GtkCellRendererCombo {{{
+//////////////////////////////
+
+// GtkCellRendererCombo type
+type CellRendererCombo struct {
+	object *C.GtkCellRendererCombo
+	*CellRendererText
+}
+
+func NewCellRendererCombo() *CellRendererCombo {
+	cl := &CellRendererCombo{}
+	o := C.gtk_cell_renderer_combo_new()
+	cl.object = C.to_GtkCellRendererCombo(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	}
+	cl.CellRendererText = newCellRendererTextFromNative(unsafe.Pointer(o)).(*CellRendererText)
+	cellRendererComboFinalizer(cl)
+
+	return cl
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererComboFinalizer(cl *CellRendererCombo) {
+	runtime.SetFinalizer(cl, func(cl *CellRendererCombo) { gobject.Unref(cl) })
+}
+
+
+// Conversion functions
+func newCellRendererComboFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRendererCombo{}
+	cl.object = C.to_GtkCellRendererCombo(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cl.CellRendererText = newCellRendererTextFromNative(obj).(*CellRendererText)
+	cellRendererComboFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRendererCombo(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRendererCombo)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER_COMBO, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRendererCombo) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRendererCombo) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRendererCombo) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRendererCombo) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+//////////////////////////////
+// END GtkCellRendererCombo
 ////////////////////////////// }}}
 
 // GTK3 MODULE init function {{{
