@@ -52,30 +52,30 @@ func newRectangleFromNative(obj unsafe.Pointer) interface{} {
 	return r
 }
 
-func nativeRectangle(rec Rectangle) *C.GdkRectangle {
+func NativeRectangle(rec Rectangle) unsafe.Pointer {
 	var cr C.GdkRectangle
 	cr.x = C.int(rec.X)
 	cr.y = C.int(rec.Y)
 	cr.width = C.int(rec.Width)
 	cr.height = C.int(rec.Height)
 
-	return &cr
+	return unsafe.Pointer(&cr)
 }
 
 func RectangleIntersect(r1, r2 Rectangle) Rectangle {
-	cr1 := nativeRectangle(r1)
-	cr2 := nativeRectangle(r2)
+	cr1 := NativeRectangle(r1)
+	cr2 := NativeRectangle(r2)
 	var cr3 C.GdkRectangle
-	C.gdk_rectangle_intersect(cr1, cr2, &cr3)
+	C.gdk_rectangle_intersect((*C.GdkRectangle)(cr1), (*C.GdkRectangle)(cr2), &cr3)
 
 	return CreateRectangle(unsafe.Pointer(&cr3))
 }
 
 func RectangleUnion(r1, r2 Rectangle) Rectangle {
-	cr1 := nativeRectangle(r1)
-	cr2 := nativeRectangle(r2)
+	cr1 := NativeRectangle(r1)
+	cr2 := NativeRectangle(r2)
 	var cr3 C.GdkRectangle
-	C.gdk_rectangle_union(cr1, cr2, &cr3)
+	C.gdk_rectangle_union((*C.GdkRectangle)(cr1), (*C.GdkRectangle)(cr2), &cr3)
 	return CreateRectangle(unsafe.Pointer(&cr3))
 }
 

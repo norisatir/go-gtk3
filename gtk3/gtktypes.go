@@ -10,6 +10,7 @@ import "C"
 
 import g "github.com/norisatir/go-gtk3/gobject"
 
+// GtkType {{{
 var GtkType gtkTypes
 
 type gtkTypes struct {
@@ -315,9 +316,9 @@ type gtkTypes struct {
 	TREE_VIEW_COLUMN_SIZING   g.GType
 	UI_MANAGER_ITEM_TYPE      g.GType
 	WIDGET_HELP_TYPE          g.GType
-}
+} // }}}
 
-// GtkShadowType
+// GtkShadowType {{{
 var GtkShadow gtkShadow
 
 type gtkShadow struct {
@@ -327,9 +328,9 @@ type gtkShadow struct {
 	ETCHED_IN  int
 	ETCHED_OUT int
 }
-// End GtkShadow
+// End GtkShadow }}}
 
-// string
+// GtkStock {{{
 var GtkStock gtkStock
 
 type gtkStock struct {
@@ -439,9 +440,9 @@ type gtkStock struct {
 	ZOOM_IN                       string
 	ZOOM_OUT                      string
 }
-// End GtkStock
+// End GtkStock  }}}
 
-// GtkPositionType
+// GtkPositionType  {{{
 var GtkPosition gtkPosition
 
 type gtkPosition struct {
@@ -450,18 +451,18 @@ type gtkPosition struct {
 	TOP    int
 	BOTTOM int
 }
-// End GtkPositionType
+// End GtkPositionType }}}
 
-// GtkDialogFlags
+// GtkDialogFlags {{{
 var GtkDialogFlags gtkDialogFlags
 
 type gtkDialogFlags struct {
 	MODAL               int
 	DESTROY_WITH_PARENT int
 }
-// End GtkDialogFlags
+// End GtkDialogFlags }}}
 
-// GtkResponse
+// GtkResponse {{{
 var GtkResponse gtkResponse
 
 type gtkResponse struct {
@@ -477,9 +478,9 @@ type gtkResponse struct {
 	APPLY        int
 	HELP         int
 }
-// End GtkResponse
+// End GtkResponse }}}
 
-// GtkMessageType
+// GtkMessageType {{{
 var GtkMessage gtkMessage
 
 type gtkMessage struct {
@@ -489,9 +490,9 @@ type gtkMessage struct {
 	ERROR    int
 	OTHER    int
 }
-// End GtkMessageType
+// End GtkMessageType }}}
 
-// GtkButtons
+// GtkButtons {{{
 var GtkButtons gtkButtons
 
 type gtkButtons struct {
@@ -502,27 +503,27 @@ type gtkButtons struct {
 	YES_NO    int
 	OK_CANCEL int
 }
-// End GtkButtons
+// End GtkButtons }}}
 
-// GtkOrientation
+// GtkOrientation {{{
 var GtkOrientation gtkOrientation
 
 type gtkOrientation struct {
 	HORIZONTAL int
 	VERTICAL   int
 }
-// End GtkOrientation
+// End GtkOrientation }}}
 
-// GtkPackType
+// GtkPackType {{{
 var GtkPack gtkPack
 
 type gtkPack struct {
 	PACK_START int
 	PACK_END   int
 }
-// End GtkPackType
+// End GtkPackType }}}
 
-// GtkButtonBoxStyle
+// GtkButtonBoxStyle {{{
 var GtkButtonBoxStyle gtkButtonBoxStyle
 
 type gtkButtonBoxStyle struct {
@@ -532,9 +533,9 @@ type gtkButtonBoxStyle struct {
 	END    int
 	CENTER int
 }
-// End GtkButtonBoxStyle
+// End GtkButtonBoxStyle }}}
 
-// GtkIconSize
+// GtkIconSize {{{
 var GtkIconSize gtkIconSize
 
 type gtkIconSize struct {
@@ -546,9 +547,9 @@ type gtkIconSize struct {
 	DND           int
 	DIALOG        int
 }
-// End GtkIconSize
+// End GtkIconSize  }}}
 
-// GApplicatonFlags
+// GApplicatonFlags {{{
 var GApplicationFlags gApplicationFlags
 
 type gApplicationFlags struct {
@@ -560,9 +561,9 @@ type gApplicationFlags struct {
 	SEND_ENVIRONMENT     int
 	NON_UNIQUE           int
 }
-// End GApplicationFlags
+// End GApplicationFlags }}}
 
-// GtkJustification
+// GtkJustification {{{
 var GtkJustification gtkJustification
 
 type gtkJustification struct {
@@ -571,18 +572,18 @@ type gtkJustification struct {
 	CENTER int
 	FILL   int
 }
-// End GtkJustification
+// End GtkJustification }}}
 
-// GtkWindowType
+// GtkWindowType {{{
 var GtkWindowType gtkWindowType
 
 type gtkWindowType struct {
 	TOPLEVEL int
 	POPUP    int
 }
-// End GtkWindowType
+// End GtkWindowType }}}
 
-// GtkSensitivityType
+// GtkSensitivityType {{{
 var GtkSensitivity gtkSensitivity
 
 type gtkSensitivity struct {
@@ -590,9 +591,9 @@ type gtkSensitivity struct {
 	ON   int
 	OFF  int
 }
-// End GtkSensitivity
+// End GtkSensitivity }}}
 
-// GtkPolicyType
+// GtkPolicyType {{{
 var GtkPolicy gtkPolicy
 
 type gtkPolicy struct {
@@ -600,9 +601,9 @@ type gtkPolicy struct {
 	AUTOMATIC int
 	NEVER     int
 }
-// End GtkPolicyType
+// End GtkPolicyType }}}
 
-// GtkCornerType
+// GtkCornerType {{{
 var GtkCorner gtkCorner
 
 type gtkCorner struct {
@@ -611,15 +612,51 @@ type gtkCorner struct {
 	TOP_RIGHT    int
 	BOTTOM_RIGHT int
 }
-// End GtkCornerType
+// End GtkCornerType }}}
 
+// GtkTreeModelFlags  {{{
 var GtkTreeModelFlags gtkTreeModelFlags
 
 type gtkTreeModelFlags struct {
     ITERS_PERSIST int
     LIST_ONLY int
 }
+// End GtkTreeModelFlags  }}}
 
+// GtkCellRendererState {{{
+var GtkCellRendererState gtkCellRendererState
+
+type gtkCellRendererState struct {
+	SELECTED int
+	PRELIT int
+	INSENSITIVE int
+	SORTED int
+	FOCUSED int
+}
+// End GtkCellRendererState }}}
+
+// GtkCellRendererMode {{{
+var GtkCellRendererMode gtkCellRendererMode
+
+type gtkCellRendererMode struct {
+	INERT int
+	ACTIVATABLE int
+	EDITABLE int
+}
+// End GtkCellRendererMode }}}
+
+// GtkSizeRequestMode {{{
+var GtkSizeRequestMode gtkSizeRequestMode
+
+type gtkSizeRequestMode struct {
+	HEIGHT_FOR_WIDTH int
+	WIDTH_FOR_HEIGHT int
+	CONSTANT_SIZE int
+}
+// End GtkSizeRequestMode  }}}
+
+
+// GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
 	GtkType.ACCEL_GROUP = g.GType(C.gtk_accel_group_get_type())
@@ -1138,4 +1175,21 @@ func init() {
     // Initialize GtkTreeModelFlags
     GtkTreeModelFlags.ITERS_PERSIST = 1 << 0
     GtkTreeModelFlags.LIST_ONLY = 1 << 1
-}
+
+	// Initialize GtkCellRendererState
+	GtkCellRendererState.SELECTED = 1 << 0
+	GtkCellRendererState.PRELIT = 1 << 1
+	GtkCellRendererState.INSENSITIVE = 1 << 2
+	GtkCellRendererState.SORTED = 1 << 3
+	GtkCellRendererState.FOCUSED = 1 << 4
+
+	// Initialize GtkCellRendererMode
+	GtkCellRendererMode.INERT = 0
+	GtkCellRendererMode.ACTIVATABLE = 1
+	GtkCellRendererMode.EDITABLE = 2
+
+	// Initialize GtkSizeRequestMode
+	GtkSizeRequestMode.HEIGHT_FOR_WIDTH = 0
+	GtkSizeRequestMode.WIDTH_FOR_HEIGHT = 1
+	GtkSizeRequestMode.CONSTANT_SIZE = 2
+} /// }}}

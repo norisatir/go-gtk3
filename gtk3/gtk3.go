@@ -33,6 +33,8 @@ static inline GtkScrollbar* to_GtkScrollbar(void* obj) { return GTK_SCROLLBAR(ob
 static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SCROLLED_WINDOW(obj); }
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
+static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
+static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -239,6 +241,11 @@ type RangeLike interface {
 // TreeModel like interface must have method ITreeModel()
 type TreeModelLike interface {
     ITreeModel() *TreeModel
+}
+
+// CellRendererLike interface must have method CRenderer()
+type CellRendererLike interface {
+	CRenderer() *CellRenderer
 }
 //////////////////////////////
 // END Interfaces
@@ -4042,6 +4049,283 @@ func (self *ListStore) MoveAfter(iter, position *TreeIter) {
 // END GtkListStore
 ////////////////////////////// }}}
 
+// GtkCellRenderer {{{
+//////////////////////////////
+
+// GtkCellRenderer type
+type CellRenderer struct {
+	object *C.GtkCellRenderer
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererFinalizer(cl *CellRenderer) {
+	runtime.SetFinalizer(cl, func(cl *CellRenderer) { gobject.Unref(cl) })
+}
+
+// Conversion functions
+func newCellRendererFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRenderer{}
+	cl.object = C.to_GtkCellRenderer(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cellRendererFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRenderer(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRenderer)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRenderer) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRenderer) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRenderer) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRenderer) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// Interface functions
+
+func (self *CellRenderer) GetAlignedArea(w WidgetLike, gtk_CellRendererState_flags int, cellArea gdk3.Rectangle) gdk3.Rectangle {
+	ca := gdk3.NativeRectangle(cellArea)
+	var alignedArea C.GdkRectangle
+	C.gtk_cell_renderer_get_aligned_area(self.object, w.W().object, C.GtkCellRendererState(gtk_CellRendererState_flags),
+				(*C.GdkRectangle)(ca), &alignedArea)
+	return gdk3.CreateRectangle(unsafe.Pointer(&alignedArea))
+}
+
+//TODO: gtk_cell_renderer_render
+//TODO: gtk_cell_renderer_activate
+//TODO: gtk_cell_renderer_start_editing
+//TODO: gtk_cell_renderer_stop_editing
+
+func (self *CellRenderer) GetFixedSize() (width, height int) {
+	var w C.gint
+	var h C.gint
+	C.gtk_cell_renderer_get_fixed_size(self.object, &w, &h)
+
+	width = int(w)
+	height = int(h)
+	return
+}
+
+func (self *CellRenderer) SetFixedSize(width, height int) {
+	C.gtk_cell_renderer_set_fixed_size(self.object, C.gint(width), C.gint(height))
+}
+
+func (self *CellRenderer) GetVisible() bool {
+	b := C.gtk_cell_renderer_get_visible(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellRenderer) SetVisible(visible bool) {
+	b := gobject.GBool(visible)
+	defer b.Free()
+	C.gtk_cell_renderer_set_visible(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellRenderer) GetSensitive() bool {
+	b := C.gtk_cell_renderer_get_sensitive(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellRenderer) SetSensitive(sensitive bool) {
+	b := gobject.GBool(sensitive)
+	defer b.Free()
+	C.gtk_cell_renderer_set_sensitive(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellRenderer) GetAlignment() (xalign, yalign float32) {
+	var x C.gfloat
+	var y C.gfloat
+	C.gtk_cell_renderer_get_alignment(self.object, &x, &y)
+
+	xalign = float32(x)
+	yalign = float32(y)
+	return
+}
+
+func (self *CellRenderer) SetAlignment(xalign, yalign float32) {
+	C.gtk_cell_renderer_set_alignment(self.object, C.gfloat(xalign), C.gfloat(yalign))
+}
+
+func (self *CellRenderer) GetPadding() (xpad, ypad int) {
+	var x C.gint
+	var y C.gint
+	C.gtk_cell_renderer_get_padding(self.object, &x, &y)
+	xpad = int(x)
+	ypad = int(y)
+	return
+}
+
+func (self *CellRenderer) SetPadding(xpad, ypad int) {
+	C.gtk_cell_renderer_set_padding(self.object, C.gint(xpad), C.gint(ypad))
+}
+
+func (self *CellRenderer) GetState(w WidgetLike, gtk_CellRendererState int) int {
+	return int(C.gtk_cell_renderer_get_state(self.object, w.W().object, C.GtkCellRendererState(gtk_CellRendererState)))
+}
+
+func (self *CellRenderer) IsActivatable() bool {
+	b := C.gtk_cell_renderer_is_activatable(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellRenderer) GetPreferredHeight(w WidgetLike) (minimumSize, naturalSize int) {
+	var m, n C.gint
+	C.gtk_cell_renderer_get_preferred_height(self.object, w.W().object, &m, &n)
+	minimumSize = int(m)
+	naturalSize = int(n)
+	return
+}
+
+func (self *CellRenderer) GetPreferredHeightForWidth(w WidgetLike, width int) (minimumHeight, naturalHeight int) {
+	var m, n C.gint
+	C.gtk_cell_renderer_get_preferred_height_for_width(self.object, w.W().object, C.gint(width), &m, &n)
+	minimumHeight = int(m)
+	naturalHeight = int(n)
+	return
+}
+
+func (self *CellRenderer) GetPreferredSize(w WidgetLike) (minSize, natSize Requisition) {
+	var m, n C.GtkRequisition
+	C.gtk_cell_renderer_get_preferred_size(self.object, w.W().object, &m, &n)
+
+	minSize.Height = int(m.height)
+	minSize.Width = int(m.width)
+	natSize.Height = int(n.height)
+	natSize.Width = int(n.width)
+	return
+}
+
+func (self *CellRenderer) GetPreferredWidth(w WidgetLike) (minSize, natSize int) {
+	var m, n C.gint
+	C.gtk_cell_renderer_get_preferred_width(self.object, w.W().object, &m, &n)
+	minSize = int(m)
+	natSize = int(n)
+	return
+}
+
+func (self *CellRenderer) GetPreferredWidthForHeight(w WidgetLike, height int) (minWidth, natWidth int) {
+	var m, n C.gint
+	C.gtk_cell_renderer_get_preferred_width_for_height(self.object, w.W().object, C.gint(height), &m, &n)
+	minWidth = int(m)
+	natWidth = int(n)
+	return
+}
+
+func (self *CellRenderer) GetRequestMode() int {
+	return int(C.gtk_cell_renderer_get_request_mode(self.object))
+}
+//////////////////////////////
+// END GtkCellRenderer
+////////////////////////////// }}}
+
+// GtkCellRendererText {{{
+//////////////////////////////
+
+// GtkCellRendererText type
+type CellRendererText struct {
+	object *C.GtkCellRendererText
+	*CellRenderer
+}
+
+func NewCellRendererText() *CellRendererText {
+	cl := &CellRendererText{}
+	o := C.gtk_cell_renderer_text_new()
+	cl.object = C.to_GtkCellRendererText(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(unsafe.Pointer(o)).(*CellRenderer)
+	cellRendererTextFinalizer(cl)
+
+	return cl
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererTextFinalizer(cl *CellRendererText) {
+	runtime.SetFinalizer(cl, func(cl *CellRendererText) { gobject.Unref(cl) })
+}
+
+
+// Conversion functions
+func newCellRendererTextFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRendererText{}
+	cl.object = C.to_GtkCellRendererText(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(obj).(*CellRenderer)
+	cellRendererTextFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRendererText(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRendererText)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER_TEXT, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRendererText) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRendererText) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRendererText) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRendererText) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be CellRendererLike
+func (self CellRendererText) CRenderer() *CellRenderer {
+	return self.CellRenderer
+}
+
+// Interface functions
+
+func (self *CellRendererText) SetFixedHeigthFromFont(numberOfRows int) {
+	C.gtk_cell_renderer_text_set_fixed_height_from_font(self.object, C.gint(numberOfRows))
+}
+
+//////////////////////////////
+// END GtkCellRendererText
+////////////////////////////// }}}
+
 // GTK3 MODULE init function {{{
 func init() {
 	// Register GtkApplicaton type
@@ -4123,5 +4407,13 @@ func init() {
 	// Register GtkListStore type
 	gobject.RegisterCType(GtkType.LIST_STORE, newListStoreFromNative)
 	gobject.RegisterGoType(GtkType.LIST_STORE, nativeFromListStore)
+
+	// Register GtkCellRenderer type
+	gobject.RegisterCType(GtkType.CELL_RENDERER, newCellRendererFromNative)
+	gobject.RegisterGoType(GtkType.CELL_RENDERER, nativeFromCellRenderer)
+
+	// Register GtkCellRendererText type
+	gobject.RegisterCType(GtkType.CELL_RENDERER_TEXT, newCellRendererTextFromNative)
+	gobject.RegisterGoType(GtkType.CELL_RENDERER_TEXT, nativeFromCellRendererText)
 }
 // End init function }}}
