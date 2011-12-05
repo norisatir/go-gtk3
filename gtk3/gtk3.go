@@ -37,6 +37,7 @@ static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_R
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
 static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
 static inline GtkCellRendererSpinner* to_GtkCellRendererSpinner(void* obj) { return GTK_CELL_RENDERER_SPINNER(obj); }
+static inline GtkCellRendererToggle* to_GtkCellRendererToggle(void* obj) { return GTK_CELL_RENDERER_TOGGLE(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -4486,6 +4487,120 @@ func (self CellRendererSpinner) CRenderer() *CellRenderer {
 // END GtkCellRendererSpinner
 ////////////////////////////// }}}
 
+// GtkCellRendererToggle {{{
+//////////////////////////////
+
+// GtkCellRendererToggle type
+type CellRendererToggle struct {
+	object *C.GtkCellRendererToggle
+	*CellRenderer
+}
+
+func NewCellRendererToggle() *CellRendererToggle {
+	cl := &CellRendererToggle{}
+	o := C.gtk_cell_renderer_toggle_new()
+	cl.object = C.to_GtkCellRendererToggle(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(unsafe.Pointer(o)).(*CellRenderer)
+	cellRendererToggleFinalizer(cl)
+
+	return cl
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererToggleFinalizer(cl *CellRendererToggle) {
+	runtime.SetFinalizer(cl, func(cl *CellRendererToggle) { gobject.Unref(cl) })
+}
+
+
+// Conversion functions
+func newCellRendererToggleFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRendererToggle{}
+	cl.object = C.to_GtkCellRendererToggle(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(obj).(*CellRenderer)
+	cellRendererToggleFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRendererToggle(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRendererToggle)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER_TOGGLE, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRendererToggle) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRendererToggle) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRendererToggle) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRendererToggle) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be CellRendererLike
+func (self CellRendererToggle) CRenderer() *CellRenderer {
+	return self.CellRenderer
+}
+
+// CellRendererToggle Interface
+
+func (self *CellRendererToggle) GetRadio() bool {
+	b := C.gtk_cell_renderer_toggle_get_radio(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellRendererToggle) SetRadio(radio bool) {
+	b := gobject.GBool(radio)
+	defer b.Free()
+	C.gtk_cell_renderer_toggle_set_radio(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellRendererToggle) GetActive() bool {
+	b := C.gtk_cell_renderer_toggle_get_active(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellRendererToggle) SetActive(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_cell_renderer_toggle_set_active(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellRendererToggle) GetActivatable() bool {
+	b := C.gtk_cell_renderer_toggle_get_activatable(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellRendererToggle) SetActivatable(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_cell_renderer_toggle_set_activatable(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+//////////////////////////////
+// END GtkCellRendererToggle
+////////////////////////////// }}}
+
 // GTK3 MODULE init function {{{
 func init() {
 	// Register GtkApplicaton type
@@ -4579,5 +4694,9 @@ func init() {
 	// Register GtkCellRendererSpinner type
 	gobject.RegisterCType(GtkType.CELL_RENDERER_SPINNER, newCellRendererSpinnerFromNative)
 	gobject.RegisterGoType(GtkType.CELL_RENDERER_SPINNER, nativeFromCellRendererSpinner)
+
+	// Register GtkCellRendererToggle type
+	gobject.RegisterCType(GtkType.CELL_RENDERER_TOGGLE, newCellRendererToggleFromNative)
+	gobject.RegisterGoType(GtkType.CELL_RENDERER_TOGGLE, nativeFromCellRendererToggle)
 }
 // End init function }}}
