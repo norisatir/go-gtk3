@@ -36,6 +36,7 @@ static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(o
 static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
 static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
+static inline GtkCellRendererSpinner* to_GtkCellRendererSpinner(void* obj) { return GTK_CELL_RENDERER_SPINNER(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -4406,6 +4407,85 @@ func (self CellRendererProgress) CRenderer() *CellRenderer {
 // END GtkCellRendererProgress
 ////////////////////////////// }}}
 
+// GtkCellRendererSpinner {{{
+//////////////////////////////
+
+// GtkCellRendererSpinner type
+type CellRendererSpinner struct {
+	object *C.GtkCellRendererSpinner
+	*CellRenderer
+}
+
+func NewCellRendererSpinner() *CellRendererSpinner {
+	cl := &CellRendererSpinner{}
+	o := C.gtk_cell_renderer_spinner_new()
+	cl.object = C.to_GtkCellRendererSpinner(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(unsafe.Pointer(o)).(*CellRenderer)
+	cellRendererSpinnerFinalizer(cl)
+
+	return cl
+}
+
+// Clear CellRenderer struct when it goes out of reach
+func cellRendererSpinnerFinalizer(cl *CellRendererSpinner) {
+	runtime.SetFinalizer(cl, func(cl *CellRendererSpinner) { gobject.Unref(cl) })
+}
+
+
+// Conversion functions
+func newCellRendererSpinnerFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellRendererSpinner{}
+	cl.object = C.to_GtkCellRendererSpinner(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cl.CellRenderer = newCellRendererFromNative(obj).(*CellRenderer)
+	cellRendererSpinnerFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellRendererSpinner(cl interface{}) *gobject.GValue {
+	cellRend, ok := cl.(*CellRendererSpinner)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_RENDERER_SPINNER, cellRend.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellRendererSpinner) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellRendererSpinner) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellRendererSpinner) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellRendererSpinner) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be CellRendererLike
+func (self CellRendererSpinner) CRenderer() *CellRenderer {
+	return self.CellRenderer
+}
+//////////////////////////////
+// END GtkCellRendererSpinner
+////////////////////////////// }}}
+
 // GTK3 MODULE init function {{{
 func init() {
 	// Register GtkApplicaton type
@@ -4495,5 +4575,9 @@ func init() {
 	// Register GtkCellRendererText type
 	gobject.RegisterCType(GtkType.CELL_RENDERER_TEXT, newCellRendererTextFromNative)
 	gobject.RegisterGoType(GtkType.CELL_RENDERER_TEXT, nativeFromCellRendererText)
+
+	// Register GtkCellRendererSpinner type
+	gobject.RegisterCType(GtkType.CELL_RENDERER_SPINNER, newCellRendererSpinnerFromNative)
+	gobject.RegisterGoType(GtkType.CELL_RENDERER_SPINNER, nativeFromCellRendererSpinner)
 }
 // End init function }}}
