@@ -33,6 +33,7 @@ static inline GtkScrollbar* to_GtkScrollbar(void* obj) { return GTK_SCROLLBAR(ob
 static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SCROLLED_WINDOW(obj); }
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
+static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
 static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
 static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
@@ -162,6 +163,30 @@ static inline void gtype_array_free(GType* types) {
 
 static inline void gtype_array_set_element(GType* types, int n, GType type) {
 	types[n] = type;
+}
+
+static inline GValue* gvalue_array_new(int n) {
+	return g_new0(GValue, n);
+}
+
+static inline void gvalue_array_free(GValue* vals) {
+	g_free(vals);
+}
+
+static inline void gvalue_array_set_element(GValue* vals, int n, GValue* val) {
+	vals[n] = *val;
+}
+
+static inline gint* gint_array_new(int n) {
+	return g_new0(gint, n);
+}
+
+static inline void gint_array_free(gint* vals) {
+	g_free(vals);
+}
+
+static inline void gint_array_set_element(gint* vals, int n, gint val) {
+	vals[n] = val;
 }
 
 //End Gtk*Store func }}}
@@ -4023,8 +4048,30 @@ func (self *ListStore) InsertAfter(iter, sibling *TreeIter) {
 }
 
 func (self *ListStore) InsertWithValues(iter *TreeIter, position int, values map[int]interface{}) {
-	self.Insert(iter, position)
-	self.SetValues(iter, values)
+	if values == nil || len(values) == 0 {
+		return
+	}
+
+	valArr := C.gvalue_array_new(C.int(len(values)))
+	columns := C.gint_array_new(C.int(len(values)))
+	defer C.gvalue_array_free(valArr)
+	defer C.gint_array_free(columns)
+
+	var i int = 0
+	for k,v := range values {
+		C.gint_array_set_element(columns, C.int(i), C.gint(k))
+		cval := gobject.ConvertToC(v)
+		defer cval.Free()
+		C.gvalue_array_set_element(valArr, C.int(i), (*C.GValue)(cval.ToCGValue()))
+		i++
+	}
+	var Citer *C.GtkTreeIter = nil
+
+	if iter != nil {
+		Citer = &iter.object
+	}
+
+	C.gtk_list_store_insert_with_valuesv(self.object, Citer, C.gint(position), columns, valArr, C.gint(len(values)))
 }
 
 func (self *ListStore) Prepend(iter *TreeIter) {
@@ -4054,6 +4101,231 @@ func (self *ListStore) MoveAfter(iter, position *TreeIter) {
 }
 //////////////////////////////
 // END GtkListStore
+////////////////////////////// }}}
+
+// GtkTreeStore {{{
+//////////////////////////////
+
+// GtkTreeStore type
+type TreeStore struct {
+	object *C.GtkTreeStore
+	*TreeModel
+}
+
+func NewTreeStore(gtypeSlice []gobject.GType) *TreeStore {
+	count := len(gtypeSlice)
+	if count == 0 {
+		return nil
+	}
+
+	arr := C.gtype_array_new(C.int(count))
+	defer C.gtype_array_free(arr)
+
+	for i,gtype := range gtypeSlice {
+		C.gtype_array_set_element(arr, C.int(i), C.GType(gtype))
+	}
+
+	ts := &TreeStore{}
+	ts.object = C.gtk_tree_store_newv(C.gint(count), arr)
+
+	if gobject.IsObjectFloating(ts) {
+		gobject.RefSink(ts)
+	}
+	ts.TreeModel = NewTreeModel(unsafe.Pointer(ts.object))
+	treeStoreFinalizer(ts)
+
+	return ts
+}
+
+// Clear TreeStore struct when it goes out of reach
+func treeStoreFinalizer(ts *TreeStore) {
+	runtime.SetFinalizer(ts, func(ts *TreeStore) { gobject.Unref(ts) })
+}
+
+// Conversion functions
+func newTreeStoreFromNative(obj unsafe.Pointer) interface{} {
+	ts := &TreeStore{}
+	ts.object = C.to_GtkTreeStore(obj)
+
+	if gobject.IsObjectFloating(ts) {
+		gobject.RefSink(ts)
+	} else {
+		gobject.Ref(ts)
+	}
+	ts.TreeModel = NewTreeModel(obj)
+	treeStoreFinalizer(ts)
+
+	return ts
+}
+
+func nativeFromTreeStore(ts interface{}) *gobject.GValue {
+	treeStore, ok := ts.(*TreeStore)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TREE_STORE, treeStore.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TreeStore) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TreeStore) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TreeStore) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TreeStore) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// TreeStore implements TreeModel
+func (self TreeStore) ITreeModel() *TreeModel {
+	return self.TreeModel
+}
+
+// TreeStore interface
+
+func (self *TreeStore) SetValue(iter *TreeIter, column int, value interface{}) {
+	cval := gobject.ConvertToC(value)
+
+	// If value cannot be converted to fundamnetal
+	// gobject value, then we don't do anything
+	if cval == nil {
+		return
+	}
+	defer cval.Free()
+	
+	C.gtk_tree_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
+}
+
+func (self *TreeStore) SetValues(iter *TreeIter, values map[int]interface{}) {
+	for k,v := range values {
+		self.SetValue(iter, k, v)
+	}
+}
+
+func (self *TreeStore) Remove(iter *TreeIter) bool {
+	b := C.gtk_tree_store_remove(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeStore) Insert(iter,parent *TreeIter, position int) {
+	var cparent *C.GtkTreeIter = nil
+
+	if parent != nil {
+		cparent = &parent.object
+	}
+	C.gtk_tree_store_insert(self.object, &iter.object, cparent, C.gint(position))
+}
+
+func (self *TreeStore) InsertBefore(iter, parent, sibling *TreeIter) {
+	var cSibling, cParent *C.GtkTreeIter = nil, nil
+	
+	if sibling != nil {
+		cSibling = &sibling.object
+	}
+
+	if parent != nil {
+		cParent = &parent.object
+	}
+	C.gtk_tree_store_insert_before(self.object, &iter.object, cParent, cSibling)
+}
+
+func (self *TreeStore) InsertAfter(iter, parent, sibling *TreeIter) {
+	var cSibling, cParent *C.GtkTreeIter = nil, nil
+	
+	if sibling != nil {
+		cSibling = &sibling.object
+	}
+
+	if parent != nil {
+		cParent = &parent.object
+	}
+	C.gtk_tree_store_insert_after(self.object, &iter.object, cParent, cSibling)
+}
+
+func (self *TreeStore) InsertWithValues(iter, parent *TreeIter, position int, values map[int]interface{}) {
+	if values == nil || len(values) == 0 {
+		return
+	}
+
+	valArr := C.gvalue_array_new(C.int(len(values)))
+	columns := C.gint_array_new(C.int(len(values)))
+	defer C.gvalue_array_free(valArr)
+	defer C.gint_array_free(columns)
+
+	var i int = 0
+	for k,v := range values {
+		C.gint_array_set_element(columns, C.int(i), C.gint(k))
+		cval := gobject.ConvertToC(v)
+		defer cval.Free()
+		C.gvalue_array_set_element(valArr, C.int(i), (*C.GValue)(cval.ToCGValue()))
+		i++
+	}
+	var Citer, Cparent *C.GtkTreeIter = nil, nil
+
+	if iter != nil {
+		Citer = &iter.object
+	}
+
+	if parent != nil {
+		Cparent = &parent.object
+	}
+
+	C.gtk_tree_store_insert_with_valuesv(self.object, Citer, Cparent, C.gint(position), columns, valArr, C.gint(len(values)))
+}
+
+func (self *TreeStore) Prepend(iter, parent *TreeIter) {
+	var cParent *C.GtkTreeIter = nil
+	
+	if parent != nil {
+		cParent = &parent.object
+	}
+	C.gtk_tree_store_prepend(self.object, &iter.object, cParent)
+}
+
+func (self *TreeStore) Append(iter, parent *TreeIter) {
+    var cParent *C.GtkTreeIter = nil
+	if parent != nil {
+		cParent = &parent.object
+	}
+	C.gtk_tree_store_append(self.object, &iter.object, cParent)
+}
+
+func (self *TreeStore) IsAncestor(iter, descendant *TreeIter) bool {
+	b := C.gtk_tree_store_is_ancestor(self.object, &iter.object, &descendant.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeStore) IterDepth(iter *TreeIter) int {
+	return int(C.gtk_tree_store_iter_depth(self.object, &iter.object))
+}
+
+func (self *TreeStore) Clear() {
+	C.gtk_tree_store_clear(self.object)
+}
+
+//TODO: gtk_tree_store_reorder
+
+func (self *TreeStore) Swap(a, b *TreeIter) {
+	C.gtk_tree_store_swap(self.object, &a.object, &b.object)
+}
+
+func (self *TreeStore) MoveBefore(iter, position *TreeIter) {
+	C.gtk_tree_store_move_before(self.object, &iter.object, &position.object)
+}
+
+func (self *TreeStore) MoveAfter(iter, position *TreeIter) {
+	C.gtk_tree_store_move_after(self.object, &iter.object, &position.object)
+}
+//////////////////////////////
+// END GtkTreeStore
 ////////////////////////////// }}}
 
 // GtkCellRenderer {{{
@@ -4987,6 +5259,10 @@ func init() {
 	// Register GtkListStore type
 	gobject.RegisterCType(GtkType.LIST_STORE, newListStoreFromNative)
 	gobject.RegisterGoType(GtkType.LIST_STORE, nativeFromListStore)
+
+	// Register GtkTreeStore type
+	gobject.RegisterCType(GtkType.TREE_STORE, newTreeStoreFromNative)
+	gobject.RegisterGoType(GtkType.TREE_STORE, nativeFromTreeStore)
 
 	// Register GtkCellRenderer type
 	gobject.RegisterCType(GtkType.CELL_RENDERER, newCellRendererFromNative)
