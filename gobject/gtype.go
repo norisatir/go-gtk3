@@ -103,6 +103,13 @@ type GValue struct {
 	value *C.GValue
 }
 
+func NewGValueFromNative(gv unsafe.Pointer) *GValue {
+	cgv := (*C.GValue)(gv)
+	newGV := &GValue{0, cgv}
+	newGV.ReInitializeType()
+	return newGV
+}
+
 func (self GValue) ToCGValue() unsafe.Pointer {
 	return unsafe.Pointer(self.value)
 }

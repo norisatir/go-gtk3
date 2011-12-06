@@ -664,6 +664,25 @@ type gtkCellRendererAccelMode struct {
 }
 // End GtkCellRendererAccelMode }}}
 
+// GtkTreeViewColumnSizing {{{
+var GtkTreeViewColumnSizing gtkTreeViewColumnSizing
+
+type gtkTreeViewColumnSizing struct {
+	GROW_ONLY int
+	AUTOSIZE int
+	FIXED int
+}
+// End GtkTreeViewColumnSizing }}}
+
+// GtkSortType {{{
+var GtkSortType gtkSortType
+
+type gtkSortType struct {
+	ASCENDING int
+	DESCENDING int
+}
+// End GtkSortType }}}
+
 
 // GTK3 module init func {{{
 func init() {
@@ -1205,4 +1224,13 @@ func init() {
 	// Initialize GtkCellRendererAccelMode
 	GtkCellRendererAccelMode.GTK = 0
 	GtkCellRendererAccelMode.OTHER = 1
+
+	// Initialize GtkTreeViewColumnSizing
+	GtkTreeViewColumnSizing.GROW_ONLY = 0
+	GtkTreeViewColumnSizing.AUTOSIZE = 1
+	GtkTreeViewColumnSizing.FIXED = 2
+
+	// Initialize GtkSortType
+	GtkSortType.ASCENDING = 0
+	GtkSortType.DESCENDING = 1
 } /// }}}
