@@ -70,7 +70,7 @@ static gboolean _gtk_button_box_get_child_non_homogeneous(GtkButtonBox *widget, 
 #if GTK_CHECK_VERSION(3,2,0)
 	return gtk_button_box_get_child_non_homogeneous(widget, child);
 #else
-	return NULL;
+	return FALSE;
 #endif
 }
 // End ButtonBox funcs }}}
@@ -147,6 +147,16 @@ static inline void _gtk_message_dialog_format_secondary_markup(GtkMessageDialog*
 	gtk_message_dialog_format_secondary_markup(md, message, NULL);
 }
 // End GtkMessageDialog funcs }}}
+
+// GtkAdjustment funcs {{{
+static gdouble _gtk_adjustment_get_minimum_increment(GtkAdjustment* adjustment) {
+#if GTK_CHECK_VERSION(3,2,0)
+    return gtk_adjustment_get_minimum_increment(adjustment);
+#else
+    return 0;
+#endif
+}
+// End GtkAdjustment funcs }}}
 
 // GtkTreePath funcs {{{
 static inline gint _gtk_tree_path_get_indice(gint* indices, int index) {
@@ -3160,7 +3170,7 @@ func (self *Adjustment) GetStepIncrement() float64 {
 }
 
 func (self *Adjustment) GetMinimumIncrement() float64 {
-	return float64(C.gtk_adjustment_get_minimum_increment(self.object))
+	return float64(C._gtk_adjustment_get_minimum_increment(self.object))
 }
 
 func (self *Adjustment) GetUpper() float64 {
