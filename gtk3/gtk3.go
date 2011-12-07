@@ -198,11 +198,15 @@ static inline void gint_array_set_element(gint* vals, int n, gint val) {
 import "C"
 import "unsafe"
 import "runtime"
+import "sync"
 import "fmt"
 import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
 
 // General types and functions {{{
+
+var FreezeMain *sync.Cond
+var mainExit bool
 
 func Init() {
 	C._gtk_init(nil, nil)
@@ -216,20 +220,41 @@ func MainQuit() {
 	C.gtk_main_quit()
 }
 
-// Convinient map for properties
+func GoMain(blocking bool) {
+    mainExit = false
+    for !mainExit {
+        MainIterationDo(blocking)
+    }
+}
+
+func GoMainQuit() {
+    mainExit = true
+}
+
+func MainIterationDo(blocking bool) {
+    b := gobject.GBool(blocking)
+    defer b.Free()
+
+    FreezeMain.L.Lock()
+    defer FreezeMain.L.Unlock()
+
+    C.gtk_main_iteration_do(*((*C.gboolean)(b.GetPtr())))
+}
+
+// Convenient map for properties
 type P map[string]interface{}
 
-// Convinient struct and slice for buttons and id's (See Dialog)
+// Convenient struct and slice for buttons and id's (See Dialog)
 type ButID struct {
 	Text     string
 	Response int
 }
 type B []ButID
 
-// Convinient map for Columns and values (See ListStore, TreeStore)
+// Convenient map for Columns and values (See ListStore, TreeStore)
 type V map[int]interface{}
 
-// Convinient struct and slice for TreeViewColumn attributes
+// Convenient struct and slice for TreeViewColumn attributes
 type CollAttr struct {
 	Attribute string
 	Column int
@@ -5602,6 +5627,9 @@ func (self *TreeView) SetSearchColumn(column int) {
 
 // GTK3 MODULE init function {{{
 func init() {
+    // Initialize FreezeMain variable
+    FreezeMain = sync.NewCond(new(sync.Mutex))
+
 	// Register GtkApplicaton type
 	gobject.RegisterCType(GtkType.APPLICATION, appFromNative)
 	gobject.RegisterGoType(GtkType.APPLICATION, nativeFromApp)
