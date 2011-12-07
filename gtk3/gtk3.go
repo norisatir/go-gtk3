@@ -951,6 +951,10 @@ func (self *Window) GetModal() bool {
 	return gobject.GoBool(b.GetPtr())
 }
 
+func (self *Window) SetDefaultSize(width, height int) {
+    C.gtk_window_set_default_size(self.object, C.gint(width), C.gint(height))
+}
+
 func (self *Window) WindowPresent() {
 	C.gtk_window_present(self.object)
 }
