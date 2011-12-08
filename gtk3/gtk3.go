@@ -45,6 +45,7 @@ static inline GtkCellRendererCombo* to_GtkCellRendererCombo(void* obj) { return 
 static inline GtkCellRendererSpin* to_GtkCellRendererSpin(void* obj) { return GTK_CELL_RENDERER_SPIN(obj); }
 static inline GtkTreeViewColumn* to_GtkTreeViewColumn(void* obj) { return GTK_TREE_VIEW_COLUMN(obj); }
 static inline GtkTreeView* to_GtkTreeView(void* obj) { return GTK_TREE_VIEW(obj); }
+static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
 
@@ -4482,6 +4483,63 @@ func (self *TreeViewColumn) GetXOffset() int {
 // End GtkTreeViewColumn
 ////////////////////////////// }}}
 
+// GtkTreeSelection {{{
+//////////////////////////////
+
+// GtkTreeSelection type
+type TreeSelection struct {
+	object *C.GtkTreeSelection
+}
+
+// Clear TreeSelection struct when it goes out of reach
+func treeSelectionFinalizer(ts *TreeSelection) {
+	runtime.SetFinalizer(ts, func(ts *TreeSelection) { gobject.Unref(ts) })
+}
+
+// Conversion function
+func newTreeSelectionFromNative(obj unsafe.Pointer) interface{} {
+	ts := &TreeSelection{}
+	ts.object = C.to_GtkTreeSelection(obj)
+
+	if gobject.IsObjectFloating(ts) {
+		gobject.RefSink(ts)
+	} else {
+		gobject.Ref(ts)
+	}
+	treeSelectionFinalizer(ts)
+	
+	return ts
+}
+
+func nativeFromTreeSelection(ts interface{}) *gobject.GValue {
+	treeSelection, ok := ts.(*TreeSelection)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TREE_SELECTION, treeSelection.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TreeSelection) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TreeSelection) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TreeSelection) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TreeSelection) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+//////////////////////////////
+// End GtkTreeSelection
+////////////////////////////// }}}
+
 // GtkTreeView {{{
 //////////////////////////////
 
@@ -6266,6 +6324,10 @@ func init() {
 	// Register GtkTreeViewColumn type
 	gobject.RegisterCType(GtkType.TREE_VIEW_COLUMN, newTreeViewColumnFromNative)
 	gobject.RegisterGoType(GtkType.TREE_VIEW_COLUMN, nativeFromTreeViewColumn)
+
+	// Register GtkTreeSelection type
+	gobject.RegisterCType(GtkType.TREE_SELECTION, newTreeSelectionFromNative)
+	gobject.RegisterGoType(GtkType.TREE_SELECTION, nativeFromTreeSelection)
 
 	// Register GtkTreeView
 	gobject.RegisterCType(GtkType.TREE_VIEW, newTreeViewFromNative)

@@ -683,6 +683,17 @@ type gtkSortType struct {
 }
 // End GtkSortType }}}
 
+// GtkSelectionMode {{{
+var GtkSelectionMode gtkSelectionMode
+
+type gtkSelectionMode struct {
+	NONE int
+	SINGLE int
+	BROWSE int
+	MULTIPLE int
+}
+// End GtkSelectionMode }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1232,4 +1243,10 @@ func init() {
 	// Initialize GtkSortType
 	GtkSortType.ASCENDING = 0
 	GtkSortType.DESCENDING = 1
+
+	// Initialize GtkSelectionMode
+	GtkSelectionMode.NONE = 0
+	GtkSelectionMode.SINGLE = 1
+	GtkSelectionMode.BROWSE = 2
+	GtkSelectionMode.MULTIPLE = 3
 } /// }}}
