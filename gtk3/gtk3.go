@@ -4403,6 +4403,81 @@ func (self *TreeViewColumn) GetSortColumnId() int {
 	return int(C.gtk_tree_view_column_get_sort_column_id(self.object))
 }
 
+func (self *TreeViewColumn) SetSortIndicator(setting bool) {
+    b := gobject.GBool(setting)
+    defer b.Free()
+    C.gtk_tree_view_column_set_sort_indicator(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeViewColumn) GetSortIndicator() bool {
+    b := C.gtk_tree_view_column_get_sort_indicator(self.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeViewColumn) SetSortOrder(gtk_SortType int) {
+    C.gtk_tree_view_column_set_sort_order(self.object, C.GtkSortType(gtk_SortType))
+}
+
+func (self *TreeViewColumn) GetSortOrder() int {
+    return int(C.gtk_tree_view_column_get_sort_order(self.object))
+}
+
+func (self *TreeViewColumn) CellSetCellData(model TreeModelLike, iter *TreeIter, isExpander, isExpanded bool) {
+    b1 := gobject.GBool(isExpander)
+    defer b1.Free()
+    b2 := gobject.GBool(isExpanded)
+    defer b2.Free()
+    C.gtk_tree_view_column_cell_set_cell_data(self.object, model.ITreeModel().object, &iter.object, *((*C.gboolean)(b1.GetPtr())),
+        *((*C.gboolean)(b2.GetPtr())))
+}
+
+func (self *TreeViewColumn) CellGetSize(rec *gdk3.Rectangle) (xOffset, yOffset, width, height int) {
+    rectangle := gdk3.NativeRectangle(*rec)
+    var x,y,w,h C.gint
+    C.gtk_tree_view_column_cell_get_size(self.object, (*C.GdkRectangle)(rectangle), &x, &y, &w, &h)
+    xOffset = int(x)
+    yOffset = int(y)
+    width = int(w)
+    height = int(h)
+    return
+}
+
+func (self *TreeViewColumn) CellGetPosition(renderer CellRendererLike) (bool, int, int) {
+    var o, w C.gint
+    b := C.gtk_tree_view_column_cell_get_position(self.object, renderer.CRenderer().object, &o, &w)
+    retBool := gobject.GoBool(unsafe.Pointer(&b))
+    return retBool, int(o), int(w)
+}
+
+func (self *TreeViewColumn) CellIsVisible() bool {
+    b := C.gtk_tree_view_column_cell_is_visible(self.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeViewColumn) FocusCell(renderer CellRendererLike) {
+    C.gtk_tree_view_column_focus_cell(self.object, renderer.CRenderer().object)
+}
+
+func (self *TreeViewColumn) QueueResize() {
+    C.gtk_tree_view_column_queue_resize(self.object)
+}
+
+func (self *TreeViewColumn) GetTreeView() WidgetLike {
+    w := C.gtk_tree_view_column_get_tree_view(self.object)
+    if w == nil {
+        return nil
+    }
+
+    widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
+    if err == nil {
+        return widget.(WidgetLike)
+    }
+    return nil
+}
+
+func (self *TreeViewColumn) GetXOffset() int {
+    return int(C.gtk_tree_view_column_get_x_offset(self.object))
+}
 //////////////////////////////
 // End GtkTreeViewColumn
 ////////////////////////////// }}}
