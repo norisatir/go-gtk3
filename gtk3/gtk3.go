@@ -45,6 +45,7 @@ static inline GtkCellRendererCombo* to_GtkCellRendererCombo(void* obj) { return 
 static inline GtkCellRendererSpin* to_GtkCellRendererSpin(void* obj) { return GTK_CELL_RENDERER_SPIN(obj); }
 static inline GtkTreeViewColumn* to_GtkTreeViewColumn(void* obj) { return GTK_TREE_VIEW_COLUMN(obj); }
 static inline GtkTreeView* to_GtkTreeView(void* obj) { return GTK_TREE_VIEW(obj); }
+static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
 
 // GtkApplication funcs {{{
@@ -5638,6 +5639,378 @@ func (self *TreeView) SetSearchColumn(column int) {
 // End GtkTreeView
 ////////////////////////////// }}}
 
+// GtkNotebook {{{
+//////////////////////////////
+
+// GtkNotebook type
+type Notebook struct {
+    object *C.GtkNotebook
+    *Container
+}
+
+func NewNotebook() *Notebook {
+    n := &Notebook{}
+    o := C.gtk_notebook_new()
+    n.object = C.to_GtkNotebook(unsafe.Pointer(o))
+
+    if gobject.IsObjectFloating(n) {
+        gobject.RefSink(n)
+    }
+    n.Container = NewContainer(unsafe.Pointer(o))
+    notebookFinalizer(n)
+
+    return n
+}
+
+// Clear Notebook struct when it goes out of reach
+func notebookFinalizer(n *Notebook) {
+    runtime.SetFinalizer(n, func(n *Notebook) { gobject.Unref(n) })
+}
+
+// Conversion functions
+func newNotebookFromNative(obj unsafe.Pointer) interface{} {
+    n := &Notebook{}
+    n.object = C.to_GtkNotebook(obj)
+
+    if gobject.IsObjectFloating(n) {
+        gobject.RefSink(n)
+    } else {
+        gobject.Ref(n)
+    }
+    n.Container = NewContainer(obj)
+    notebookFinalizer(n)
+
+    return n
+}
+
+func nativeFromNotebook(note interface{}) *gobject.GValue {
+    n, ok := note.(*Notebook)
+    if ok {
+        gv := gobject.CreateCGValue(GtkType.NOTEBOOK, n.ToNative())
+        return gv
+    }
+    return nil
+}
+
+// To be object-like
+func (self Notebook) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Notebook) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Notebook) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Notebook) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-like
+func (self Notebook) C() *Container {
+	return self.Container
+}
+
+// Notebook interface
+
+func (self *Notebook) AppendPage(child, tabLabel WidgetLike) int {
+    var tab *C.GtkWidget = nil
+    if tabLabel != nil {
+        tab = tabLabel.W().object
+    }
+    return int(C.gtk_notebook_append_page(self.object, child.W().object, tab))
+}
+
+func (self *Notebook) AppendPageMenu(child, tabLabel, menuLabel WidgetLike) int {
+    var t, m *C.GtkWidget = nil, nil
+
+    if tabLabel != nil {
+        t = tabLabel.W().object
+    }
+
+    if menuLabel != nil {
+        m = menuLabel.W().object
+    }
+    return int(C.gtk_notebook_append_page_menu(self.object, child.W().object, t, m))
+}
+
+func (self *Notebook) PrependPage(child, tabLabel WidgetLike) int {
+    var t *C.GtkWidget
+    if tabLabel != nil {
+        t = tabLabel.W().object
+    }
+    return int(C.gtk_notebook_prepend_page(self.object, child.W().object, t))
+}
+
+func (self *Notebook) PrependPageMenu(child, tabLabel, menuLabel WidgetLike) int {
+    var t, m *C.GtkWidget = nil, nil
+
+    if tabLabel != nil {
+        t = tabLabel.W().object
+    }
+
+    if menuLabel != nil {
+        m = menuLabel.W().object
+    }
+    return int(C.gtk_notebook_prepend_page_menu(self.object, child.W().object, t, m))
+}
+
+func (self *Notebook) InsertPage(child, tabLabel WidgetLike, position int) int {
+    var t *C.GtkWidget = nil
+
+    if tabLabel != nil {
+        t = tabLabel.W().object
+    }
+    return int(C.gtk_notebook_insert_page(self.object, child.W().object, t, C.gint(position)))
+}
+
+func (self *Notebook) InsertPageMenu(child, tabLabel, menuLabel WidgetLike, position int) int {
+    var t, m *C.GtkWidget = nil, nil
+
+    if tabLabel != nil {
+        t = tabLabel.W().object
+    }
+
+    if menuLabel != nil {
+        m = menuLabel.W().object
+    }
+    return int(C.gtk_notebook_insert_page_menu(self.object, child.W().object, t, m, C.gint(position)))
+}
+
+func (self *Notebook) RemovePage(pageNum int) {
+    C.gtk_notebook_remove_page(self.object, C.gint(pageNum))
+}
+
+func (self *Notebook) PageNum(child WidgetLike) int {
+    return int(C.gtk_notebook_page_num(self.object, child.W().object))
+}
+
+func (self *Notebook) NextPage() {
+    C.gtk_notebook_next_page(self.object)
+}
+
+func (self *Notebook) PrevPage() {
+    C.gtk_notebook_prev_page(self.object)
+}
+
+func (self *Notebook) ReorderChild(child WidgetLike, position int) {
+    C.gtk_notebook_reorder_child(self.object, child.W().object, C.gint(position))
+}
+
+func (self *Notebook) SetTabPos(gtk_PositionType int) {
+    C.gtk_notebook_set_tab_pos(self.object, C.GtkPositionType(gtk_PositionType))
+}
+
+func (self *Notebook) SetShowTabs(showTabs bool) {
+    b := gobject.GBool(showTabs)
+    defer b.Free()
+    C.gtk_notebook_set_show_tabs(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Notebook) SetShowBorder(showBorder bool) {
+    b := gobject.GBool(showBorder)
+    defer b.Free()
+    C.gtk_notebook_set_show_border(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Notebook) SetScrollable(scrollable bool) {
+    b := gobject.GBool(scrollable)
+    defer b.Free()
+    C.gtk_notebook_set_scrollable(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Notebook) PopupEnable() {
+    C.gtk_notebook_popup_enable(self.object)
+}
+
+func (self *Notebook) PopupDisable() {
+    C.gtk_notebook_popup_disable(self.object)
+}
+
+func (self *Notebook) GetCurrentPage() int {
+    return int(C.gtk_notebook_get_current_page(self.object))
+}
+
+func (self *Notebook) GetMenuLabel(child WidgetLike) WidgetLike {
+    ml := C.gtk_notebook_get_menu_label(self.object, child.W().object)
+    if ml == nil {
+        return nil
+    }
+
+    l, err := gobject.ConvertToGo(unsafe.Pointer(ml))
+    if err == nil {
+        return l.(WidgetLike)
+    }
+    return nil
+}
+
+func (self *Notebook) GetNthPage(pageNum int) WidgetLike {
+    w := C.gtk_notebook_get_nth_page(self.object, C.gint(pageNum))
+    if w == nil {
+        return nil
+    }
+
+    child, err := gobject.ConvertToGo(unsafe.Pointer(w))
+    if err == nil {
+        return child.(WidgetLike)
+    }
+    return nil
+}
+
+func (self *Notebook) GetNPages() int {
+    return int(C.gtk_notebook_get_n_pages(self.object))
+}
+
+func (self *Notebook) GetTabLabel(child WidgetLike) WidgetLike {
+    w := C.gtk_notebook_get_tab_label(self.object, child.W().object)
+    if w == nil {
+        return nil
+    }
+
+    widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
+    if err == nil {
+        return widget.(WidgetLike)
+    }
+    return nil
+}
+
+func (self *Notebook) SetMenuLabel(child, menuLabel WidgetLike) {
+    var m *C.GtkWidget = nil
+    if menuLabel != nil {
+        m = menuLabel.W().object
+    }
+    C.gtk_notebook_set_menu_label(self.object, child.W().object, m)
+}
+
+func (self *Notebook) SetMenuLabelText(child WidgetLike, menuText string) {
+    s := gobject.GString(menuText)
+    defer s.Free()
+    C.gtk_notebook_set_menu_label_text(self.object, child.W().object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Notebook) SetTabLabel(child, tabLabel WidgetLike) {
+    var l *C.GtkWidget = nil
+    if tabLabel != nil {
+        l = tabLabel.W().object
+    }
+    C.gtk_notebook_set_tab_label(self.object, child.W().object, l)
+}
+
+func (self *Notebook) SetTabLabelText(child WidgetLike, tabText string) {
+    s := gobject.GString(tabText)
+    defer s.Free()
+    C.gtk_notebook_set_tab_label_text(self.object, child.W().object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Notebook) SetTabReorderable(child WidgetLike, reorderable bool) {
+    b := gobject.GBool(reorderable)
+    defer b.Free()
+    C.gtk_notebook_set_tab_reorderable(self.object, child.W().object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Notebook) SetTabDetachable(child WidgetLike, detachable bool) {
+    b := gobject.GBool(detachable)
+    defer b.Free()
+    C.gtk_notebook_set_tab_detachable(self.object, child.W().object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Notebook) GetMenuLabelText(child WidgetLike) string {
+    s := C.gtk_notebook_get_menu_label_text(self.object, child.W().object)
+    if s == nil {
+        return ""
+    }
+    return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *Notebook) GetScrollable() bool {
+    b := C.gtk_notebook_get_scrollable(self.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Notebook) GetShowBorder() bool {
+    b := C.gtk_notebook_get_show_border(self.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Notebook) GetShowTabs() bool {
+    b := C.gtk_notebook_get_show_tabs(self.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Notebook) GetTabLabelText(child WidgetLike) string {
+    s := C.gtk_notebook_get_tab_label_text(self.object, child.W().object)
+    if s == nil {
+        return ""
+    }
+    return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *Notebook) GetTabPos() (gtk_PositionType int) {
+    return int(C.gtk_notebook_get_tab_pos(self.object))
+}
+
+func (self *Notebook) GetTabReorderable(child WidgetLike) bool {
+    b := C.gtk_notebook_get_tab_reorderable(self.object, child.W().object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Notebook) GetTabDetachable(child WidgetLike) bool {
+    b := C.gtk_notebook_get_tab_detachable(self.object, child.W().object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Notebook) GetTabHborder() uint {
+    return uint(C.gtk_notebook_get_tab_hborder(self.object))
+}
+
+func (self *Notebook) GetTabVborder() uint {
+    return uint(C.gtk_notebook_get_tab_vborder(self.object))
+}
+
+func (self *Notebook) SetCurrentPage(pageNum int) {
+    C.gtk_notebook_set_current_page(self.object, C.gint(pageNum))
+}
+
+func (self *Notebook) SetGroupName(groupName string) {
+    if groupName == "" {
+        C.gtk_notebook_set_group_name(self.object, nil)
+    }
+    s := gobject.GString(groupName)
+    defer s.Free()
+
+    C.gtk_notebook_set_group_name(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Notebook) GetGroupName() string {
+    s := C.gtk_notebook_get_group_name(self.object)
+    if s == nil {
+        return ""
+    }
+    return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *Notebook) SetActionWidget(w WidgetLike, gtk_Pack int) {
+    C.gtk_notebook_set_action_widget(self.object, w.W().object, C.GtkPackType(gtk_Pack))
+}
+
+func (self *Notebook) GetActionWidget(gtk_Pack int) WidgetLike {
+    w := C.gtk_notebook_get_action_widget(self.object, C.GtkPackType(gtk_Pack))
+    if w == nil {
+        return nil
+    }
+    widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
+    if err == nil {
+        return widget.(WidgetLike)
+    }
+    return nil
+}
+//////////////////////////////
+// End GtkNotebook
+////////////////////////////// }}}
+
 
 // GTK3 MODULE init function {{{
 func init() {
@@ -5771,5 +6144,9 @@ func init() {
 	// Register GtkTreeView
 	gobject.RegisterCType(GtkType.TREE_VIEW, newTreeViewFromNative)
 	gobject.RegisterGoType(GtkType.TREE_VIEW, nativeFromTreeView)
+
+    // Register GtkNotebook
+    gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
+    gobject.RegisterGoType(GtkType.NOTEBOOK, nativeFromNotebook)
 }
 // End init function }}}
