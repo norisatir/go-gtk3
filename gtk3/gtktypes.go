@@ -618,8 +618,8 @@ type gtkCorner struct {
 var GtkTreeModelFlags gtkTreeModelFlags
 
 type gtkTreeModelFlags struct {
-    ITERS_PERSIST int
-    LIST_ONLY int
+	ITERS_PERSIST int
+	LIST_ONLY     int
 }
 // End GtkTreeModelFlags  }}}
 
@@ -627,11 +627,11 @@ type gtkTreeModelFlags struct {
 var GtkCellRendererState gtkCellRendererState
 
 type gtkCellRendererState struct {
-	SELECTED int
-	PRELIT int
+	SELECTED    int
+	PRELIT      int
 	INSENSITIVE int
-	SORTED int
-	FOCUSED int
+	SORTED      int
+	FOCUSED     int
 }
 // End GtkCellRendererState }}}
 
@@ -639,9 +639,9 @@ type gtkCellRendererState struct {
 var GtkCellRendererMode gtkCellRendererMode
 
 type gtkCellRendererMode struct {
-	INERT int
+	INERT       int
 	ACTIVATABLE int
-	EDITABLE int
+	EDITABLE    int
 }
 // End GtkCellRendererMode }}}
 
@@ -651,7 +651,7 @@ var GtkSizeRequestMode gtkSizeRequestMode
 type gtkSizeRequestMode struct {
 	HEIGHT_FOR_WIDTH int
 	WIDTH_FOR_HEIGHT int
-	CONSTANT_SIZE int
+	CONSTANT_SIZE    int
 }
 // End GtkSizeRequestMode  }}}
 
@@ -659,7 +659,7 @@ type gtkSizeRequestMode struct {
 var GtkCellRendererAccelMode gtkCellRendererAccelMode
 
 type gtkCellRendererAccelMode struct {
-	GTK int
+	GTK   int
 	OTHER int
 }
 // End GtkCellRendererAccelMode }}}
@@ -669,8 +669,8 @@ var GtkTreeViewColumnSizing gtkTreeViewColumnSizing
 
 type gtkTreeViewColumnSizing struct {
 	GROW_ONLY int
-	AUTOSIZE int
-	FIXED int
+	AUTOSIZE  int
+	FIXED     int
 }
 // End GtkTreeViewColumnSizing }}}
 
@@ -678,11 +678,10 @@ type gtkTreeViewColumnSizing struct {
 var GtkSortType gtkSortType
 
 type gtkSortType struct {
-	ASCENDING int
+	ASCENDING  int
 	DESCENDING int
 }
 // End GtkSortType }}}
-
 
 // GTK3 module init func {{{
 func init() {
@@ -1200,9 +1199,9 @@ func init() {
 	GtkCorner.TOP_RIGHT = 2
 	GtkCorner.BOTTOM_RIGHT = 3
 
-    // Initialize GtkTreeModelFlags
-    GtkTreeModelFlags.ITERS_PERSIST = 1 << 0
-    GtkTreeModelFlags.LIST_ONLY = 1 << 1
+	// Initialize GtkTreeModelFlags
+	GtkTreeModelFlags.ITERS_PERSIST = 1 << 0
+	GtkTreeModelFlags.LIST_ONLY = 1 << 1
 
 	// Initialize GtkCellRendererState
 	GtkCellRendererState.SELECTED = 1 << 0

@@ -232,24 +232,24 @@ func MainQuit() {
 }
 
 func GoMain(blocking bool) {
-    mainExit = false
-    for !mainExit {
-        MainIterationDo(blocking)
-    }
+	mainExit = false
+	for !mainExit {
+		MainIterationDo(blocking)
+	}
 }
 
 func GoMainQuit() {
-    mainExit = true
+	mainExit = true
 }
 
 func MainIterationDo(blocking bool) {
-    b := gobject.GBool(blocking)
-    defer b.Free()
+	b := gobject.GBool(blocking)
+	defer b.Free()
 
-    FreezeMain.L.Lock()
-    defer FreezeMain.L.Unlock()
+	FreezeMain.L.Lock()
+	defer FreezeMain.L.Unlock()
 
-    C.gtk_main_iteration_do(*((*C.gboolean)(b.GetPtr())))
+	C.gtk_main_iteration_do(*((*C.gboolean)(b.GetPtr())))
 }
 
 // Convenient map for properties
@@ -268,7 +268,7 @@ type V map[int]interface{}
 // Convenient struct and slice for TreeViewColumn attributes
 type CollAttr struct {
 	Attribute string
-	Column int
+	Column    int
 }
 type A []CollAttr
 
@@ -317,7 +317,7 @@ type RangeLike interface {
 
 // TreeModel like interface must have method ITreeModel()
 type TreeModelLike interface {
-    ITreeModel() *TreeModel
+	ITreeModel() *TreeModel
 }
 
 // CellRendererLike interface must have method CRenderer()
@@ -328,100 +328,7 @@ type CellRendererLike interface {
 // END Interfaces
 ////////////////////////////// }}}
 
-// GtkApplication {{{
-//////////////////////////////
-
-// Application Type
-type Application struct {
-	object *C.GtkApplication
-}
-
-// Create new application
-func NewApplication(id string, flags int) *Application {
-	cid := gobject.GString(id)
-	defer cid.Free()
-	app := C.gtk_application_new((*C.gchar)(cid.GetPtr()), C.GApplicationFlags(flags))
-	gtkapp := &Application{app}
-
-	if gobject.IsObjectFloating(gtkapp) {
-		gobject.RefSink(gtkapp)
-	}
-	C.g_application_register(C.to_GApplication(app), nil, nil)
-	//C.g_application_activate(C.to_GApplication(app))
-	gtkapp.Connect("activate", func() {})
-
-	return gtkapp
-}
-
-// Release reference when this Application struct goes out of scope
-func appFinalizer(a *Application) {
-	runtime.SetFinalizer(a, func(a *Application) { gobject.Unref(a) })
-}
-
-// Convert from Native to Go type
-func appFromNative(app unsafe.Pointer) interface{} {
-	ga := C.to_GtkApplication(app)
-	gtkapp := &Application{ga}
-
-	if gobject.IsObjectFloating(gtkapp) {
-		gobject.RefSink(gtkapp)
-	} else {
-		gobject.Ref(gtkapp)
-	}
-	return &Application{ga}
-}
-
-// Convert from Go to Native
-func nativeFromApp(app interface{}) *gobject.GValue {
-	argapp, ok := app.(*Application)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.APPLICATION, argapp.ToNative())
-		return gv
-	}
-
-	return nil
-}
-
-// To be object-like
-func (self Application) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self Application) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self Application) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self Application) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// Add Window to application object
-func (self *Application) AddWindow(window *Window) {
-	if window == nil {
-		return
-	}
-	C.gtk_application_add_window(self.object, window.object)
-}
-
-// Remove Window
-func (self *Application) RemoveWindow(window *Window) {
-	if window == nil {
-		return
-	}
-
-	C.gtk_application_remove_window(self.object, window.object)
-}
-
-// Run app
-func (self *Application) Run() {
-	C.run_app(self.object)
-}
-// END GtkApplication
-////////////////////////////// }}}
+// Base Structs {{{
 
 // GtkWidget {{{
 //////////////////////////////
@@ -676,6 +583,209 @@ func (self *Container) SetBorderWidth(width uint) {
 //////////////////////////////
 // END GtkContainer
 ////////////////////////////// }}}
+
+// GtkRange {{{
+//////////////////////////////
+
+// GtkRange type
+type Range struct {
+	object *C.GtkRange
+	*Widget
+}
+
+// Clear Range struct when it goes out of reach
+func rangeFinalizer(r *Range) {
+	runtime.SetFinalizer(r, func(r *Range) { gobject.Unref(r) })
+}
+
+// Conversion functions for gobject registration map
+func newRangeFromNative(obj unsafe.Pointer) interface{} {
+	r := &Range{}
+	r.object = C.to_GtkRange(obj)
+
+	if gobject.IsObjectFloating(r) {
+		gobject.RefSink(r)
+	} else {
+		gobject.Ref(r)
+	}
+	r.Widget = NewWidget(obj)
+	rangeFinalizer(r)
+
+	return r
+}
+
+func nativeFromRange(r interface{}) *gobject.GValue {
+	ran, ok := r.(*Range)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.RANGE, ran.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self Range) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Range) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Range) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Range) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be widget-like
+func (self Range) W() *Widget {
+	return self.Widget
+}
+
+// Range interface
+func (self *Range) GetFillLevel() float64 {
+	return float64(C.gtk_range_get_fill_level(self.object))
+}
+
+func (self *Range) GetRestrictToFillLevel() bool {
+	b := C.gtk_range_get_restrict_to_fill_level(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Range) GetShowFillLevel() bool {
+	b := C.gtk_range_get_show_fill_level(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Range) SetFillLevel(fillLevel float64) {
+	C.gtk_range_set_fill_level(self.object, C.gdouble(fillLevel))
+}
+
+func (self *Range) SetRestrictToFillLevel(restrictToFillLevel bool) {
+	b := gobject.GBool(restrictToFillLevel)
+	defer b.Free()
+	C.gtk_range_set_restrict_to_fill_level(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Range) SetShowFillLevel(showFillLevel bool) {
+	b := gobject.GBool(showFillLevel)
+	defer b.Free()
+	C.gtk_range_set_show_fill_level(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Range) GetAdjustment() *Adjustment {
+	a := C.gtk_range_get_adjustment(self.object)
+	adj, err := gobject.ConvertToGo(unsafe.Pointer(&a))
+	if err == nil {
+		return adj.(*Adjustment)
+	}
+	return nil
+}
+
+func (self *Range) SetAdjustment(adjustment *Adjustment) {
+	C.gtk_range_set_adjustment(self.object, adjustment.object)
+}
+
+func (self *Range) GetInverted() bool {
+	b := C.gtk_range_get_inverted(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Range) SetInverted(inverted bool) {
+	b := gobject.GBool(inverted)
+	C.gtk_range_set_inverted(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Range) GetValue() float64 {
+	return float64(C.gtk_range_get_value(self.object))
+}
+
+func (self *Range) SetValue(value float64) {
+	C.gtk_range_set_value(self.object, C.gdouble(value))
+}
+
+func (self *Range) SetIncrements(step, page float64) {
+	C.gtk_range_set_increments(self.object, C.gdouble(step), C.gdouble(page))
+}
+
+func (self *Range) SetRange(min, max float64) {
+	C.gtk_range_set_range(self.object, C.gdouble(min), C.gdouble(max))
+}
+
+func (self *Range) GetRoundDigits() int {
+	return int(C.gtk_range_get_round_digits(self.object))
+}
+
+func (self *Range) SetRoundDigits(roundDigits int) {
+	C.gtk_range_set_round_digits(self.object, C.gint(roundDigits))
+}
+
+func (self *Range) SetLowerStepperSensitivity(gtk_sensitivityType int) {
+	C.gtk_range_set_lower_stepper_sensitivity(self.object, C.GtkSensitivityType(gtk_sensitivityType))
+}
+
+func (self *Range) GetLowerStepperSensitivity() int {
+	return int(C.gtk_range_get_lower_stepper_sensitivity(self.object))
+}
+
+func (self *Range) SetUpperStepperSensitivity(gtk_sensitivityType int) {
+	C.gtk_range_set_upper_stepper_sensitivity(self.object, C.GtkSensitivityType(gtk_sensitivityType))
+}
+
+func (self *Range) GetUpperStepperSensitivity() int {
+	return int(C.gtk_range_get_upper_stepper_sensitivity(self.object))
+}
+
+func (self *Range) GetFlippable() bool {
+	b := C.gtk_range_get_flippable(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Range) SetFlippable(flippable bool) {
+	b := gobject.GBool(flippable)
+	defer b.Free()
+	C.gtk_range_set_flippable(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Range) GetMinSliderSize() int {
+	return int(C.gtk_range_get_min_slider_size(self.object))
+}
+
+//TODO: gtk_range_get_range_rect
+
+func (self *Range) GetSliderRange() (start, end int) {
+	var s C.gint
+	var e C.gint
+	C.gtk_range_get_slider_range(self.object, &s, &e)
+	start = int(s)
+	end = int(e)
+	return
+}
+
+func (self *Range) GetSliderSizeFixed() bool {
+	b := C.gtk_range_get_slider_size_fixed(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Range) SetMinSliderSize(minSize int) {
+	C.gtk_range_set_min_slider_size(self.object, C.gint(minSize))
+}
+
+func (self *Range) SetSliderSizeFixed(sizeFixed bool) {
+	b := gobject.GBool(sizeFixed)
+	defer b.Free()
+	C.gtk_range_set_slider_size_fixed(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+//////////////////////////////
+// END GtkRange
+////////////////////////////// }}}
+
+// End Base Structs }}}
+
+// Windows {{{
 
 // GtkWindow {{{
 //////////////////////////////
@@ -963,7 +1073,7 @@ func (self *Window) GetModal() bool {
 }
 
 func (self *Window) SetDefaultSize(width, height int) {
-    C.gtk_window_set_default_size(self.object, C.gint(width), C.gint(height))
+	C.gtk_window_set_default_size(self.object, C.gint(width), C.gint(height))
 }
 
 func (self *Window) WindowPresent() {
@@ -1032,61 +1142,89 @@ func (self *Window) GetApplication() *Application {
 // END GtkWindow
 ////////////////////////////// }}}
 
-// GtkBox {{{
+// GtkDialog {{{
 //////////////////////////////
 
-// Box type
-type Box struct {
-	object *C.GtkBox
-	*Container
+// GtkDialog type
+type Dialog struct {
+	object *C.GtkDialog
+	*Window
 }
 
-func NewBox(orientation int, spacing int) *Box {
-	box := &Box{}
-	o := C.gtk_box_new(C.GtkOrientation(orientation), C.gint(spacing))
-	box.object = C.to_GtkBox(unsafe.Pointer(o))
+func NewDialog() *Dialog {
+	d := &Dialog{}
+	o := C.gtk_dialog_new()
+	d.object = C.to_GtkDialog(unsafe.Pointer(o))
 
-	if gobject.IsObjectFloating(box) {
-		gobject.RefSink(box)
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
 	}
-	box.Container = NewContainer(unsafe.Pointer(o))
-	boxFinalizer(box)
+	d.Window = newWindowFromNative(unsafe.Pointer(o)).(*Window)
+	dialogFinalizer(d)
 
-	return box
+	return d
 }
 
-func NewHBox(spacing int) *Box {
-	return NewBox(GtkOrientation.HORIZONTAL, spacing)
+func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *Dialog {
+	// Must have at least one button
+	if len(butAndID) == 0 {
+		return nil
+	}
+
+	t := gobject.GString(title)
+	defer t.Free()
+
+	firstButton := butAndID[0].Text
+	fb := gobject.GString(firstButton)
+	defer fb.Free()
+
+	firstId := butAndID[0].Response
+
+	var wparent *C.GtkWindow = nil
+	if parent != nil {
+		wparent = parent.object
+	}
+
+	d := &Dialog{}
+	o := C._dialog_new_with_buttons((*C.gchar)(t.GetPtr()), wparent, C.GtkDialogFlags(flags),
+		(*C.gchar)(fb.GetPtr()), C.gint(firstId))
+	d.object = C.to_GtkDialog(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
+	}
+	d.Window = newWindowFromNative(unsafe.Pointer(o)).(*Window)
+	dialogFinalizer(d)
+	d.AddButtons(butAndID[1:])
+
+	return d
 }
 
-func NewVBox(spacing int) *Box {
-	return NewBox(GtkOrientation.VERTICAL, spacing)
+// Clear Dialog struct when it goes out of reach
+func dialogFinalizer(d *Dialog) {
+	runtime.SetFinalizer(d, func(d *Dialog) { gobject.Unref(d) })
 }
 
-// Clear Box struct when it goes out of reach
-func boxFinalizer(box *Box) {
-	runtime.SetFinalizer(box, func(box *Box) { gobject.Unref(box) })
-}
 // Conversion function for gobject registration map
-func newBoxFromNative(obj unsafe.Pointer) interface{} {
-	box := &Box{}
-	box.object = C.to_GtkBox(obj)
+func newDialogFromNative(obj unsafe.Pointer) interface{} {
+	d := &Dialog{}
+	d.object = C.to_GtkDialog(obj)
 
-	if gobject.IsObjectFloating(box) {
-		gobject.RefSink(box)
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
 	} else {
-		gobject.Ref(box)
+		gobject.Ref(d)
 	}
-	box.Container = NewContainer(obj)
-	boxFinalizer(box)
+	d.Window = newWindowFromNative(obj).(*Window)
+	dialogFinalizer(d)
 
-	return box
+	return d
 }
 
-func nativeFromBox(b interface{}) *gobject.GValue {
-	box, ok := b.(*Box)
+func nativeFromDialog(d interface{}) *gobject.GValue {
+	dialog, ok := d.(*Dialog)
 	if ok {
-		gv := gobject.CreateCGValue(GtkType.BOX, box.ToNative())
+		gv := gobject.CreateCGValue(GtkType.DIALOG, dialog.ToNative())
 		return gv
 	}
 
@@ -1094,248 +1232,173 @@ func nativeFromBox(b interface{}) *gobject.GValue {
 }
 
 // To be object-like
-func (self Box) ToNative() unsafe.Pointer {
+func (self Dialog) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Box) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+func (self Dialog) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
 	return gobject.Connect(self, name, f, data...)
 }
 
-func (self Box) Set(properties map[string]interface{}) {
+func (self Dialog) Set(properties map[string]interface{}) {
 	gobject.Set(self, properties)
 }
 
-func (self Box) Get(properties []string) map[string]interface{} {
+func (self Dialog) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// To be container-like
-func (self Box) C() *Container {
-	return self.Container
+// To be window-like
+func (self Dialog) Wnd() *Window {
+	return self.Window
 }
 
-// Box interface
-func (self *Box) PackStart(w WidgetLike, expand bool, fill bool, padding uint) {
-	e := gobject.GBool(expand)
-	f := gobject.GBool(fill)
-	defer e.Free()
-	defer f.Free()
-	C.gtk_box_pack_start(self.object, w.W().object, *((*C.gboolean)(e.GetPtr())), *((*C.gboolean)(e.GetPtr())), C.guint(padding))
+// Dialog interface
+func (self *Dialog) Run() int {
+	response := C.gtk_dialog_run(self.object)
+	return int(response)
 }
 
-func (self *Box) PackEnd(w WidgetLike, expand bool, fill bool, padding uint) {
-	e := gobject.GBool(expand)
-	f := gobject.GBool(fill)
-	defer e.Free()
-	defer f.Free()
-	C.gtk_box_pack_end(self.object, w.W().object, *((*C.gboolean)(e.GetPtr())), *((*C.gboolean)(e.GetPtr())), C.guint(padding))
+func (self *Dialog) Response(responseId int) {
+	C.gtk_dialog_response(self.object, C.gint(responseId))
 }
 
-func (self *Box) GetHomogeneous() bool {
-	h := gobject.GetProperty(self, "homogeneous")
-	defer h.Free()
-	return gobject.GoBool(h.GetPtr())
-}
-
-func (self *Box) SetHomogeneous(homogeneous bool) {
-	gobject.SetProperty(self, "homogeneous", homogeneous)
-}
-
-func (self *Box) GetSpacing() int {
-	return int(C.gtk_box_get_spacing(self.object))
-}
-
-func (self *Box) SetSpacing(spacing int) {
-	gobject.SetProperty(self, "spacing", spacing)
-}
-
-func (self *Box) ReorderChild(w WidgetLike, position int) {
-	C.gtk_box_reorder_child(self.object, w.W().object, C.gint(position))
-}
-
-func (self *Box) QueryChildPacking(w WidgetLike) (expand bool, fill bool, padding uint, ptype int) {
-	var e C.gboolean
-	var f C.gboolean
-	var p C.guint
-	var t C.GtkPackType
-	C.gtk_box_query_child_packing(self.object, w.W().object, &e, &f, &p, &t)
-
-	return gobject.GoBool(unsafe.Pointer(&e)), gobject.GoBool(unsafe.Pointer(&f)), uint(p), int(t)
-}
-
-func (self *Box) SetChildPacking(w WidgetLike, expand bool, fill bool, padding int, ptype int) {
-	e := gobject.GBool(expand)
-	f := gobject.GBool(fill)
-	defer e.Free()
-	defer f.Free()
-	C.gtk_box_set_child_packing(self.object, w.W().object, *((*C.gboolean)(e.GetPtr())), *((*C.gboolean)(f.GetPtr())),
-		C.guint(padding), C.GtkPackType(ptype))
-}
-//////////////////////////////
-// END GtkBox
-////////////////////////////// }}}
-
-// GtkButtonBox {{{
-//////////////////////////////
-
-// ButtonBox type
-type ButtonBox struct {
-	object *C.GtkButtonBox
-	*Box
-}
-
-func NewButtonBox(orientation int) *ButtonBox {
-	bb := &ButtonBox{}
-	o := C.gtk_button_box_new(C.GtkOrientation(orientation))
-	bb.object = C.to_GtkButtonBox(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(bb) {
-		gobject.RefSink(bb)
-	}
-	bb.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
-	buttonBoxFinalizer(bb)
-
-	return bb
-}
-
-// Clear ButtonBox structure when it goes out of reach
-func buttonBoxFinalizer(bb *ButtonBox) {
-	runtime.SetFinalizer(bb, func(bb *ButtonBox) { gobject.Unref(bb) })
-}
-
-// Conversion function for gobject registration map
-func newButtonBoxFromNative(obj unsafe.Pointer) interface{} {
-	bb := &ButtonBox{}
-	bb.object = C.to_GtkButtonBox(obj)
-
-	if gobject.IsObjectFloating(bb) {
-		gobject.RefSink(bb)
-	}
-	bb.Box = newBoxFromNative(obj).(*Box)
-	buttonBoxFinalizer(bb)
-
-	return bb
-}
-
-func nativeFromButtonBox(b interface{}) *gobject.GValue {
-	bbox, ok := b.(*ButtonBox)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.BUTTON_BOX, bbox.ToNative())
-		return gv
-	}
-	return nil
-}
-
-// To be object-like
-func (self ButtonBox) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self ButtonBox) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self ButtonBox) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self ButtonBox) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// To be Box-like
-func (self ButtonBox) CBox() *Box {
-	return self.Box
-}
-
-// ButtonBox Interface
-func (self *ButtonBox) GetLayout() int {
-	l := C.gtk_button_box_get_layout(self.object)
-	return int(l)
-}
-
-func (self *ButtonBox) GetChildSecondary(w WidgetLike) bool {
-	cb := C.gtk_button_box_get_child_secondary(self.object, w.W().object)
-	return gobject.GoBool(unsafe.Pointer(&cb))
-}
-
-func (self *ButtonBox) GetChildNonHomogeneous(w WidgetLike) bool {
-	cb := C._gtk_button_box_get_child_non_homogeneous(self.object, w.W().object)
-	return gobject.GoBool(unsafe.Pointer(&cb))
-}
-
-func (self *ButtonBox) SetLayout(layoutStyle int) {
-	C.gtk_button_box_set_layout(self.object, C.GtkButtonBoxStyle(layoutStyle))
-}
-
-func (self *ButtonBox) SetChildSecondary(w WidgetLike, isSecondary bool) {
-	cb := gobject.GBool(isSecondary)
-	defer cb.Free()
-	C.gtk_button_box_set_child_secondary(self.object, w.W().object, *((*C.gboolean)(cb.GetPtr())))
-}
-
-func (self *ButtonBox) SetChildNonHomogeneous(w WidgetLike, nonHomogeneous bool) {
-	cb := gobject.GBool(nonHomogeneous)
-	defer cb.Free()
-	C._gtk_button_box_set_child_non_homogeneous(self.object, w.W().object, *((*C.gboolean)(cb.GetPtr())))
-}
-//////////////////////////////
-// END GtkButtonBox
-////////////////////////////// }}}
-
-// GtkFrame {{{
-//////////////////////////////
-
-// Frame type
-type Frame struct {
-	object *C.GtkFrame
-	*Container
-}
-
-func NewFrame(label string) *Frame {
-	f := &Frame{}
-
-	s := gobject.GString(label)
+func (self *Dialog) AddButton(buttonText string, responseId int) *Button {
+	s := gobject.GString(buttonText)
 	defer s.Free()
-
-	o := C.gtk_frame_new((*C.gchar)(s.GetPtr()))
-	f.object = C.to_GtkFrame(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(f) {
-		gobject.RefSink(f)
+	b := C.gtk_dialog_add_button(self.object, (*C.gchar)(s.GetPtr()), C.gint(responseId))
+	btn, err := gobject.ConvertToGo(unsafe.Pointer(&b))
+	if err == nil {
+		return btn.(*Button)
 	}
-	f.Container = NewContainer(unsafe.Pointer(o))
-	frameFinalizer(f)
-
-	return f
+	return nil
 }
 
-// Clear Frame struct when it goes out of reach
-func frameFinalizer(f *Frame) {
-	runtime.SetFinalizer(f, func(f *Frame) { gobject.Unref(f) })
+func (self *Dialog) AddButtons(buttonAndId B) {
+	for _, btn := range buttonAndId {
+		self.AddButton(btn.Text, btn.Response)
+	}
+}
+
+func (self *Dialog) AddActionWidget(w WidgetLike, responseId int) {
+	C.gtk_dialog_add_action_widget(self.object, w.W().object, C.gint(responseId))
+}
+
+func (self *Dialog) SetDefaultResponse(responseId int) {
+	C.gtk_dialog_set_default_response(self.object, C.gint(responseId))
+}
+
+func (self *Dialog) SetResponseSensitive(responseId int, setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_dialog_set_response_sensitive(self.object, C.gint(responseId), *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Dialog) GetResponseForWidget(w WidgetLike) int {
+	i := C.gtk_dialog_get_response_for_widget(self.object, w.W().object)
+	return int(i)
+}
+
+func (self *Dialog) GetWidgetForResponse(responseId int) WidgetLike {
+	cw := C.gtk_dialog_get_widget_for_response(self.object, C.gint(responseId))
+	if cw != nil {
+		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
+		if err == nil {
+			return w.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *Dialog) GetActionArea() WidgetLike {
+	cw := C.gtk_dialog_get_action_area(self.object)
+	if cw != nil {
+		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
+		if err == nil {
+			return w.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *Dialog) GetContentArea() WidgetLike {
+	cw := C.gtk_dialog_get_content_area(self.object)
+	if cw != nil {
+		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
+		if err == nil {
+			return w.(WidgetLike)
+		}
+	}
+	return nil
+}
+//////////////////////////////
+// END GtkDialog
+////////////////////////////// }}}
+
+// GtkMessageDialog {{{
+//////////////////////////////
+
+// GtkMessageDialog type
+type MessageDialog struct {
+	object *C.GtkMessageDialog
+	*Dialog
+}
+
+func NewMessageDialog(parent *Window, flags int, mtype int, buttons int, messageFormat string, argsToMessage ...interface{}) *MessageDialog {
+	mdiag := &MessageDialog{}
+	var message string = messageFormat
+
+	// If additional args, then call Sprintf with those args
+	// and save formated message
+	if len(argsToMessage) > 0 {
+		message = fmt.Sprintf(messageFormat, argsToMessage...)
+	}
+
+	cmessage := gobject.GString(message)
+	defer cmessage.Free()
+
+	// If parent is not nil we will feed the parent object
+	var pwin *C.GtkWindow = nil
+	if parent != nil {
+		pwin = parent.object
+	}
+
+	o := C._new_message_dialog(pwin, C.GtkDialogFlags(flags), C.GtkMessageType(mtype), C.GtkButtonsType(buttons),
+		(*C.gchar)(cmessage.GetPtr()))
+	mdiag.object = C.to_GtkMessageDialog(unsafe.Pointer(o))
+	if gobject.IsObjectFloating(mdiag) {
+		gobject.RefSink(mdiag)
+	}
+	mdiag.Dialog = newDialogFromNative(unsafe.Pointer(o)).(*Dialog)
+	messageDialogFinalizer(mdiag)
+
+	return mdiag
+}
+
+// Clear MessageDialog struct when it goes out of reach
+func messageDialogFinalizer(d *MessageDialog) {
+	runtime.SetFinalizer(d, func(d *MessageDialog) { gobject.Unref(d) })
 }
 
 // Conversion function for gobject registration map
-func newFrameFromNative(obj unsafe.Pointer) interface{} {
-	f := &Frame{}
-	f.object = C.to_GtkFrame(obj)
+func newMessageDialogFromNative(obj unsafe.Pointer) interface{} {
+	d := &MessageDialog{}
+	d.object = C.to_GtkMessageDialog(obj)
 
-	if gobject.IsObjectFloating(f) {
-		gobject.RefSink(f)
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
 	} else {
-		gobject.Ref(f)
+		gobject.Ref(d)
 	}
-	f.Container = NewContainer(unsafe.Pointer(f.object))
-	frameFinalizer(f)
-
-	return f
+	d.Dialog = newDialogFromNative(obj).(*Dialog)
+	messageDialogFinalizer(d)
+	return d
 }
 
-func nativeFromFrame(frame interface{}) *gobject.GValue {
-	f, ok := frame.(*Frame)
+func nativeFromMessageDialog(d interface{}) *gobject.GValue {
+	dialog, ok := d.(*MessageDialog)
 	if ok {
-		gv := gobject.CreateCGValue(GtkType.FRAME, f.ToNative())
+		gv := gobject.CreateCGValue(GtkType.MESSAGE_DIALOG, dialog.ToNative())
 		return gv
 	}
 
@@ -1343,226 +1406,89 @@ func nativeFromFrame(frame interface{}) *gobject.GValue {
 }
 
 // To be object like
-func (self Frame) ToNative() unsafe.Pointer {
+func (self MessageDialog) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
 }
 
-func (self Frame) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+func (self MessageDialog) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
 	return gobject.Connect(self, name, f, data...)
 }
 
-func (self Frame) Set(properties map[string]interface{}) {
+func (self MessageDialog) Set(properties map[string]interface{}) {
 	gobject.Set(self, properties)
 }
 
-func (self Frame) Get(properties []string) map[string]interface{} {
+func (self MessageDialog) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// To be container-lie
-func (self Frame) C() *Container {
-	return self.Container
+// To be dialog-like
+func (self MessageDialog) D() *Dialog {
+	return self.Dialog
 }
 
-// Frame interface
-func (self *Frame) SetLabel(label string) {
-	s := gobject.GString(label)
-	defer s.Free()
-	C.gtk_frame_set_label(self.object, (*C.gchar)(s.GetPtr()))
+// Message dialog interface
+func (self *MessageDialog) SetMarkup(markup string) {
+	m := gobject.GString(markup)
+	defer m.Free()
+	C.gtk_message_dialog_set_markup(self.object, (*C.gchar)(m.GetPtr()))
 }
 
-func (self *Frame) SetLabelWidget(w WidgetLike) {
-	C.gtk_frame_set_label_widget(self.object, w.W().object)
+func (self *MessageDialog) SetImage(w WidgetLike) {
+	C.gtk_message_dialog_set_image(self.object, w.W().object)
 }
 
-func (self *Frame) SetLabelAlign(xalign, yalign float32) {
-	C.gtk_frame_set_label_align(self.object, C.gfloat(xalign), C.gfloat(yalign))
-}
-
-func (self *Frame) SetShadowType(gtk_shadow int) {
-	C.gtk_frame_set_shadow_type(self.object, C.GtkShadowType(gtk_shadow))
-}
-
-func (self *Frame) GetLabel() string {
-	l := C.gtk_frame_get_label(self.object)
-	return gobject.GoString(unsafe.Pointer(l))
-}
-
-func (self *Frame) GetLabelAlign() (xalign, yalign float32) {
-	var cax C.gfloat
-	var cay C.gfloat
-	C.gtk_frame_get_label_align(self.object, &cax, &cay)
-	return float32(cax), float32(cay)
-}
-
-func (self *Frame) GetLabelWidget() WidgetLike {
-	cw := C.gtk_frame_get_label_widget(self.object)
-	w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
-	if err != nil {
-		return w.(WidgetLike)
+func (self *MessageDialog) GetImage() WidgetLike {
+	im := C.gtk_message_dialog_get_image(self.object)
+	if im != nil {
+		i, err := gobject.ConvertToGo(unsafe.Pointer(im))
+		if err == nil {
+			return i.(WidgetLike)
+		}
 	}
 	return nil
 }
 
-func (self *Frame) GetShadowType() int {
-	return int(C.gtk_frame_get_shadow_type(self.object))
+func (self *MessageDialog) GetMessageArea() WidgetLike {
+	ma := C.gtk_message_dialog_get_message_area(self.object)
+	if ma != nil {
+		m, err := gobject.ConvertToGo(unsafe.Pointer(ma))
+		if err == nil {
+			return m.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *MessageDialog) FormatSecondaryText(messageFormat string, args ...interface{}) {
+	var message string = messageFormat
+	if len(args) > 0 {
+		message = fmt.Sprintf(messageFormat, args...)
+	}
+
+	cmessage := gobject.GString(message)
+	defer cmessage.Free()
+
+	C._gtk_message_dialog_format_secondary_text(self.object, (*C.gchar)(cmessage.GetPtr()))
+}
+
+func (self *MessageDialog) FormatSecondaryMarkup(format string, args ...interface{}) {
+	var message string = format
+	if len(args) > 0 {
+		message = fmt.Sprintf(format, args...)
+	}
+	cmessage := gobject.GString(message)
+	defer cmessage.Free()
+
+	C._gtk_message_dialog_format_secondary_markup(self.object, (*C.gchar)(cmessage.GetPtr()))
 }
 //////////////////////////////
-// END GtkFrame
+// END GtkMessageDialog
 ////////////////////////////// }}}
 
-// GtkGrid {{{
-//////////////////////////////
+// End Windows }}}
 
-// GtkGrid Type
-type Grid struct {
-	object *C.GtkGrid
-	*Container
-}
-
-func NewGrid() *Grid {
-	grid := &Grid{}
-	o := C.gtk_grid_new()
-	grid.object = C.to_GtkGrid(unsafe.Pointer(o))
-	grid.Container = NewContainer(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(grid) {
-		gobject.RefSink(grid)
-	}
-	gridFinalizer(grid)
-
-	return grid
-}
-
-// Clear Grid struct when it goes out of reach
-func gridFinalizer(g *Grid) {
-	runtime.SetFinalizer(g, func(g *Grid) { gobject.Unref(g) })
-}
-
-// Conversion function for gobject registration map
-func newGridFromNative(obj unsafe.Pointer) interface{} {
-	grid := &Grid{}
-	grid.object = C.to_GtkGrid(obj)
-
-	if gobject.IsObjectFloating(grid) {
-		gobject.RefSink(grid)
-	} else {
-		gobject.Ref(grid)
-	}
-	grid.Container = NewContainer(obj)
-	gridFinalizer(grid)
-
-	return grid
-}
-
-func nativeFromGrid(g interface{}) *gobject.GValue {
-	grid, ok := g.(*Grid)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.GRID, grid.ToNative())
-		return gv
-	}
-
-	return nil
-}
-
-// To be Object-like
-func (self Grid) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self Grid) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self Grid) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self Grid) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-// To be container-like
-func (self Grid) C() *Container {
-	return self.Container
-}
-
-// Grid interface
-func (self *Grid) Attach(w WidgetLike, left, top, width, height int) {
-	C.gtk_grid_attach(self.object, w.W().object, C.gint(left), C.gint(top),
-		C.gint(width), C.gint(height))
-}
-
-func (self *Grid) AttachNextTo(child WidgetLike, sibling WidgetLike, side, width, height int) {
-	C.gtk_grid_attach_next_to(self.object, child.W().object, sibling.W().object, C.GtkPositionType(side),
-		C.gint(width), C.gint(height))
-}
-
-func (self *Grid) GetChildAt(left, top int) WidgetLike {
-	c := C._gtk_grid_get_child_at(self.object, C.gint(left), C.gint(top))
-	if c == nil {
-		return nil
-	}
-
-	child, err := gobject.ConvertToGo(unsafe.Pointer(c))
-	if err == nil {
-		return child.(WidgetLike)
-	}
-
-	return nil
-}
-
-func (self *Grid) InsertRow(position int) {
-	C._gtk_grid_insert_row(self.object, C.gint(position))
-}
-
-func (self *Grid) InsertColumn(position int) {
-	C._gtk_grid_insert_column(self.object, C.gint(position))
-}
-
-func (self *Grid) InsertNextTo(sibling WidgetLike, side int) {
-	C._gtk_grid_insert_next_to(self.object, sibling.W().object, C.GtkPositionType(side))
-}
-
-func (self *Grid) SetRowHomogeneous(homogeneous bool) {
-	b := gobject.GBool(homogeneous)
-	defer b.Free()
-	C.gtk_grid_set_row_homogeneous(self.object, *((*C.gboolean)(b.GetPtr())))
-}
-
-func (self *Grid) GetRowHomogeneous() bool {
-	b := C.gtk_grid_get_row_homogeneous(self.object)
-	return gobject.GoBool(unsafe.Pointer(&b))
-}
-
-func (self *Grid) SetRowSpacing(spacing uint) {
-	C.gtk_grid_set_row_spacing(self.object, C.guint(spacing))
-}
-
-func (self *Grid) GetRowSpacing() uint {
-	return uint(C.gtk_grid_get_row_spacing(self.object))
-}
-
-func (self *Grid) SetColumnHomogeneous(homogeneous bool) {
-	b := gobject.GBool(homogeneous)
-	defer b.Free()
-	C.gtk_grid_set_column_homogeneous(self.object, *((*C.gboolean)(b.GetPtr())))
-}
-
-func (self *Grid) GetColumnHomogeneous() bool {
-	b := C.gtk_grid_get_column_homogeneous(self.object)
-	return gobject.GoBool(unsafe.Pointer(&b))
-}
-
-func (self *Grid) SetColumnSpacing(spacing uint) {
-	C.gtk_grid_set_column_spacing(self.object, C.guint(spacing))
-}
-
-func (self *Grid) GetColumnSpacing() uint {
-	return uint(C.gtk_grid_get_column_spacing(self.object))
-}
-//////////////////////////////
-// END GtkGrid
-////////////////////////////// }}}
+// Display Widgets {{{
 
 // GtkLabel {{{
 //////////////////////////////
@@ -1962,6 +1888,10 @@ func (self Image) W() *Widget {
 // END GtkImage
 ////////////////////////////// }}}
 
+// End Display Widgets }}}
+
+// Buttons and Toggles {{{
+
 // GtkButton {{{
 //////////////////////////////
 
@@ -2289,6 +2219,10 @@ func (self *ToggleButton) SetInconsistent(setting bool) {
 //////////////////////////////
 // END GtkToggleButton
 ////////////////////////////// }}}
+
+// End Buttons and Toggles }}}
+
+// Numeric/Text Data Entry {{{
 
 // GtkEntryBuffer {{{
 //////////////////////////////
@@ -2628,1043 +2562,9 @@ func (self *Entry) GetOverwriteMode() bool {
 // END GtkEntry
 ////////////////////////////// }}}
 
-// GtkDialog {{{
-//////////////////////////////
+// End Numeric/Text Data Entry }}}
 
-// GtkDialog type
-type Dialog struct {
-	object *C.GtkDialog
-	*Window
-}
-
-func NewDialog() *Dialog {
-	d := &Dialog{}
-	o := C.gtk_dialog_new()
-	d.object = C.to_GtkDialog(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(d) {
-		gobject.RefSink(d)
-	}
-	d.Window = newWindowFromNative(unsafe.Pointer(o)).(*Window)
-	dialogFinalizer(d)
-
-	return d
-}
-
-func NewDialogWithButtons(title string, parent *Window, flags int, butAndID B) *Dialog {
-	// Must have at least one button
-	if len(butAndID) == 0 {
-		return nil
-	}
-
-	t := gobject.GString(title)
-	defer t.Free()
-
-	firstButton := butAndID[0].Text
-	fb := gobject.GString(firstButton)
-	defer fb.Free()
-
-	firstId := butAndID[0].Response
-
-	var wparent *C.GtkWindow = nil
-	if parent != nil {
-		wparent = parent.object
-	}
-
-	d := &Dialog{}
-	o := C._dialog_new_with_buttons((*C.gchar)(t.GetPtr()), wparent, C.GtkDialogFlags(flags),
-		(*C.gchar)(fb.GetPtr()), C.gint(firstId))
-	d.object = C.to_GtkDialog(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(d) {
-		gobject.RefSink(d)
-	}
-	d.Window = newWindowFromNative(unsafe.Pointer(o)).(*Window)
-	dialogFinalizer(d)
-	d.AddButtons(butAndID[1:])
-
-	return d
-}
-
-// Clear Dialog struct when it goes out of reach
-func dialogFinalizer(d *Dialog) {
-	runtime.SetFinalizer(d, func(d *Dialog) { gobject.Unref(d) })
-}
-
-// Conversion function for gobject registration map
-func newDialogFromNative(obj unsafe.Pointer) interface{} {
-	d := &Dialog{}
-	d.object = C.to_GtkDialog(obj)
-
-	if gobject.IsObjectFloating(d) {
-		gobject.RefSink(d)
-	} else {
-		gobject.Ref(d)
-	}
-	d.Window = newWindowFromNative(obj).(*Window)
-	dialogFinalizer(d)
-
-	return d
-}
-
-func nativeFromDialog(d interface{}) *gobject.GValue {
-	dialog, ok := d.(*Dialog)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.DIALOG, dialog.ToNative())
-		return gv
-	}
-
-	return nil
-}
-
-// To be object-like
-func (self Dialog) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self Dialog) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self Dialog) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self Dialog) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// To be window-like
-func (self Dialog) Wnd() *Window {
-	return self.Window
-}
-
-// Dialog interface
-func (self *Dialog) Run() int {
-	response := C.gtk_dialog_run(self.object)
-	return int(response)
-}
-
-func (self *Dialog) Response(responseId int) {
-	C.gtk_dialog_response(self.object, C.gint(responseId))
-}
-
-func (self *Dialog) AddButton(buttonText string, responseId int) *Button {
-	s := gobject.GString(buttonText)
-	defer s.Free()
-	b := C.gtk_dialog_add_button(self.object, (*C.gchar)(s.GetPtr()), C.gint(responseId))
-	btn, err := gobject.ConvertToGo(unsafe.Pointer(&b))
-	if err == nil {
-		return btn.(*Button)
-	}
-	return nil
-}
-
-func (self *Dialog) AddButtons(buttonAndId B) {
-	for _, btn := range buttonAndId {
-		self.AddButton(btn.Text, btn.Response)
-	}
-}
-
-func (self *Dialog) AddActionWidget(w WidgetLike, responseId int) {
-	C.gtk_dialog_add_action_widget(self.object, w.W().object, C.gint(responseId))
-}
-
-func (self *Dialog) SetDefaultResponse(responseId int) {
-	C.gtk_dialog_set_default_response(self.object, C.gint(responseId))
-}
-
-func (self *Dialog) SetResponseSensitive(responseId int, setting bool) {
-	b := gobject.GBool(setting)
-	defer b.Free()
-	C.gtk_dialog_set_response_sensitive(self.object, C.gint(responseId), *((*C.gboolean)(b.GetPtr())))
-}
-
-func (self *Dialog) GetResponseForWidget(w WidgetLike) int {
-	i := C.gtk_dialog_get_response_for_widget(self.object, w.W().object)
-	return int(i)
-}
-
-func (self *Dialog) GetWidgetForResponse(responseId int) WidgetLike {
-	cw := C.gtk_dialog_get_widget_for_response(self.object, C.gint(responseId))
-	if cw != nil {
-		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
-		if err == nil {
-			return w.(WidgetLike)
-		}
-	}
-	return nil
-}
-
-func (self *Dialog) GetActionArea() WidgetLike {
-	cw := C.gtk_dialog_get_action_area(self.object)
-	if cw != nil {
-		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
-		if err == nil {
-			return w.(WidgetLike)
-		}
-	}
-	return nil
-}
-
-func (self *Dialog) GetContentArea() WidgetLike {
-	cw := C.gtk_dialog_get_content_area(self.object)
-	if cw != nil {
-		w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
-		if err == nil {
-			return w.(WidgetLike)
-		}
-	}
-	return nil
-}
-//////////////////////////////
-// END GtkDialog
-////////////////////////////// }}}
-
-// GtkMessageDialog {{{
-//////////////////////////////
-
-// GtkMessageDialog type
-type MessageDialog struct {
-	object *C.GtkMessageDialog
-	*Dialog
-}
-
-func NewMessageDialog(parent *Window, flags int, mtype int, buttons int, messageFormat string, argsToMessage ...interface{}) *MessageDialog {
-	mdiag := &MessageDialog{}
-	var message string = messageFormat
-
-	// If additional args, then call Sprintf with those args
-	// and save formated message
-	if len(argsToMessage) > 0 {
-		message = fmt.Sprintf(messageFormat, argsToMessage...)
-	}
-
-	cmessage := gobject.GString(message)
-	defer cmessage.Free()
-
-	// If parent is not nil we will feed the parent object
-	var pwin *C.GtkWindow = nil
-	if parent != nil {
-		pwin = parent.object
-	}
-
-	o := C._new_message_dialog(pwin, C.GtkDialogFlags(flags), C.GtkMessageType(mtype), C.GtkButtonsType(buttons),
-		(*C.gchar)(cmessage.GetPtr()))
-	mdiag.object = C.to_GtkMessageDialog(unsafe.Pointer(o))
-	if gobject.IsObjectFloating(mdiag) {
-		gobject.RefSink(mdiag)
-	}
-	mdiag.Dialog = newDialogFromNative(unsafe.Pointer(o)).(*Dialog)
-	messageDialogFinalizer(mdiag)
-
-	return mdiag
-}
-
-// Clear MessageDialog struct when it goes out of reach
-func messageDialogFinalizer(d *MessageDialog) {
-	runtime.SetFinalizer(d, func(d *MessageDialog) { gobject.Unref(d) })
-}
-
-// Conversion function for gobject registration map
-func newMessageDialogFromNative(obj unsafe.Pointer) interface{} {
-	d := &MessageDialog{}
-	d.object = C.to_GtkMessageDialog(obj)
-
-	if gobject.IsObjectFloating(d) {
-		gobject.RefSink(d)
-	} else {
-		gobject.Ref(d)
-	}
-	d.Dialog = newDialogFromNative(obj).(*Dialog)
-	messageDialogFinalizer(d)
-	return d
-}
-
-func nativeFromMessageDialog(d interface{}) *gobject.GValue {
-	dialog, ok := d.(*MessageDialog)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.MESSAGE_DIALOG, dialog.ToNative())
-		return gv
-	}
-
-	return nil
-}
-
-// To be object like
-func (self MessageDialog) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self MessageDialog) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self MessageDialog) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self MessageDialog) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// To be dialog-like
-func (self MessageDialog) D() *Dialog {
-	return self.Dialog
-}
-
-// Message dialog interface
-func (self *MessageDialog) SetMarkup(markup string) {
-	m := gobject.GString(markup)
-	defer m.Free()
-	C.gtk_message_dialog_set_markup(self.object, (*C.gchar)(m.GetPtr()))
-}
-
-func (self *MessageDialog) SetImage(w WidgetLike) {
-	C.gtk_message_dialog_set_image(self.object, w.W().object)
-}
-
-func (self *MessageDialog) GetImage() WidgetLike {
-	im := C.gtk_message_dialog_get_image(self.object)
-	if im != nil {
-		i, err := gobject.ConvertToGo(unsafe.Pointer(im))
-		if err == nil {
-			return i.(WidgetLike)
-		}
-	}
-	return nil
-}
-
-func (self *MessageDialog) GetMessageArea() WidgetLike {
-	ma := C.gtk_message_dialog_get_message_area(self.object)
-	if ma != nil {
-		m, err := gobject.ConvertToGo(unsafe.Pointer(ma))
-		if err == nil {
-			return m.(WidgetLike)
-		}
-	}
-	return nil
-}
-
-func (self *MessageDialog) FormatSecondaryText(messageFormat string, args ...interface{}) {
-	var message string = messageFormat
-	if len(args) > 0 {
-		message = fmt.Sprintf(messageFormat, args...)
-	}
-
-	cmessage := gobject.GString(message)
-	defer cmessage.Free()
-
-	C._gtk_message_dialog_format_secondary_text(self.object, (*C.gchar)(cmessage.GetPtr()))
-}
-
-func (self *MessageDialog) FormatSecondaryMarkup(format string, args ...interface{}) {
-	var message string = format
-	if len(args) > 0 {
-		message = fmt.Sprintf(format, args...)
-	}
-	cmessage := gobject.GString(message)
-	defer cmessage.Free()
-
-	C._gtk_message_dialog_format_secondary_markup(self.object, (*C.gchar)(cmessage.GetPtr()))
-}
-//////////////////////////////
-// END GtkMessageDialog
-////////////////////////////// }}}
-
-// GtkSeparator {{{
-//////////////////////////////
-
-// GtkSeparator type
-type Separator struct {
-	object *C.GtkSeparator
-	*Widget
-}
-
-func NewSeparator(orientation int) *Separator {
-	sep := &Separator{}
-	o := C.gtk_separator_new(C.GtkOrientation(orientation))
-	sep.object = C.to_GtkSeparator(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(sep) {
-		gobject.RefSink(sep)
-	}
-	sep.Widget = NewWidget(unsafe.Pointer(o))
-	separatorFinalizer(sep)
-
-	return sep
-}
-
-func NewHSeparator() *Separator {
-	return NewSeparator(GtkOrientation.HORIZONTAL)
-}
-
-func NewVSeparator() *Separator {
-	return NewSeparator(GtkOrientation.VERTICAL)
-}
-
-// Clear Separator struct when it goes out of reach
-func separatorFinalizer(s *Separator) {
-	runtime.SetFinalizer(s, func(s *Separator) { gobject.Unref(s) })
-}
-
-// Conversion function for gobject registration map
-func newSeparatorFromNative(obj unsafe.Pointer) interface{} {
-	sep := &Separator{}
-	sep.object = C.to_GtkSeparator(obj)
-
-	if gobject.IsObjectFloating(sep) {
-		gobject.RefSink(sep)
-	} else {
-		gobject.Ref(sep)
-	}
-	sep.Widget = NewWidget(obj)
-	separatorFinalizer(sep)
-
-	return sep
-}
-
-func nativeFromSeparator(s interface{}) *gobject.GValue {
-	sep, ok := s.(*Separator)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.SEPARATOR, sep.ToNative())
-		return gv
-	}
-
-	return nil
-}
-
-// To be object like
-func (self Separator) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self Separator) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self Separator) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-
-}
-
-func (self Separator) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-// To be widget-like
-func (self Separator) W() *Widget {
-	return self.Widget
-}
-//////////////////////////////
-// END GtkSeparator
-////////////////////////////// }}}
-
-// GtkAdjustment {{{
-//////////////////////////////
-
-// GtkAdjustment type
-type Adjustment struct {
-	object *C.GtkAdjustment
-}
-
-func NewAdjustment(value, lower, upper, stepIncrement, pageIncrement, pageSize float64) *Adjustment {
-	a := &Adjustment{}
-	o := C.gtk_adjustment_new(C.gdouble(value), C.gdouble(lower), C.gdouble(upper), C.gdouble(stepIncrement),
-		C.gdouble(pageIncrement), C.gdouble(pageSize))
-	a.object = C.to_GtkAdjustment(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(a) {
-		gobject.RefSink(a)
-	}
-	adjustmentFinalizer(a)
-
-	return a
-}
-
-// Clear Adjustment struct when it goes out of reach
-func adjustmentFinalizer(a *Adjustment) {
-	runtime.SetFinalizer(a, func(a *Adjustment) { gobject.Unref(a) })
-}
-
-// Conversion functions for gobject registration map
-func newAdjustmentFromNative(obj unsafe.Pointer) interface{} {
-	a := &Adjustment{}
-	a.object = C.to_GtkAdjustment(obj)
-
-	if gobject.IsObjectFloating(a) {
-		gobject.RefSink(a)
-	} else {
-		gobject.Ref(a)
-	}
-	adjustmentFinalizer(a)
-
-	return a
-}
-
-func nativeFromAdjustment(a interface{}) *gobject.GValue {
-	adj, ok := a.(*Adjustment)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.ADJUSTMENT, adj.ToNative())
-		return gv
-	}
-
-	return nil
-}
-
-// To be object-like
-func (self Adjustment) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self Adjustment) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self Adjustment) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self Adjustment) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// Adjustment interface
-func (self *Adjustment) GetValue() float64 {
-	return float64(C.gtk_adjustment_get_value(self.object))
-}
-
-func (self *Adjustment) SetValue(value float64) {
-	C.gtk_adjustment_set_value(self.object, C.gdouble(value))
-}
-
-func (self *Adjustment) ClampPage(lower, upper float64) {
-	C.gtk_adjustment_clamp_page(self.object, C.gdouble(lower), C.gdouble(upper))
-}
-
-func (self *Adjustment) Changed() {
-	C.gtk_adjustment_changed(self.object)
-}
-
-func (self *Adjustment) ValueChanged() {
-	C.gtk_adjustment_value_changed(self.object)
-}
-
-func (self *Adjustment) Configure(value, lower, upper, stepIncrement, pageIncrement, pageSize float64) {
-	C.gtk_adjustment_configure(self.object, C.gdouble(value), C.gdouble(lower), C.gdouble(upper),
-		C.gdouble(stepIncrement), C.gdouble(pageIncrement), C.gdouble(pageSize))
-}
-
-func (self *Adjustment) GetLower() float64 {
-	return float64(C.gtk_adjustment_get_lower(self.object))
-}
-
-func (self *Adjustment) GetPageIncrement() float64 {
-	return float64(C.gtk_adjustment_get_page_increment(self.object))
-}
-
-func (self *Adjustment) GetPageSize() float64 {
-	return float64(C.gtk_adjustment_get_page_size(self.object))
-}
-
-func (self *Adjustment) GetStepIncrement() float64 {
-	return float64(C.gtk_adjustment_get_step_increment(self.object))
-}
-
-func (self *Adjustment) GetMinimumIncrement() float64 {
-	return float64(C._gtk_adjustment_get_minimum_increment(self.object))
-}
-
-func (self *Adjustment) GetUpper() float64 {
-	return float64(C.gtk_adjustment_get_upper(self.object))
-}
-
-func (self *Adjustment) SetLower(lower float64) {
-	C.gtk_adjustment_set_lower(self.object, C.gdouble(lower))
-}
-
-func (self *Adjustment) SetPageIncrement(pageIncrement float64) {
-	C.gtk_adjustment_set_page_increment(self.object, C.gdouble(pageIncrement))
-}
-
-func (self *Adjustment) SetPageSize(pageSize float64) {
-	C.gtk_adjustment_set_page_size(self.object, C.gdouble(pageSize))
-}
-
-func (self *Adjustment) SetStepIncrement(stepIncrement float64) {
-	C.gtk_adjustment_set_step_increment(self.object, C.gdouble(stepIncrement))
-}
-
-func (self *Adjustment) SetUpper(upper float64) {
-	C.gtk_adjustment_set_upper(self.object, C.gdouble(upper))
-}
-//////////////////////////////
-// GtkAdjustment
-////////////////////////////// }}}
-
-// GtkRange {{{
-//////////////////////////////
-
-// GtkRange type
-type Range struct {
-	object *C.GtkRange
-	*Widget
-}
-
-// Clear Range struct when it goes out of reach
-func rangeFinalizer(r *Range) {
-	runtime.SetFinalizer(r, func(r *Range) { gobject.Unref(r) })
-}
-
-// Conversion functions for gobject registration map
-func newRangeFromNative(obj unsafe.Pointer) interface{} {
-	r := &Range{}
-	r.object = C.to_GtkRange(obj)
-
-	if gobject.IsObjectFloating(r) {
-		gobject.RefSink(r)
-	} else {
-		gobject.Ref(r)
-	}
-	r.Widget = NewWidget(obj)
-	rangeFinalizer(r)
-
-	return r
-}
-
-func nativeFromRange(r interface{}) *gobject.GValue {
-	ran, ok := r.(*Range)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.RANGE, ran.ToNative())
-		return gv
-	}
-	return nil
-}
-
-// To be object-like
-func (self Range) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self Range) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self Range) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self Range) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// To be widget-like
-func (self Range) W() *Widget {
-	return self.Widget
-}
-
-// Range interface
-func (self *Range) GetFillLevel() float64 {
-	return float64(C.gtk_range_get_fill_level(self.object))
-}
-
-func (self *Range) GetRestrictToFillLevel() bool {
-	b := C.gtk_range_get_restrict_to_fill_level(self.object)
-	return gobject.GoBool(unsafe.Pointer(&b))
-}
-
-func (self *Range) GetShowFillLevel() bool {
-	b := C.gtk_range_get_show_fill_level(self.object)
-	return gobject.GoBool(unsafe.Pointer(&b))
-}
-
-func (self *Range) SetFillLevel(fillLevel float64) {
-	C.gtk_range_set_fill_level(self.object, C.gdouble(fillLevel))
-}
-
-func (self *Range) SetRestrictToFillLevel(restrictToFillLevel bool) {
-	b := gobject.GBool(restrictToFillLevel)
-	defer b.Free()
-	C.gtk_range_set_restrict_to_fill_level(self.object, *((*C.gboolean)(b.GetPtr())))
-}
-
-func (self *Range) SetShowFillLevel(showFillLevel bool) {
-	b := gobject.GBool(showFillLevel)
-	defer b.Free()
-	C.gtk_range_set_show_fill_level(self.object, *((*C.gboolean)(b.GetPtr())))
-}
-
-func (self *Range) GetAdjustment() *Adjustment {
-	a := C.gtk_range_get_adjustment(self.object)
-	adj, err := gobject.ConvertToGo(unsafe.Pointer(&a))
-	if err == nil {
-		return adj.(*Adjustment)
-	}
-	return nil
-}
-
-func (self *Range) SetAdjustment(adjustment *Adjustment) {
-	C.gtk_range_set_adjustment(self.object, adjustment.object)
-}
-
-func (self *Range) GetInverted() bool {
-	b := C.gtk_range_get_inverted(self.object)
-	return gobject.GoBool(unsafe.Pointer(&b))
-}
-
-func (self *Range) SetInverted(inverted bool) {
-	b := gobject.GBool(inverted)
-	C.gtk_range_set_inverted(self.object, *((*C.gboolean)(b.GetPtr())))
-}
-
-func (self *Range) GetValue() float64 {
-	return float64(C.gtk_range_get_value(self.object))
-}
-
-func (self *Range) SetValue(value float64) {
-	C.gtk_range_set_value(self.object, C.gdouble(value))
-}
-
-func (self *Range) SetIncrements(step, page float64) {
-	C.gtk_range_set_increments(self.object, C.gdouble(step), C.gdouble(page))
-}
-
-func (self *Range) SetRange(min, max float64) {
-	C.gtk_range_set_range(self.object, C.gdouble(min), C.gdouble(max))
-}
-
-func (self *Range) GetRoundDigits() int {
-	return int(C.gtk_range_get_round_digits(self.object))
-}
-
-func (self *Range) SetRoundDigits(roundDigits int) {
-	C.gtk_range_set_round_digits(self.object, C.gint(roundDigits))
-}
-
-func (self *Range) SetLowerStepperSensitivity(gtk_sensitivityType int) {
-	C.gtk_range_set_lower_stepper_sensitivity(self.object, C.GtkSensitivityType(gtk_sensitivityType))
-}
-
-func (self *Range) GetLowerStepperSensitivity() int {
-	return int(C.gtk_range_get_lower_stepper_sensitivity(self.object))
-}
-
-func (self *Range) SetUpperStepperSensitivity(gtk_sensitivityType int) {
-	C.gtk_range_set_upper_stepper_sensitivity(self.object, C.GtkSensitivityType(gtk_sensitivityType))
-}
-
-func (self *Range) GetUpperStepperSensitivity() int {
-	return int(C.gtk_range_get_upper_stepper_sensitivity(self.object))
-}
-
-func (self *Range) GetFlippable() bool {
-	b := C.gtk_range_get_flippable(self.object)
-	return gobject.GoBool(unsafe.Pointer(&b))
-}
-
-func (self *Range) SetFlippable(flippable bool) {
-	b := gobject.GBool(flippable)
-	defer b.Free()
-	C.gtk_range_set_flippable(self.object, *((*C.gboolean)(b.GetPtr())))
-}
-
-func (self *Range) GetMinSliderSize() int {
-	return int(C.gtk_range_get_min_slider_size(self.object))
-}
-
-//TODO: gtk_range_get_range_rect
-
-func (self *Range) GetSliderRange() (start, end int) {
-	var s C.gint
-	var e C.gint
-	C.gtk_range_get_slider_range(self.object, &s, &e)
-	start = int(s)
-	end = int(e)
-	return
-}
-
-func (self *Range) GetSliderSizeFixed() bool {
-	b := C.gtk_range_get_slider_size_fixed(self.object)
-	return gobject.GoBool(unsafe.Pointer(&b))
-}
-
-func (self *Range) SetMinSliderSize(minSize int) {
-	C.gtk_range_set_min_slider_size(self.object, C.gint(minSize))
-}
-
-func (self *Range) SetSliderSizeFixed(sizeFixed bool) {
-	b := gobject.GBool(sizeFixed)
-	defer b.Free()
-	C.gtk_range_set_slider_size_fixed(self.object, *((*C.gboolean)(b.GetPtr())))
-}
-//////////////////////////////
-// END GtkRange
-////////////////////////////// }}}
-
-// GtkScrollbar {{{
-//////////////////////////////
-
-// GtkScrollbar type
-type Scrollbar struct {
-	object *C.GtkScrollbar
-	*Range
-}
-
-func NewScrollbar(gtk_orientation int, adjustment *Adjustment) *Scrollbar {
-	sb := &Scrollbar{}
-	o := C.gtk_scrollbar_new(C.GtkOrientation(gtk_orientation), adjustment.object)
-	sb.object = C.to_GtkScrollbar(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(sb) {
-		gobject.RefSink(sb)
-	}
-	sb.Range = newRangeFromNative(unsafe.Pointer(o)).(*Range)
-	scrollbarFinalizer(sb)
-
-	return sb
-}
-
-func NewHScrollbar(adjustment *Adjustment) *Scrollbar {
-	return NewScrollbar(GtkOrientation.HORIZONTAL, adjustment)
-}
-
-func NewVScrollbar(adjustment *Adjustment) *Scrollbar {
-	return NewScrollbar(GtkOrientation.VERTICAL, adjustment)
-}
-
-// Clear Scrollbar struct when it goes out of reach
-func scrollbarFinalizer(sb *Scrollbar) {
-	runtime.SetFinalizer(sb, func(sb *Scrollbar) { gobject.Unref(sb) })
-}
-
-// Conversions functions
-func newScrollbarFromNative(sb unsafe.Pointer) interface{} {
-	scrollbar := &Scrollbar{}
-	scrollbar.object = C.to_GtkScrollbar(sb)
-
-	if gobject.IsObjectFloating(scrollbar) {
-		gobject.RefSink(scrollbar)
-	} else {
-		gobject.Ref(scrollbar)
-	}
-	scrollbar.Range = newRangeFromNative(sb).(*Range)
-	scrollbarFinalizer(scrollbar)
-
-	return scrollbar
-}
-
-func nativeFromScrollbar(sb interface{}) *gobject.GValue {
-	scrollbar, ok := sb.(*Scrollbar)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.SCROLLBAR, scrollbar.ToNative())
-		return gv
-	}
-	return nil
-}
-
-// To be object-like
-func (self Scrollbar) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self Scrollbar) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self Scrollbar) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self Scrollbar) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// To be Range-like
-func (self Scrollbar) R() *Range {
-	return self.Range
-}
-//////////////////////////////
-// END GtkScrollbar
-////////////////////////////// }}}
-
-// GtkScrolledWindow {{{
-//////////////////////////////
-
-// GtkScrolledWindow type
-type ScrolledWindow struct {
-	object *C.GtkScrolledWindow
-	*Container
-}
-
-func NewScrolledWindow(hadjustment, vadjustment *Adjustment) *ScrolledWindow {
-	sw := &ScrolledWindow{}
-	var ha, va *C.GtkAdjustment
-	ha, va = nil, nil
-
-	if hadjustment != nil {
-		ha = hadjustment.object
-	}
-
-	if vadjustment != nil {
-		va = vadjustment.object
-	}
-
-	o := C.gtk_scrolled_window_new(ha, va)
-	sw.object = C.to_GtkScrolledWindow(unsafe.Pointer(o))
-
-	if gobject.IsObjectFloating(sw) {
-		gobject.RefSink(sw)
-	}
-	sw.Container = NewContainer(unsafe.Pointer(o))
-	scrolledWindowFinalizer(sw)
-
-	return sw
-}
-
-// Clear ScrolledWindow struct when it goes out of reach
-func scrolledWindowFinalizer(sw *ScrolledWindow) {
-	runtime.SetFinalizer(sw, func(sw *ScrolledWindow) { gobject.Unref(sw) })
-}
-
-// Conversion functions
-func newScrolledWindowFromNative(sw unsafe.Pointer) interface{} {
-	scrolled := &ScrolledWindow{}
-	scrolled.object = C.to_GtkScrolledWindow(sw)
-
-	if gobject.IsObjectFloating(scrolled) {
-		gobject.RefSink(scrolled)
-	} else {
-		gobject.Ref(scrolled)
-	}
-	scrolled.Container = NewContainer(sw)
-	scrolledWindowFinalizer(scrolled)
-
-	return scrolled
-}
-
-func nativeFromScrolledWindow(sw interface{}) *gobject.GValue {
-	scrolled, ok := sw.(*ScrolledWindow)
-	if ok {
-		gv := gobject.CreateCGValue(GtkType.SCROLLED_WINDOW, scrolled.ToNative())
-		return gv
-	}
-	return nil
-}
-
-// To be object-like
-func (self ScrolledWindow) ToNative() unsafe.Pointer {
-	return unsafe.Pointer(self.object)
-}
-
-func (self ScrolledWindow) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return gobject.Connect(self, name, f, data...)
-}
-
-func (self ScrolledWindow) Set(properties map[string]interface{}) {
-	gobject.Set(self, properties)
-}
-
-func (self ScrolledWindow) Get(properties []string) map[string]interface{} {
-	return gobject.Get(self, properties)
-}
-
-// ScrolledWindow interface
-func (self *ScrolledWindow) GetHadjustment() *Adjustment {
-	ad := C.gtk_scrolled_window_get_hadjustment(self.object)
-	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
-	if err == nil {
-		return a.(*Adjustment)
-	}
-	return nil
-}
-
-func (self *ScrolledWindow) GetVadjustment() *Adjustment {
-	ad := C.gtk_scrolled_window_get_vadjustment(self.object)
-	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
-	if err == nil {
-		return a.(*Adjustment)
-	}
-	return nil
-}
-
-func (self *ScrolledWindow) GetHScrollbar() WidgetLike {
-	ad := C.gtk_scrolled_window_get_hscrollbar(self.object)
-	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
-	if err == nil {
-		return a.(WidgetLike)
-	}
-	return nil
-}
-
-func (self *ScrolledWindow) GetVScrollbar() WidgetLike {
-	ad := C.gtk_scrolled_window_get_vscrollbar(self.object)
-	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
-	if err == nil {
-		return a.(WidgetLike)
-	}
-	return nil
-}
-
-func (self *ScrolledWindow) SetPolicy(gtk_policy_horizontal, gtk_policy_vertical int) {
-	C.gtk_scrolled_window_set_policy(self.object, C.GtkPolicyType(gtk_policy_horizontal), C.GtkPolicyType(gtk_policy_vertical))
-}
-
-func (self *ScrolledWindow) AddWithViewport(child WidgetLike) {
-	C.gtk_scrolled_window_add_with_viewport(self.object, child.W().object)
-}
-
-func (self *ScrolledWindow) SetPlacement(gtk_corner_window_placement int) {
-	C.gtk_scrolled_window_set_placement(self.object, C.GtkCornerType(gtk_corner_window_placement))
-}
-
-func (self *ScrolledWindow) UnsetPlacement() {
-	C.gtk_scrolled_window_unset_placement(self.object)
-}
-
-func (self *ScrolledWindow) SetShadowType(gtk_shadow int) {
-	C.gtk_scrolled_window_set_shadow_type(self.object, C.GtkShadowType(gtk_shadow))
-}
-
-func (self *ScrolledWindow) SetHadjustment(ha *Adjustment) {
-	C.gtk_scrolled_window_set_hadjustment(self.object, ha.object)
-}
-
-func (self *ScrolledWindow) SetVadjustment(va *Adjustment) {
-	C.gtk_scrolled_window_set_vadjustment(self.object, va.object)
-}
-
-func (self *ScrolledWindow) GetPlacement() int {
-	return int(C.gtk_scrolled_window_get_placement(self.object))
-}
-
-func (self *ScrolledWindow) GetPolicy() (hscrollbarPolicy, vscrollbarPolicy int) {
-	var hp C.GtkPolicyType
-	var vp C.GtkPolicyType
-	C.gtk_scrolled_window_get_policy(self.object, &hp, &vp)
-	return int(hp), int(vp)
-}
-
-func (self *ScrolledWindow) GetShadowType() int {
-	return int(C.gtk_scrolled_window_get_shadow_type(self.object))
-}
-
-func (self *ScrolledWindow) GetMinContentWidth() int {
-	return int(C.gtk_scrolled_window_get_min_content_width(self.object))
-}
-
-func (self *ScrolledWindow) SetMinContentWidth(width int) {
-	C.gtk_scrolled_window_set_min_content_width(self.object, C.gint(width))
-}
-
-func (self *ScrolledWindow) GetMinContentHeight() int {
-	return int(C.gtk_scrolled_window_get_min_content_height(self.object))
-}
-
-func (self *ScrolledWindow) SetMinContentHeight(height int) {
-	C.gtk_scrolled_window_set_min_content_height(self.object, C.gint(height))
-}
-//////////////////////////////
-// END GtkScrolledWindow
-////////////////////////////// }}}
+// Tree, List and Icon Grid Widgets {{{
 
 // GtkTreePath {{{
 //////////////////////////////
@@ -3703,7 +2603,6 @@ func NewTreePathFirst() *TreePath {
 }
 
 //TODO: NewTreePathFromIndices
-
 
 // Clear TreePath struct when it goes out of scope
 func treePathFinalizer(tp *TreePath) {
@@ -3827,7 +2726,6 @@ func (self *TreeIter) Copy() *TreeIter {
 	return gti
 }
 
-
 //////////////////////////////
 // END GtkTreeIter
 ////////////////////////////// }}}
@@ -3841,75 +2739,75 @@ type TreeModel struct {
 }
 
 func NewTreeModel(ctm unsafe.Pointer) *TreeModel {
-    tm := &TreeModel{}
-    tm.object = C.to_GtkTreeModel(ctm)
+	tm := &TreeModel{}
+	tm.object = C.to_GtkTreeModel(ctm)
 
-    if gobject.IsObjectFloating(tm) {
-        gobject.RefSink(tm)
-    } else {
-        gobject.Ref(tm)
-    }
-    treeModelFinalizer(tm)
+	if gobject.IsObjectFloating(tm) {
+		gobject.RefSink(tm)
+	} else {
+		gobject.Ref(tm)
+	}
+	treeModelFinalizer(tm)
 
-    return tm
+	return tm
 }
 
 // Clear TreeModel struct when it goes out of scope
 func treeModelFinalizer(tm *TreeModel) {
-    runtime.SetFinalizer(tm, func(tm *TreeModel) { gobject.Unref(tm) })
+	runtime.SetFinalizer(tm, func(tm *TreeModel) { gobject.Unref(tm) })
 }
 
 // To be object-like
 func (self TreeModel) ToNative() unsafe.Pointer {
-    return unsafe.Pointer(self.object)
+	return unsafe.Pointer(self.object)
 }
 
-func (self TreeModel) Connect(name string, f interface{}, data... interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-    return gobject.Connect(self, name, f, data...)
+func (self TreeModel) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self TreeModel) Set(properties map[string]interface{}) {
 }
 
 func (self TreeModel) Get(properties []string) map[string]interface{} {
-    return nil
+	return nil
 }
 
 // TreeModel interface
 
 func (self *TreeModel) GetFlags() int {
-    return int(C.gtk_tree_model_get_flags(self.object))
+	return int(C.gtk_tree_model_get_flags(self.object))
 }
 
 func (self *TreeModel) GetNColumns() int {
-    return int(C.gtk_tree_model_get_n_columns(self.object))
+	return int(C.gtk_tree_model_get_n_columns(self.object))
 }
 
 //TODO: gtk_tree_model_get_column_type
 
 func (self *TreeModel) GetIter(iter *TreeIter, path *TreePath) bool {
-    b := C.gtk_tree_model_get_iter(self.object, &iter.object, path.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_get_iter(self.object, &iter.object, path.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) GetIterFromString(iter *TreeIter, pathString string) bool {
-    s := gobject.GString(pathString)
-    defer s.Free()
-    b := C.gtk_tree_model_get_iter_from_string(self.object, &iter.object, (*C.gchar)(s.GetPtr()))
-    return gobject.GoBool(unsafe.Pointer(&b))
+	s := gobject.GString(pathString)
+	defer s.Free()
+	b := C.gtk_tree_model_get_iter_from_string(self.object, &iter.object, (*C.gchar)(s.GetPtr()))
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) GetIterFirst(iter *TreeIter) bool {
-    b := C.gtk_tree_model_get_iter_first(self.object, &iter.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_get_iter_first(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) GetPath(iter *TreeIter) *TreePath {
-    p := C.gtk_tree_model_get_path(self.object, &iter.object)
-    path := &TreePath{p}
-    treePathFinalizer(path)
+	p := C.gtk_tree_model_get_path(self.object, &iter.object)
+	path := &TreePath{p}
+	treePathFinalizer(path)
 
-    return path
+	return path
 }
 
 func (self *TreeModel) GetValue(iter *TreeIter, column int) interface{} {
@@ -3927,42 +2825,42 @@ func (self *TreeModel) GetValue(iter *TreeIter, column int) interface{} {
 }
 
 func (self *TreeModel) IterNext(iter *TreeIter) bool {
-    b := C.gtk_tree_model_iter_next(self.object, &iter.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_iter_next(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) IterPrevious(iter *TreeIter) bool {
-    b := C.gtk_tree_model_iter_previous(self.object, &iter.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_iter_previous(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) IterChildren(iter *TreeIter, parent *TreeIter) bool {
-    b := C.gtk_tree_model_iter_children(self.object, &iter.object, &parent.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_iter_children(self.object, &iter.object, &parent.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) IterHasChild(iter *TreeIter) bool {
-    b := C.gtk_tree_model_iter_has_child(self.object, &iter.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_iter_has_child(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) IterNChildren(iter *TreeIter) int {
-    return int(C.gtk_tree_model_iter_n_children(self.object, &iter.object))
+	return int(C.gtk_tree_model_iter_n_children(self.object, &iter.object))
 }
 
 func (self *TreeModel) IterNthChild(iter *TreeIter, parent *TreeIter, n int) bool {
-    b := C.gtk_tree_model_iter_nth_child(self.object, &iter.object, &parent.object, C.gint(n))
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_iter_nth_child(self.object, &iter.object, &parent.object, C.gint(n))
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) IterParent(iter *TreeIter, child *TreeIter) bool {
-    b := C.gtk_tree_model_iter_parent(self.object, &iter.object, &child.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_tree_model_iter_parent(self.object, &iter.object, &child.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *TreeModel) GetStringFromIter(iter *TreeIter) string {
-    s := C.gtk_tree_model_get_string_from_iter(self.object, &iter.object)
-    return gobject.GoString(unsafe.Pointer(&s))
+	s := C.gtk_tree_model_get_string_from_iter(self.object, &iter.object)
+	return gobject.GoString(unsafe.Pointer(&s))
 }
 
 //TODO: gtk_tree_model_ref_node
@@ -3992,7 +2890,7 @@ func NewListStore(gtypeSlice []gobject.GType) *ListStore {
 	arr := C.gtype_array_new(C.int(count))
 	defer C.gtype_array_free(arr)
 
-	for i,gtype := range gtypeSlice {
+	for i, gtype := range gtypeSlice {
 		C.gtype_array_set_element(arr, C.int(i), C.GType(gtype))
 	}
 
@@ -4071,12 +2969,12 @@ func (self *ListStore) SetValue(iter *TreeIter, column int, value interface{}) {
 		return
 	}
 	defer cval.Free()
-	
+
 	C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
 }
 
 func (self *ListStore) SetValues(iter *TreeIter, values map[int]interface{}) {
-	for k,v := range values {
+	for k, v := range values {
 		self.SetValue(iter, k, v)
 	}
 }
@@ -4092,7 +2990,7 @@ func (self *ListStore) Insert(iter *TreeIter, position int) {
 
 func (self *ListStore) InsertBefore(iter, sibling *TreeIter) {
 	var cSibling *C.GtkTreeIter = nil
-	
+
 	if sibling != nil {
 		cSibling = &sibling.object
 	}
@@ -4101,7 +2999,7 @@ func (self *ListStore) InsertBefore(iter, sibling *TreeIter) {
 
 func (self *ListStore) InsertAfter(iter, sibling *TreeIter) {
 	var cSibling *C.GtkTreeIter = nil
-	
+
 	if sibling != nil {
 		cSibling = &sibling.object
 	}
@@ -4119,7 +3017,7 @@ func (self *ListStore) InsertWithValues(iter *TreeIter, position int, values map
 	defer C.gint_array_free(columns)
 
 	var i int = 0
-	for k,v := range values {
+	for k, v := range values {
 		C.gint_array_set_element(columns, C.int(i), C.gint(k))
 		cval := gobject.ConvertToC(v)
 		defer cval.Free()
@@ -4182,7 +3080,7 @@ func NewTreeStore(gtypeSlice []gobject.GType) *TreeStore {
 	arr := C.gtype_array_new(C.int(count))
 	defer C.gtype_array_free(arr)
 
-	for i,gtype := range gtypeSlice {
+	for i, gtype := range gtypeSlice {
 		C.gtype_array_set_element(arr, C.int(i), C.GType(gtype))
 	}
 
@@ -4261,12 +3159,12 @@ func (self *TreeStore) SetValue(iter *TreeIter, column int, value interface{}) {
 		return
 	}
 	defer cval.Free()
-	
+
 	C.gtk_tree_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
 }
 
 func (self *TreeStore) SetValues(iter *TreeIter, values map[int]interface{}) {
-	for k,v := range values {
+	for k, v := range values {
 		self.SetValue(iter, k, v)
 	}
 }
@@ -4276,7 +3174,7 @@ func (self *TreeStore) Remove(iter *TreeIter) bool {
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
-func (self *TreeStore) Insert(iter,parent *TreeIter, position int) {
+func (self *TreeStore) Insert(iter, parent *TreeIter, position int) {
 	var cparent *C.GtkTreeIter = nil
 
 	if parent != nil {
@@ -4287,7 +3185,7 @@ func (self *TreeStore) Insert(iter,parent *TreeIter, position int) {
 
 func (self *TreeStore) InsertBefore(iter, parent, sibling *TreeIter) {
 	var cSibling, cParent *C.GtkTreeIter = nil, nil
-	
+
 	if sibling != nil {
 		cSibling = &sibling.object
 	}
@@ -4300,7 +3198,7 @@ func (self *TreeStore) InsertBefore(iter, parent, sibling *TreeIter) {
 
 func (self *TreeStore) InsertAfter(iter, parent, sibling *TreeIter) {
 	var cSibling, cParent *C.GtkTreeIter = nil, nil
-	
+
 	if sibling != nil {
 		cSibling = &sibling.object
 	}
@@ -4322,7 +3220,7 @@ func (self *TreeStore) InsertWithValues(iter, parent *TreeIter, position int, va
 	defer C.gint_array_free(columns)
 
 	var i int = 0
-	for k,v := range values {
+	for k, v := range values {
 		C.gint_array_set_element(columns, C.int(i), C.gint(k))
 		cval := gobject.ConvertToC(v)
 		defer cval.Free()
@@ -4344,7 +3242,7 @@ func (self *TreeStore) InsertWithValues(iter, parent *TreeIter, position int, va
 
 func (self *TreeStore) Prepend(iter, parent *TreeIter) {
 	var cParent *C.GtkTreeIter = nil
-	
+
 	if parent != nil {
 		cParent = &parent.object
 	}
@@ -4352,7 +3250,7 @@ func (self *TreeStore) Prepend(iter, parent *TreeIter) {
 }
 
 func (self *TreeStore) Append(iter, parent *TreeIter) {
-    var cParent *C.GtkTreeIter = nil
+	var cParent *C.GtkTreeIter = nil
 	if parent != nil {
 		cParent = &parent.object
 	}
@@ -4449,7 +3347,7 @@ func (self *CellRenderer) GetAlignedArea(w WidgetLike, gtk_CellRendererState_fla
 	ca := gdk3.NativeRectangle(cellArea)
 	var alignedArea C.GdkRectangle
 	C.gtk_cell_renderer_get_aligned_area(self.object, w.W().object, C.GtkCellRendererState(gtk_CellRendererState_flags),
-				(*C.GdkRectangle)(ca), &alignedArea)
+		(*C.GdkRectangle)(ca), &alignedArea)
 	return gdk3.CreateRectangle(unsafe.Pointer(&alignedArea))
 }
 
@@ -4608,7 +3506,6 @@ func cellRendererTextFinalizer(cl *CellRendererText) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererText) { gobject.Unref(cl) })
 }
 
-
 // Conversion functions
 func newCellRendererTextFromNative(obj unsafe.Pointer) interface{} {
 	cl := &CellRendererText{}
@@ -4694,7 +3591,6 @@ func cellRendererProgressFinalizer(cl *CellRendererProgress) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererProgress) { gobject.Unref(cl) })
 }
 
-
 // Conversion functions
 func newCellRendererProgressFromNative(obj unsafe.Pointer) interface{} {
 	cl := &CellRendererProgress{}
@@ -4773,7 +3669,6 @@ func cellRendererSpinnerFinalizer(cl *CellRendererSpinner) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererSpinner) { gobject.Unref(cl) })
 }
 
-
 // Conversion functions
 func newCellRendererSpinnerFromNative(obj unsafe.Pointer) interface{} {
 	cl := &CellRendererSpinner{}
@@ -4851,7 +3746,6 @@ func NewCellRendererToggle() *CellRendererToggle {
 func cellRendererToggleFinalizer(cl *CellRendererToggle) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererToggle) { gobject.Unref(cl) })
 }
-
 
 // Conversion functions
 func newCellRendererToggleFromNative(obj unsafe.Pointer) interface{} {
@@ -4966,7 +3860,6 @@ func cellRendererPixbufFinalizer(cl *CellRendererPixbuf) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererPixbuf) { gobject.Unref(cl) })
 }
 
-
 // Conversion functions
 func newCellRendererPixbufFromNative(obj unsafe.Pointer) interface{} {
 	cl := &CellRendererPixbuf{}
@@ -5045,7 +3938,6 @@ func cellRendererAccelFinalizer(cl *CellRendererAccel) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererAccel) { gobject.Unref(cl) })
 }
 
-
 // Conversion functions
 func newCellRendererAccelFromNative(obj unsafe.Pointer) interface{} {
 	cl := &CellRendererAccel{}
@@ -5119,7 +4011,6 @@ func cellRendererComboFinalizer(cl *CellRendererCombo) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererCombo) { gobject.Unref(cl) })
 }
 
-
 // Conversion functions
 func newCellRendererComboFromNative(obj unsafe.Pointer) interface{} {
 	cl := &CellRendererCombo{}
@@ -5192,7 +4083,6 @@ func NewCellRendererSpin() *CellRendererSpin {
 func cellRendererSpinFinalizer(cl *CellRendererSpin) {
 	runtime.SetFinalizer(cl, func(cl *CellRendererSpin) { gobject.Unref(cl) })
 }
-
 
 // Conversion functions
 func newCellRendererSpinFromNative(obj unsafe.Pointer) interface{} {
@@ -5333,7 +4223,6 @@ func (self *TreeViewColumn) Clear() {
 	C.gtk_tree_view_column_clear(self.object)
 }
 
-
 func (self *TreeViewColumn) AddAttribute(cellRenderer CellRendererLike, attribute string, column int) {
 	s := gobject.GString(attribute)
 	defer s.Free()
@@ -5342,7 +4231,7 @@ func (self *TreeViewColumn) AddAttribute(cellRenderer CellRendererLike, attribut
 
 func (self *TreeViewColumn) SetAttributes(cellRenderer CellRendererLike, attrs A) {
 	self.ClearAttributes(cellRenderer)
-	for _,cellAttr := range attrs {
+	for _, cellAttr := range attrs {
 		self.AddAttribute(cellRenderer, cellAttr.Attribute, cellAttr.Column)
 	}
 }
@@ -5639,57 +4528,466 @@ func (self *TreeView) SetSearchColumn(column int) {
 // End GtkTreeView
 ////////////////////////////// }}}
 
+// End Tree, List and Icon Grid Widgets }}}
+
+// Layout Containers {{{
+
+// GtkGrid {{{
+//////////////////////////////
+
+// GtkGrid Type
+type Grid struct {
+	object *C.GtkGrid
+	*Container
+}
+
+func NewGrid() *Grid {
+	grid := &Grid{}
+	o := C.gtk_grid_new()
+	grid.object = C.to_GtkGrid(unsafe.Pointer(o))
+	grid.Container = NewContainer(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(grid) {
+		gobject.RefSink(grid)
+	}
+	gridFinalizer(grid)
+
+	return grid
+}
+
+// Clear Grid struct when it goes out of reach
+func gridFinalizer(g *Grid) {
+	runtime.SetFinalizer(g, func(g *Grid) { gobject.Unref(g) })
+}
+
+// Conversion function for gobject registration map
+func newGridFromNative(obj unsafe.Pointer) interface{} {
+	grid := &Grid{}
+	grid.object = C.to_GtkGrid(obj)
+
+	if gobject.IsObjectFloating(grid) {
+		gobject.RefSink(grid)
+	} else {
+		gobject.Ref(grid)
+	}
+	grid.Container = NewContainer(obj)
+	gridFinalizer(grid)
+
+	return grid
+}
+
+func nativeFromGrid(g interface{}) *gobject.GValue {
+	grid, ok := g.(*Grid)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.GRID, grid.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be Object-like
+func (self Grid) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Grid) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Grid) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Grid) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+// To be container-like
+func (self Grid) C() *Container {
+	return self.Container
+}
+
+// Grid interface
+func (self *Grid) Attach(w WidgetLike, left, top, width, height int) {
+	C.gtk_grid_attach(self.object, w.W().object, C.gint(left), C.gint(top),
+		C.gint(width), C.gint(height))
+}
+
+func (self *Grid) AttachNextTo(child WidgetLike, sibling WidgetLike, side, width, height int) {
+	C.gtk_grid_attach_next_to(self.object, child.W().object, sibling.W().object, C.GtkPositionType(side),
+		C.gint(width), C.gint(height))
+}
+
+func (self *Grid) GetChildAt(left, top int) WidgetLike {
+	c := C._gtk_grid_get_child_at(self.object, C.gint(left), C.gint(top))
+	if c == nil {
+		return nil
+	}
+
+	child, err := gobject.ConvertToGo(unsafe.Pointer(c))
+	if err == nil {
+		return child.(WidgetLike)
+	}
+
+	return nil
+}
+
+func (self *Grid) InsertRow(position int) {
+	C._gtk_grid_insert_row(self.object, C.gint(position))
+}
+
+func (self *Grid) InsertColumn(position int) {
+	C._gtk_grid_insert_column(self.object, C.gint(position))
+}
+
+func (self *Grid) InsertNextTo(sibling WidgetLike, side int) {
+	C._gtk_grid_insert_next_to(self.object, sibling.W().object, C.GtkPositionType(side))
+}
+
+func (self *Grid) SetRowHomogeneous(homogeneous bool) {
+	b := gobject.GBool(homogeneous)
+	defer b.Free()
+	C.gtk_grid_set_row_homogeneous(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Grid) GetRowHomogeneous() bool {
+	b := C.gtk_grid_get_row_homogeneous(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Grid) SetRowSpacing(spacing uint) {
+	C.gtk_grid_set_row_spacing(self.object, C.guint(spacing))
+}
+
+func (self *Grid) GetRowSpacing() uint {
+	return uint(C.gtk_grid_get_row_spacing(self.object))
+}
+
+func (self *Grid) SetColumnHomogeneous(homogeneous bool) {
+	b := gobject.GBool(homogeneous)
+	defer b.Free()
+	C.gtk_grid_set_column_homogeneous(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Grid) GetColumnHomogeneous() bool {
+	b := C.gtk_grid_get_column_homogeneous(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Grid) SetColumnSpacing(spacing uint) {
+	C.gtk_grid_set_column_spacing(self.object, C.guint(spacing))
+}
+
+func (self *Grid) GetColumnSpacing() uint {
+	return uint(C.gtk_grid_get_column_spacing(self.object))
+}
+//////////////////////////////
+// END GtkGrid
+////////////////////////////// }}}
+
+// GtkBox {{{
+//////////////////////////////
+
+// Box type
+type Box struct {
+	object *C.GtkBox
+	*Container
+}
+
+func NewBox(orientation int, spacing int) *Box {
+	box := &Box{}
+	o := C.gtk_box_new(C.GtkOrientation(orientation), C.gint(spacing))
+	box.object = C.to_GtkBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(box) {
+		gobject.RefSink(box)
+	}
+	box.Container = NewContainer(unsafe.Pointer(o))
+	boxFinalizer(box)
+
+	return box
+}
+
+func NewHBox(spacing int) *Box {
+	return NewBox(GtkOrientation.HORIZONTAL, spacing)
+}
+
+func NewVBox(spacing int) *Box {
+	return NewBox(GtkOrientation.VERTICAL, spacing)
+}
+
+// Clear Box struct when it goes out of reach
+func boxFinalizer(box *Box) {
+	runtime.SetFinalizer(box, func(box *Box) { gobject.Unref(box) })
+}
+// Conversion function for gobject registration map
+func newBoxFromNative(obj unsafe.Pointer) interface{} {
+	box := &Box{}
+	box.object = C.to_GtkBox(obj)
+
+	if gobject.IsObjectFloating(box) {
+		gobject.RefSink(box)
+	} else {
+		gobject.Ref(box)
+	}
+	box.Container = NewContainer(obj)
+	boxFinalizer(box)
+
+	return box
+}
+
+func nativeFromBox(b interface{}) *gobject.GValue {
+	box, ok := b.(*Box)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.BOX, box.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object-like
+func (self Box) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Box) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Box) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Box) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-like
+func (self Box) C() *Container {
+	return self.Container
+}
+
+// Box interface
+func (self *Box) PackStart(w WidgetLike, expand bool, fill bool, padding uint) {
+	e := gobject.GBool(expand)
+	f := gobject.GBool(fill)
+	defer e.Free()
+	defer f.Free()
+	C.gtk_box_pack_start(self.object, w.W().object, *((*C.gboolean)(e.GetPtr())), *((*C.gboolean)(e.GetPtr())), C.guint(padding))
+}
+
+func (self *Box) PackEnd(w WidgetLike, expand bool, fill bool, padding uint) {
+	e := gobject.GBool(expand)
+	f := gobject.GBool(fill)
+	defer e.Free()
+	defer f.Free()
+	C.gtk_box_pack_end(self.object, w.W().object, *((*C.gboolean)(e.GetPtr())), *((*C.gboolean)(e.GetPtr())), C.guint(padding))
+}
+
+func (self *Box) GetHomogeneous() bool {
+	h := gobject.GetProperty(self, "homogeneous")
+	defer h.Free()
+	return gobject.GoBool(h.GetPtr())
+}
+
+func (self *Box) SetHomogeneous(homogeneous bool) {
+	gobject.SetProperty(self, "homogeneous", homogeneous)
+}
+
+func (self *Box) GetSpacing() int {
+	return int(C.gtk_box_get_spacing(self.object))
+}
+
+func (self *Box) SetSpacing(spacing int) {
+	gobject.SetProperty(self, "spacing", spacing)
+}
+
+func (self *Box) ReorderChild(w WidgetLike, position int) {
+	C.gtk_box_reorder_child(self.object, w.W().object, C.gint(position))
+}
+
+func (self *Box) QueryChildPacking(w WidgetLike) (expand bool, fill bool, padding uint, ptype int) {
+	var e C.gboolean
+	var f C.gboolean
+	var p C.guint
+	var t C.GtkPackType
+	C.gtk_box_query_child_packing(self.object, w.W().object, &e, &f, &p, &t)
+
+	return gobject.GoBool(unsafe.Pointer(&e)), gobject.GoBool(unsafe.Pointer(&f)), uint(p), int(t)
+}
+
+func (self *Box) SetChildPacking(w WidgetLike, expand bool, fill bool, padding int, ptype int) {
+	e := gobject.GBool(expand)
+	f := gobject.GBool(fill)
+	defer e.Free()
+	defer f.Free()
+	C.gtk_box_set_child_packing(self.object, w.W().object, *((*C.gboolean)(e.GetPtr())), *((*C.gboolean)(f.GetPtr())),
+		C.guint(padding), C.GtkPackType(ptype))
+}
+//////////////////////////////
+// END GtkBox
+////////////////////////////// }}}
+
+// GtkButtonBox {{{
+//////////////////////////////
+
+// ButtonBox type
+type ButtonBox struct {
+	object *C.GtkButtonBox
+	*Box
+}
+
+func NewButtonBox(orientation int) *ButtonBox {
+	bb := &ButtonBox{}
+	o := C.gtk_button_box_new(C.GtkOrientation(orientation))
+	bb.object = C.to_GtkButtonBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(bb) {
+		gobject.RefSink(bb)
+	}
+	bb.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
+	buttonBoxFinalizer(bb)
+
+	return bb
+}
+
+// Clear ButtonBox structure when it goes out of reach
+func buttonBoxFinalizer(bb *ButtonBox) {
+	runtime.SetFinalizer(bb, func(bb *ButtonBox) { gobject.Unref(bb) })
+}
+
+// Conversion function for gobject registration map
+func newButtonBoxFromNative(obj unsafe.Pointer) interface{} {
+	bb := &ButtonBox{}
+	bb.object = C.to_GtkButtonBox(obj)
+
+	if gobject.IsObjectFloating(bb) {
+		gobject.RefSink(bb)
+	}
+	bb.Box = newBoxFromNative(obj).(*Box)
+	buttonBoxFinalizer(bb)
+
+	return bb
+}
+
+func nativeFromButtonBox(b interface{}) *gobject.GValue {
+	bbox, ok := b.(*ButtonBox)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.BUTTON_BOX, bbox.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self ButtonBox) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ButtonBox) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ButtonBox) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self ButtonBox) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be Box-like
+func (self ButtonBox) CBox() *Box {
+	return self.Box
+}
+
+// ButtonBox Interface
+func (self *ButtonBox) GetLayout() int {
+	l := C.gtk_button_box_get_layout(self.object)
+	return int(l)
+}
+
+func (self *ButtonBox) GetChildSecondary(w WidgetLike) bool {
+	cb := C.gtk_button_box_get_child_secondary(self.object, w.W().object)
+	return gobject.GoBool(unsafe.Pointer(&cb))
+}
+
+func (self *ButtonBox) GetChildNonHomogeneous(w WidgetLike) bool {
+	cb := C._gtk_button_box_get_child_non_homogeneous(self.object, w.W().object)
+	return gobject.GoBool(unsafe.Pointer(&cb))
+}
+
+func (self *ButtonBox) SetLayout(layoutStyle int) {
+	C.gtk_button_box_set_layout(self.object, C.GtkButtonBoxStyle(layoutStyle))
+}
+
+func (self *ButtonBox) SetChildSecondary(w WidgetLike, isSecondary bool) {
+	cb := gobject.GBool(isSecondary)
+	defer cb.Free()
+	C.gtk_button_box_set_child_secondary(self.object, w.W().object, *((*C.gboolean)(cb.GetPtr())))
+}
+
+func (self *ButtonBox) SetChildNonHomogeneous(w WidgetLike, nonHomogeneous bool) {
+	cb := gobject.GBool(nonHomogeneous)
+	defer cb.Free()
+	C._gtk_button_box_set_child_non_homogeneous(self.object, w.W().object, *((*C.gboolean)(cb.GetPtr())))
+}
+//////////////////////////////
+// END GtkButtonBox
+////////////////////////////// }}}
+
 // GtkNotebook {{{
 //////////////////////////////
 
 // GtkNotebook type
 type Notebook struct {
-    object *C.GtkNotebook
-    *Container
+	object *C.GtkNotebook
+	*Container
 }
 
 func NewNotebook() *Notebook {
-    n := &Notebook{}
-    o := C.gtk_notebook_new()
-    n.object = C.to_GtkNotebook(unsafe.Pointer(o))
+	n := &Notebook{}
+	o := C.gtk_notebook_new()
+	n.object = C.to_GtkNotebook(unsafe.Pointer(o))
 
-    if gobject.IsObjectFloating(n) {
-        gobject.RefSink(n)
-    }
-    n.Container = NewContainer(unsafe.Pointer(o))
-    notebookFinalizer(n)
+	if gobject.IsObjectFloating(n) {
+		gobject.RefSink(n)
+	}
+	n.Container = NewContainer(unsafe.Pointer(o))
+	notebookFinalizer(n)
 
-    return n
+	return n
 }
 
 // Clear Notebook struct when it goes out of reach
 func notebookFinalizer(n *Notebook) {
-    runtime.SetFinalizer(n, func(n *Notebook) { gobject.Unref(n) })
+	runtime.SetFinalizer(n, func(n *Notebook) { gobject.Unref(n) })
 }
 
 // Conversion functions
 func newNotebookFromNative(obj unsafe.Pointer) interface{} {
-    n := &Notebook{}
-    n.object = C.to_GtkNotebook(obj)
+	n := &Notebook{}
+	n.object = C.to_GtkNotebook(obj)
 
-    if gobject.IsObjectFloating(n) {
-        gobject.RefSink(n)
-    } else {
-        gobject.Ref(n)
-    }
-    n.Container = NewContainer(obj)
-    notebookFinalizer(n)
+	if gobject.IsObjectFloating(n) {
+		gobject.RefSink(n)
+	} else {
+		gobject.Ref(n)
+	}
+	n.Container = NewContainer(obj)
+	notebookFinalizer(n)
 
-    return n
+	return n
 }
 
 func nativeFromNotebook(note interface{}) *gobject.GValue {
-    n, ok := note.(*Notebook)
-    if ok {
-        gv := gobject.CreateCGValue(GtkType.NOTEBOOK, n.ToNative())
-        return gv
-    }
-    return nil
+	n, ok := note.(*Notebook)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.NOTEBOOK, n.ToNative())
+		return gv
+	}
+	return nil
 }
 
 // To be object-like
@@ -5717,305 +5015,1035 @@ func (self Notebook) C() *Container {
 // Notebook interface
 
 func (self *Notebook) AppendPage(child, tabLabel WidgetLike) int {
-    var tab *C.GtkWidget = nil
-    if tabLabel != nil {
-        tab = tabLabel.W().object
-    }
-    return int(C.gtk_notebook_append_page(self.object, child.W().object, tab))
+	var tab *C.GtkWidget = nil
+	if tabLabel != nil {
+		tab = tabLabel.W().object
+	}
+	return int(C.gtk_notebook_append_page(self.object, child.W().object, tab))
 }
 
 func (self *Notebook) AppendPageMenu(child, tabLabel, menuLabel WidgetLike) int {
-    var t, m *C.GtkWidget = nil, nil
+	var t, m *C.GtkWidget = nil, nil
 
-    if tabLabel != nil {
-        t = tabLabel.W().object
-    }
+	if tabLabel != nil {
+		t = tabLabel.W().object
+	}
 
-    if menuLabel != nil {
-        m = menuLabel.W().object
-    }
-    return int(C.gtk_notebook_append_page_menu(self.object, child.W().object, t, m))
+	if menuLabel != nil {
+		m = menuLabel.W().object
+	}
+	return int(C.gtk_notebook_append_page_menu(self.object, child.W().object, t, m))
 }
 
 func (self *Notebook) PrependPage(child, tabLabel WidgetLike) int {
-    var t *C.GtkWidget
-    if tabLabel != nil {
-        t = tabLabel.W().object
-    }
-    return int(C.gtk_notebook_prepend_page(self.object, child.W().object, t))
+	var t *C.GtkWidget
+	if tabLabel != nil {
+		t = tabLabel.W().object
+	}
+	return int(C.gtk_notebook_prepend_page(self.object, child.W().object, t))
 }
 
 func (self *Notebook) PrependPageMenu(child, tabLabel, menuLabel WidgetLike) int {
-    var t, m *C.GtkWidget = nil, nil
+	var t, m *C.GtkWidget = nil, nil
 
-    if tabLabel != nil {
-        t = tabLabel.W().object
-    }
+	if tabLabel != nil {
+		t = tabLabel.W().object
+	}
 
-    if menuLabel != nil {
-        m = menuLabel.W().object
-    }
-    return int(C.gtk_notebook_prepend_page_menu(self.object, child.W().object, t, m))
+	if menuLabel != nil {
+		m = menuLabel.W().object
+	}
+	return int(C.gtk_notebook_prepend_page_menu(self.object, child.W().object, t, m))
 }
 
 func (self *Notebook) InsertPage(child, tabLabel WidgetLike, position int) int {
-    var t *C.GtkWidget = nil
+	var t *C.GtkWidget = nil
 
-    if tabLabel != nil {
-        t = tabLabel.W().object
-    }
-    return int(C.gtk_notebook_insert_page(self.object, child.W().object, t, C.gint(position)))
+	if tabLabel != nil {
+		t = tabLabel.W().object
+	}
+	return int(C.gtk_notebook_insert_page(self.object, child.W().object, t, C.gint(position)))
 }
 
 func (self *Notebook) InsertPageMenu(child, tabLabel, menuLabel WidgetLike, position int) int {
-    var t, m *C.GtkWidget = nil, nil
+	var t, m *C.GtkWidget = nil, nil
 
-    if tabLabel != nil {
-        t = tabLabel.W().object
-    }
+	if tabLabel != nil {
+		t = tabLabel.W().object
+	}
 
-    if menuLabel != nil {
-        m = menuLabel.W().object
-    }
-    return int(C.gtk_notebook_insert_page_menu(self.object, child.W().object, t, m, C.gint(position)))
+	if menuLabel != nil {
+		m = menuLabel.W().object
+	}
+	return int(C.gtk_notebook_insert_page_menu(self.object, child.W().object, t, m, C.gint(position)))
 }
 
 func (self *Notebook) RemovePage(pageNum int) {
-    C.gtk_notebook_remove_page(self.object, C.gint(pageNum))
+	C.gtk_notebook_remove_page(self.object, C.gint(pageNum))
 }
 
 func (self *Notebook) PageNum(child WidgetLike) int {
-    return int(C.gtk_notebook_page_num(self.object, child.W().object))
+	return int(C.gtk_notebook_page_num(self.object, child.W().object))
 }
 
 func (self *Notebook) NextPage() {
-    C.gtk_notebook_next_page(self.object)
+	C.gtk_notebook_next_page(self.object)
 }
 
 func (self *Notebook) PrevPage() {
-    C.gtk_notebook_prev_page(self.object)
+	C.gtk_notebook_prev_page(self.object)
 }
 
 func (self *Notebook) ReorderChild(child WidgetLike, position int) {
-    C.gtk_notebook_reorder_child(self.object, child.W().object, C.gint(position))
+	C.gtk_notebook_reorder_child(self.object, child.W().object, C.gint(position))
 }
 
 func (self *Notebook) SetTabPos(gtk_PositionType int) {
-    C.gtk_notebook_set_tab_pos(self.object, C.GtkPositionType(gtk_PositionType))
+	C.gtk_notebook_set_tab_pos(self.object, C.GtkPositionType(gtk_PositionType))
 }
 
 func (self *Notebook) SetShowTabs(showTabs bool) {
-    b := gobject.GBool(showTabs)
-    defer b.Free()
-    C.gtk_notebook_set_show_tabs(self.object, *((*C.gboolean)(b.GetPtr())))
+	b := gobject.GBool(showTabs)
+	defer b.Free()
+	C.gtk_notebook_set_show_tabs(self.object, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *Notebook) SetShowBorder(showBorder bool) {
-    b := gobject.GBool(showBorder)
-    defer b.Free()
-    C.gtk_notebook_set_show_border(self.object, *((*C.gboolean)(b.GetPtr())))
+	b := gobject.GBool(showBorder)
+	defer b.Free()
+	C.gtk_notebook_set_show_border(self.object, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *Notebook) SetScrollable(scrollable bool) {
-    b := gobject.GBool(scrollable)
-    defer b.Free()
-    C.gtk_notebook_set_scrollable(self.object, *((*C.gboolean)(b.GetPtr())))
+	b := gobject.GBool(scrollable)
+	defer b.Free()
+	C.gtk_notebook_set_scrollable(self.object, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *Notebook) PopupEnable() {
-    C.gtk_notebook_popup_enable(self.object)
+	C.gtk_notebook_popup_enable(self.object)
 }
 
 func (self *Notebook) PopupDisable() {
-    C.gtk_notebook_popup_disable(self.object)
+	C.gtk_notebook_popup_disable(self.object)
 }
 
 func (self *Notebook) GetCurrentPage() int {
-    return int(C.gtk_notebook_get_current_page(self.object))
+	return int(C.gtk_notebook_get_current_page(self.object))
 }
 
 func (self *Notebook) GetMenuLabel(child WidgetLike) WidgetLike {
-    ml := C.gtk_notebook_get_menu_label(self.object, child.W().object)
-    if ml == nil {
-        return nil
-    }
+	ml := C.gtk_notebook_get_menu_label(self.object, child.W().object)
+	if ml == nil {
+		return nil
+	}
 
-    l, err := gobject.ConvertToGo(unsafe.Pointer(ml))
-    if err == nil {
-        return l.(WidgetLike)
-    }
-    return nil
+	l, err := gobject.ConvertToGo(unsafe.Pointer(ml))
+	if err == nil {
+		return l.(WidgetLike)
+	}
+	return nil
 }
 
 func (self *Notebook) GetNthPage(pageNum int) WidgetLike {
-    w := C.gtk_notebook_get_nth_page(self.object, C.gint(pageNum))
-    if w == nil {
-        return nil
-    }
+	w := C.gtk_notebook_get_nth_page(self.object, C.gint(pageNum))
+	if w == nil {
+		return nil
+	}
 
-    child, err := gobject.ConvertToGo(unsafe.Pointer(w))
-    if err == nil {
-        return child.(WidgetLike)
-    }
-    return nil
+	child, err := gobject.ConvertToGo(unsafe.Pointer(w))
+	if err == nil {
+		return child.(WidgetLike)
+	}
+	return nil
 }
 
 func (self *Notebook) GetNPages() int {
-    return int(C.gtk_notebook_get_n_pages(self.object))
+	return int(C.gtk_notebook_get_n_pages(self.object))
 }
 
 func (self *Notebook) GetTabLabel(child WidgetLike) WidgetLike {
-    w := C.gtk_notebook_get_tab_label(self.object, child.W().object)
-    if w == nil {
-        return nil
-    }
+	w := C.gtk_notebook_get_tab_label(self.object, child.W().object)
+	if w == nil {
+		return nil
+	}
 
-    widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
-    if err == nil {
-        return widget.(WidgetLike)
-    }
-    return nil
+	widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
+	if err == nil {
+		return widget.(WidgetLike)
+	}
+	return nil
 }
 
 func (self *Notebook) SetMenuLabel(child, menuLabel WidgetLike) {
-    var m *C.GtkWidget = nil
-    if menuLabel != nil {
-        m = menuLabel.W().object
-    }
-    C.gtk_notebook_set_menu_label(self.object, child.W().object, m)
+	var m *C.GtkWidget = nil
+	if menuLabel != nil {
+		m = menuLabel.W().object
+	}
+	C.gtk_notebook_set_menu_label(self.object, child.W().object, m)
 }
 
 func (self *Notebook) SetMenuLabelText(child WidgetLike, menuText string) {
-    s := gobject.GString(menuText)
-    defer s.Free()
-    C.gtk_notebook_set_menu_label_text(self.object, child.W().object, (*C.gchar)(s.GetPtr()))
+	s := gobject.GString(menuText)
+	defer s.Free()
+	C.gtk_notebook_set_menu_label_text(self.object, child.W().object, (*C.gchar)(s.GetPtr()))
 }
 
 func (self *Notebook) SetTabLabel(child, tabLabel WidgetLike) {
-    var l *C.GtkWidget = nil
-    if tabLabel != nil {
-        l = tabLabel.W().object
-    }
-    C.gtk_notebook_set_tab_label(self.object, child.W().object, l)
+	var l *C.GtkWidget = nil
+	if tabLabel != nil {
+		l = tabLabel.W().object
+	}
+	C.gtk_notebook_set_tab_label(self.object, child.W().object, l)
 }
 
 func (self *Notebook) SetTabLabelText(child WidgetLike, tabText string) {
-    s := gobject.GString(tabText)
-    defer s.Free()
-    C.gtk_notebook_set_tab_label_text(self.object, child.W().object, (*C.gchar)(s.GetPtr()))
+	s := gobject.GString(tabText)
+	defer s.Free()
+	C.gtk_notebook_set_tab_label_text(self.object, child.W().object, (*C.gchar)(s.GetPtr()))
 }
 
 func (self *Notebook) SetTabReorderable(child WidgetLike, reorderable bool) {
-    b := gobject.GBool(reorderable)
-    defer b.Free()
-    C.gtk_notebook_set_tab_reorderable(self.object, child.W().object, *((*C.gboolean)(b.GetPtr())))
+	b := gobject.GBool(reorderable)
+	defer b.Free()
+	C.gtk_notebook_set_tab_reorderable(self.object, child.W().object, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *Notebook) SetTabDetachable(child WidgetLike, detachable bool) {
-    b := gobject.GBool(detachable)
-    defer b.Free()
-    C.gtk_notebook_set_tab_detachable(self.object, child.W().object, *((*C.gboolean)(b.GetPtr())))
+	b := gobject.GBool(detachable)
+	defer b.Free()
+	C.gtk_notebook_set_tab_detachable(self.object, child.W().object, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *Notebook) GetMenuLabelText(child WidgetLike) string {
-    s := C.gtk_notebook_get_menu_label_text(self.object, child.W().object)
-    if s == nil {
-        return ""
-    }
-    return gobject.GoString(unsafe.Pointer(s))
+	s := C.gtk_notebook_get_menu_label_text(self.object, child.W().object)
+	if s == nil {
+		return ""
+	}
+	return gobject.GoString(unsafe.Pointer(s))
 }
 
 func (self *Notebook) GetScrollable() bool {
-    b := C.gtk_notebook_get_scrollable(self.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_notebook_get_scrollable(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *Notebook) GetShowBorder() bool {
-    b := C.gtk_notebook_get_show_border(self.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_notebook_get_show_border(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *Notebook) GetShowTabs() bool {
-    b := C.gtk_notebook_get_show_tabs(self.object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_notebook_get_show_tabs(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *Notebook) GetTabLabelText(child WidgetLike) string {
-    s := C.gtk_notebook_get_tab_label_text(self.object, child.W().object)
-    if s == nil {
-        return ""
-    }
-    return gobject.GoString(unsafe.Pointer(s))
+	s := C.gtk_notebook_get_tab_label_text(self.object, child.W().object)
+	if s == nil {
+		return ""
+	}
+	return gobject.GoString(unsafe.Pointer(s))
 }
 
 func (self *Notebook) GetTabPos() (gtk_PositionType int) {
-    return int(C.gtk_notebook_get_tab_pos(self.object))
+	return int(C.gtk_notebook_get_tab_pos(self.object))
 }
 
 func (self *Notebook) GetTabReorderable(child WidgetLike) bool {
-    b := C.gtk_notebook_get_tab_reorderable(self.object, child.W().object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_notebook_get_tab_reorderable(self.object, child.W().object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *Notebook) GetTabDetachable(child WidgetLike) bool {
-    b := C.gtk_notebook_get_tab_detachable(self.object, child.W().object)
-    return gobject.GoBool(unsafe.Pointer(&b))
+	b := C.gtk_notebook_get_tab_detachable(self.object, child.W().object)
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 func (self *Notebook) GetTabHborder() uint {
-    return uint(C.gtk_notebook_get_tab_hborder(self.object))
+	return uint(C.gtk_notebook_get_tab_hborder(self.object))
 }
 
 func (self *Notebook) GetTabVborder() uint {
-    return uint(C.gtk_notebook_get_tab_vborder(self.object))
+	return uint(C.gtk_notebook_get_tab_vborder(self.object))
 }
 
 func (self *Notebook) SetCurrentPage(pageNum int) {
-    C.gtk_notebook_set_current_page(self.object, C.gint(pageNum))
+	C.gtk_notebook_set_current_page(self.object, C.gint(pageNum))
 }
 
 func (self *Notebook) SetGroupName(groupName string) {
-    if groupName == "" {
-        C.gtk_notebook_set_group_name(self.object, nil)
-    }
-    s := gobject.GString(groupName)
-    defer s.Free()
+	if groupName == "" {
+		C.gtk_notebook_set_group_name(self.object, nil)
+	}
+	s := gobject.GString(groupName)
+	defer s.Free()
 
-    C.gtk_notebook_set_group_name(self.object, (*C.gchar)(s.GetPtr()))
+	C.gtk_notebook_set_group_name(self.object, (*C.gchar)(s.GetPtr()))
 }
 
 func (self *Notebook) GetGroupName() string {
-    s := C.gtk_notebook_get_group_name(self.object)
-    if s == nil {
-        return ""
-    }
-    return gobject.GoString(unsafe.Pointer(s))
+	s := C.gtk_notebook_get_group_name(self.object)
+	if s == nil {
+		return ""
+	}
+	return gobject.GoString(unsafe.Pointer(s))
 }
 
 func (self *Notebook) SetActionWidget(w WidgetLike, gtk_Pack int) {
-    C.gtk_notebook_set_action_widget(self.object, w.W().object, C.GtkPackType(gtk_Pack))
+	C.gtk_notebook_set_action_widget(self.object, w.W().object, C.GtkPackType(gtk_Pack))
 }
 
 func (self *Notebook) GetActionWidget(gtk_Pack int) WidgetLike {
-    w := C.gtk_notebook_get_action_widget(self.object, C.GtkPackType(gtk_Pack))
-    if w == nil {
-        return nil
-    }
-    widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
-    if err == nil {
-        return widget.(WidgetLike)
-    }
-    return nil
+	w := C.gtk_notebook_get_action_widget(self.object, C.GtkPackType(gtk_Pack))
+	if w == nil {
+		return nil
+	}
+	widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
+	if err == nil {
+		return widget.(WidgetLike)
+	}
+	return nil
 }
 //////////////////////////////
 // End GtkNotebook
 ////////////////////////////// }}}
 
+// End Layout Containers }}}
+
+// Ornaments {{{
+
+// GtkFrame {{{
+//////////////////////////////
+
+// Frame type
+type Frame struct {
+	object *C.GtkFrame
+	*Container
+}
+
+func NewFrame(label string) *Frame {
+	f := &Frame{}
+
+	s := gobject.GString(label)
+	defer s.Free()
+
+	o := C.gtk_frame_new((*C.gchar)(s.GetPtr()))
+	f.object = C.to_GtkFrame(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(f) {
+		gobject.RefSink(f)
+	}
+	f.Container = NewContainer(unsafe.Pointer(o))
+	frameFinalizer(f)
+
+	return f
+}
+
+// Clear Frame struct when it goes out of reach
+func frameFinalizer(f *Frame) {
+	runtime.SetFinalizer(f, func(f *Frame) { gobject.Unref(f) })
+}
+
+// Conversion function for gobject registration map
+func newFrameFromNative(obj unsafe.Pointer) interface{} {
+	f := &Frame{}
+	f.object = C.to_GtkFrame(obj)
+
+	if gobject.IsObjectFloating(f) {
+		gobject.RefSink(f)
+	} else {
+		gobject.Ref(f)
+	}
+	f.Container = NewContainer(unsafe.Pointer(f.object))
+	frameFinalizer(f)
+
+	return f
+}
+
+func nativeFromFrame(frame interface{}) *gobject.GValue {
+	f, ok := frame.(*Frame)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.FRAME, f.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object like
+func (self Frame) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Frame) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Frame) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Frame) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-lie
+func (self Frame) C() *Container {
+	return self.Container
+}
+
+// Frame interface
+func (self *Frame) SetLabel(label string) {
+	s := gobject.GString(label)
+	defer s.Free()
+	C.gtk_frame_set_label(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Frame) SetLabelWidget(w WidgetLike) {
+	C.gtk_frame_set_label_widget(self.object, w.W().object)
+}
+
+func (self *Frame) SetLabelAlign(xalign, yalign float32) {
+	C.gtk_frame_set_label_align(self.object, C.gfloat(xalign), C.gfloat(yalign))
+}
+
+func (self *Frame) SetShadowType(gtk_shadow int) {
+	C.gtk_frame_set_shadow_type(self.object, C.GtkShadowType(gtk_shadow))
+}
+
+func (self *Frame) GetLabel() string {
+	l := C.gtk_frame_get_label(self.object)
+	return gobject.GoString(unsafe.Pointer(l))
+}
+
+func (self *Frame) GetLabelAlign() (xalign, yalign float32) {
+	var cax C.gfloat
+	var cay C.gfloat
+	C.gtk_frame_get_label_align(self.object, &cax, &cay)
+	return float32(cax), float32(cay)
+}
+
+func (self *Frame) GetLabelWidget() WidgetLike {
+	cw := C.gtk_frame_get_label_widget(self.object)
+	w, err := gobject.ConvertToGo(unsafe.Pointer(cw))
+	if err != nil {
+		return w.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *Frame) GetShadowType() int {
+	return int(C.gtk_frame_get_shadow_type(self.object))
+}
+//////////////////////////////
+// END GtkFrame
+////////////////////////////// }}}
+
+// GtkSeparator {{{
+//////////////////////////////
+
+// GtkSeparator type
+type Separator struct {
+	object *C.GtkSeparator
+	*Widget
+}
+
+func NewSeparator(orientation int) *Separator {
+	sep := &Separator{}
+	o := C.gtk_separator_new(C.GtkOrientation(orientation))
+	sep.object = C.to_GtkSeparator(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(sep) {
+		gobject.RefSink(sep)
+	}
+	sep.Widget = NewWidget(unsafe.Pointer(o))
+	separatorFinalizer(sep)
+
+	return sep
+}
+
+func NewHSeparator() *Separator {
+	return NewSeparator(GtkOrientation.HORIZONTAL)
+}
+
+func NewVSeparator() *Separator {
+	return NewSeparator(GtkOrientation.VERTICAL)
+}
+
+// Clear Separator struct when it goes out of reach
+func separatorFinalizer(s *Separator) {
+	runtime.SetFinalizer(s, func(s *Separator) { gobject.Unref(s) })
+}
+
+// Conversion function for gobject registration map
+func newSeparatorFromNative(obj unsafe.Pointer) interface{} {
+	sep := &Separator{}
+	sep.object = C.to_GtkSeparator(obj)
+
+	if gobject.IsObjectFloating(sep) {
+		gobject.RefSink(sep)
+	} else {
+		gobject.Ref(sep)
+	}
+	sep.Widget = NewWidget(obj)
+	separatorFinalizer(sep)
+
+	return sep
+}
+
+func nativeFromSeparator(s interface{}) *gobject.GValue {
+	sep, ok := s.(*Separator)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.SEPARATOR, sep.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object like
+func (self Separator) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Separator) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Separator) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+
+}
+
+func (self Separator) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+// To be widget-like
+func (self Separator) W() *Widget {
+	return self.Widget
+}
+//////////////////////////////
+// END GtkSeparator
+////////////////////////////// }}}
+
+// End Ornaments }}}
+
+// Scrolling {{{
+
+// GtkScrollbar {{{
+//////////////////////////////
+
+// GtkScrollbar type
+type Scrollbar struct {
+	object *C.GtkScrollbar
+	*Range
+}
+
+func NewScrollbar(gtk_orientation int, adjustment *Adjustment) *Scrollbar {
+	sb := &Scrollbar{}
+	o := C.gtk_scrollbar_new(C.GtkOrientation(gtk_orientation), adjustment.object)
+	sb.object = C.to_GtkScrollbar(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(sb) {
+		gobject.RefSink(sb)
+	}
+	sb.Range = newRangeFromNative(unsafe.Pointer(o)).(*Range)
+	scrollbarFinalizer(sb)
+
+	return sb
+}
+
+func NewHScrollbar(adjustment *Adjustment) *Scrollbar {
+	return NewScrollbar(GtkOrientation.HORIZONTAL, adjustment)
+}
+
+func NewVScrollbar(adjustment *Adjustment) *Scrollbar {
+	return NewScrollbar(GtkOrientation.VERTICAL, adjustment)
+}
+
+// Clear Scrollbar struct when it goes out of reach
+func scrollbarFinalizer(sb *Scrollbar) {
+	runtime.SetFinalizer(sb, func(sb *Scrollbar) { gobject.Unref(sb) })
+}
+
+// Conversions functions
+func newScrollbarFromNative(sb unsafe.Pointer) interface{} {
+	scrollbar := &Scrollbar{}
+	scrollbar.object = C.to_GtkScrollbar(sb)
+
+	if gobject.IsObjectFloating(scrollbar) {
+		gobject.RefSink(scrollbar)
+	} else {
+		gobject.Ref(scrollbar)
+	}
+	scrollbar.Range = newRangeFromNative(sb).(*Range)
+	scrollbarFinalizer(scrollbar)
+
+	return scrollbar
+}
+
+func nativeFromScrollbar(sb interface{}) *gobject.GValue {
+	scrollbar, ok := sb.(*Scrollbar)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.SCROLLBAR, scrollbar.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self Scrollbar) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Scrollbar) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Scrollbar) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Scrollbar) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be Range-like
+func (self Scrollbar) R() *Range {
+	return self.Range
+}
+//////////////////////////////
+// END GtkScrollbar
+////////////////////////////// }}}
+
+// GtkScrolledWindow {{{
+//////////////////////////////
+
+// GtkScrolledWindow type
+type ScrolledWindow struct {
+	object *C.GtkScrolledWindow
+	*Container
+}
+
+func NewScrolledWindow(hadjustment, vadjustment *Adjustment) *ScrolledWindow {
+	sw := &ScrolledWindow{}
+	var ha, va *C.GtkAdjustment
+	ha, va = nil, nil
+
+	if hadjustment != nil {
+		ha = hadjustment.object
+	}
+
+	if vadjustment != nil {
+		va = vadjustment.object
+	}
+
+	o := C.gtk_scrolled_window_new(ha, va)
+	sw.object = C.to_GtkScrolledWindow(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(sw) {
+		gobject.RefSink(sw)
+	}
+	sw.Container = NewContainer(unsafe.Pointer(o))
+	scrolledWindowFinalizer(sw)
+
+	return sw
+}
+
+// Clear ScrolledWindow struct when it goes out of reach
+func scrolledWindowFinalizer(sw *ScrolledWindow) {
+	runtime.SetFinalizer(sw, func(sw *ScrolledWindow) { gobject.Unref(sw) })
+}
+
+// Conversion functions
+func newScrolledWindowFromNative(sw unsafe.Pointer) interface{} {
+	scrolled := &ScrolledWindow{}
+	scrolled.object = C.to_GtkScrolledWindow(sw)
+
+	if gobject.IsObjectFloating(scrolled) {
+		gobject.RefSink(scrolled)
+	} else {
+		gobject.Ref(scrolled)
+	}
+	scrolled.Container = NewContainer(sw)
+	scrolledWindowFinalizer(scrolled)
+
+	return scrolled
+}
+
+func nativeFromScrolledWindow(sw interface{}) *gobject.GValue {
+	scrolled, ok := sw.(*ScrolledWindow)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.SCROLLED_WINDOW, scrolled.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self ScrolledWindow) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ScrolledWindow) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ScrolledWindow) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self ScrolledWindow) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// ScrolledWindow interface
+func (self *ScrolledWindow) GetHadjustment() *Adjustment {
+	ad := C.gtk_scrolled_window_get_hadjustment(self.object)
+	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
+	if err == nil {
+		return a.(*Adjustment)
+	}
+	return nil
+}
+
+func (self *ScrolledWindow) GetVadjustment() *Adjustment {
+	ad := C.gtk_scrolled_window_get_vadjustment(self.object)
+	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
+	if err == nil {
+		return a.(*Adjustment)
+	}
+	return nil
+}
+
+func (self *ScrolledWindow) GetHScrollbar() WidgetLike {
+	ad := C.gtk_scrolled_window_get_hscrollbar(self.object)
+	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
+	if err == nil {
+		return a.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *ScrolledWindow) GetVScrollbar() WidgetLike {
+	ad := C.gtk_scrolled_window_get_vscrollbar(self.object)
+	a, err := gobject.ConvertToGo(unsafe.Pointer(ad))
+	if err == nil {
+		return a.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *ScrolledWindow) SetPolicy(gtk_policy_horizontal, gtk_policy_vertical int) {
+	C.gtk_scrolled_window_set_policy(self.object, C.GtkPolicyType(gtk_policy_horizontal), C.GtkPolicyType(gtk_policy_vertical))
+}
+
+func (self *ScrolledWindow) AddWithViewport(child WidgetLike) {
+	C.gtk_scrolled_window_add_with_viewport(self.object, child.W().object)
+}
+
+func (self *ScrolledWindow) SetPlacement(gtk_corner_window_placement int) {
+	C.gtk_scrolled_window_set_placement(self.object, C.GtkCornerType(gtk_corner_window_placement))
+}
+
+func (self *ScrolledWindow) UnsetPlacement() {
+	C.gtk_scrolled_window_unset_placement(self.object)
+}
+
+func (self *ScrolledWindow) SetShadowType(gtk_shadow int) {
+	C.gtk_scrolled_window_set_shadow_type(self.object, C.GtkShadowType(gtk_shadow))
+}
+
+func (self *ScrolledWindow) SetHadjustment(ha *Adjustment) {
+	C.gtk_scrolled_window_set_hadjustment(self.object, ha.object)
+}
+
+func (self *ScrolledWindow) SetVadjustment(va *Adjustment) {
+	C.gtk_scrolled_window_set_vadjustment(self.object, va.object)
+}
+
+func (self *ScrolledWindow) GetPlacement() int {
+	return int(C.gtk_scrolled_window_get_placement(self.object))
+}
+
+func (self *ScrolledWindow) GetPolicy() (hscrollbarPolicy, vscrollbarPolicy int) {
+	var hp C.GtkPolicyType
+	var vp C.GtkPolicyType
+	C.gtk_scrolled_window_get_policy(self.object, &hp, &vp)
+	return int(hp), int(vp)
+}
+
+func (self *ScrolledWindow) GetShadowType() int {
+	return int(C.gtk_scrolled_window_get_shadow_type(self.object))
+}
+
+func (self *ScrolledWindow) GetMinContentWidth() int {
+	return int(C.gtk_scrolled_window_get_min_content_width(self.object))
+}
+
+func (self *ScrolledWindow) SetMinContentWidth(width int) {
+	C.gtk_scrolled_window_set_min_content_width(self.object, C.gint(width))
+}
+
+func (self *ScrolledWindow) GetMinContentHeight() int {
+	return int(C.gtk_scrolled_window_get_min_content_height(self.object))
+}
+
+func (self *ScrolledWindow) SetMinContentHeight(height int) {
+	C.gtk_scrolled_window_set_min_content_height(self.object, C.gint(height))
+}
+//////////////////////////////
+// END GtkScrolledWindow
+////////////////////////////// }}}
+
+// End Scrolling }}}
+
+// Miscellaneous {{{
+
+// GtkAdjustment {{{
+//////////////////////////////
+
+// GtkAdjustment type
+type Adjustment struct {
+	object *C.GtkAdjustment
+}
+
+func NewAdjustment(value, lower, upper, stepIncrement, pageIncrement, pageSize float64) *Adjustment {
+	a := &Adjustment{}
+	o := C.gtk_adjustment_new(C.gdouble(value), C.gdouble(lower), C.gdouble(upper), C.gdouble(stepIncrement),
+		C.gdouble(pageIncrement), C.gdouble(pageSize))
+	a.object = C.to_GtkAdjustment(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(a) {
+		gobject.RefSink(a)
+	}
+	adjustmentFinalizer(a)
+
+	return a
+}
+
+// Clear Adjustment struct when it goes out of reach
+func adjustmentFinalizer(a *Adjustment) {
+	runtime.SetFinalizer(a, func(a *Adjustment) { gobject.Unref(a) })
+}
+
+// Conversion functions for gobject registration map
+func newAdjustmentFromNative(obj unsafe.Pointer) interface{} {
+	a := &Adjustment{}
+	a.object = C.to_GtkAdjustment(obj)
+
+	if gobject.IsObjectFloating(a) {
+		gobject.RefSink(a)
+	} else {
+		gobject.Ref(a)
+	}
+	adjustmentFinalizer(a)
+
+	return a
+}
+
+func nativeFromAdjustment(a interface{}) *gobject.GValue {
+	adj, ok := a.(*Adjustment)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.ADJUSTMENT, adj.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object-like
+func (self Adjustment) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Adjustment) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Adjustment) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Adjustment) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// Adjustment interface
+func (self *Adjustment) GetValue() float64 {
+	return float64(C.gtk_adjustment_get_value(self.object))
+}
+
+func (self *Adjustment) SetValue(value float64) {
+	C.gtk_adjustment_set_value(self.object, C.gdouble(value))
+}
+
+func (self *Adjustment) ClampPage(lower, upper float64) {
+	C.gtk_adjustment_clamp_page(self.object, C.gdouble(lower), C.gdouble(upper))
+}
+
+func (self *Adjustment) Changed() {
+	C.gtk_adjustment_changed(self.object)
+}
+
+func (self *Adjustment) ValueChanged() {
+	C.gtk_adjustment_value_changed(self.object)
+}
+
+func (self *Adjustment) Configure(value, lower, upper, stepIncrement, pageIncrement, pageSize float64) {
+	C.gtk_adjustment_configure(self.object, C.gdouble(value), C.gdouble(lower), C.gdouble(upper),
+		C.gdouble(stepIncrement), C.gdouble(pageIncrement), C.gdouble(pageSize))
+}
+
+func (self *Adjustment) GetLower() float64 {
+	return float64(C.gtk_adjustment_get_lower(self.object))
+}
+
+func (self *Adjustment) GetPageIncrement() float64 {
+	return float64(C.gtk_adjustment_get_page_increment(self.object))
+}
+
+func (self *Adjustment) GetPageSize() float64 {
+	return float64(C.gtk_adjustment_get_page_size(self.object))
+}
+
+func (self *Adjustment) GetStepIncrement() float64 {
+	return float64(C.gtk_adjustment_get_step_increment(self.object))
+}
+
+func (self *Adjustment) GetMinimumIncrement() float64 {
+	return float64(C._gtk_adjustment_get_minimum_increment(self.object))
+}
+
+func (self *Adjustment) GetUpper() float64 {
+	return float64(C.gtk_adjustment_get_upper(self.object))
+}
+
+func (self *Adjustment) SetLower(lower float64) {
+	C.gtk_adjustment_set_lower(self.object, C.gdouble(lower))
+}
+
+func (self *Adjustment) SetPageIncrement(pageIncrement float64) {
+	C.gtk_adjustment_set_page_increment(self.object, C.gdouble(pageIncrement))
+}
+
+func (self *Adjustment) SetPageSize(pageSize float64) {
+	C.gtk_adjustment_set_page_size(self.object, C.gdouble(pageSize))
+}
+
+func (self *Adjustment) SetStepIncrement(stepIncrement float64) {
+	C.gtk_adjustment_set_step_increment(self.object, C.gdouble(stepIncrement))
+}
+
+func (self *Adjustment) SetUpper(upper float64) {
+	C.gtk_adjustment_set_upper(self.object, C.gdouble(upper))
+}
+//////////////////////////////
+// GtkAdjustment
+////////////////////////////// }}}
+
+// End Miscellaneous }}}
+
+// GtkApplication {{{
+//////////////////////////////
+
+// Application Type
+type Application struct {
+	object *C.GtkApplication
+}
+
+// Create new application
+func NewApplication(id string, flags int) *Application {
+	cid := gobject.GString(id)
+	defer cid.Free()
+	app := C.gtk_application_new((*C.gchar)(cid.GetPtr()), C.GApplicationFlags(flags))
+	gtkapp := &Application{app}
+
+	if gobject.IsObjectFloating(gtkapp) {
+		gobject.RefSink(gtkapp)
+	}
+	C.g_application_register(C.to_GApplication(app), nil, nil)
+	//C.g_application_activate(C.to_GApplication(app))
+	gtkapp.Connect("activate", func() {})
+
+	return gtkapp
+}
+
+// Release reference when this Application struct goes out of scope
+func appFinalizer(a *Application) {
+	runtime.SetFinalizer(a, func(a *Application) { gobject.Unref(a) })
+}
+
+// Convert from Native to Go type
+func appFromNative(app unsafe.Pointer) interface{} {
+	ga := C.to_GtkApplication(app)
+	gtkapp := &Application{ga}
+
+	if gobject.IsObjectFloating(gtkapp) {
+		gobject.RefSink(gtkapp)
+	} else {
+		gobject.Ref(gtkapp)
+	}
+	return &Application{ga}
+}
+
+// Convert from Go to Native
+func nativeFromApp(app interface{}) *gobject.GValue {
+	argapp, ok := app.(*Application)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.APPLICATION, argapp.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object-like
+func (self Application) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Application) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Application) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Application) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// Add Window to application object
+func (self *Application) AddWindow(window *Window) {
+	if window == nil {
+		return
+	}
+	C.gtk_application_add_window(self.object, window.object)
+}
+
+// Remove Window
+func (self *Application) RemoveWindow(window *Window) {
+	if window == nil {
+		return
+	}
+
+	C.gtk_application_remove_window(self.object, window.object)
+}
+
+// Run app
+func (self *Application) Run() {
+	C.run_app(self.object)
+}
+// END GtkApplication
+////////////////////////////// }}}
 
 // GTK3 MODULE init function {{{
 func init() {
-    // Initialize FreezeMain variable
-    FreezeMain = sync.NewCond(new(sync.Mutex))
+	// Initialize FreezeMain variable
+	FreezeMain = sync.NewCond(new(sync.Mutex))
 
 	// Register GtkApplicaton type
 	gobject.RegisterCType(GtkType.APPLICATION, appFromNative)
@@ -6145,8 +6173,8 @@ func init() {
 	gobject.RegisterCType(GtkType.TREE_VIEW, newTreeViewFromNative)
 	gobject.RegisterGoType(GtkType.TREE_VIEW, nativeFromTreeView)
 
-    // Register GtkNotebook
-    gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
-    gobject.RegisterGoType(GtkType.NOTEBOOK, nativeFromNotebook)
+	// Register GtkNotebook
+	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
+	gobject.RegisterGoType(GtkType.NOTEBOOK, nativeFromNotebook)
 }
 // End init function }}}
