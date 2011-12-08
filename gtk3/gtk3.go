@@ -4573,6 +4573,25 @@ func (self TreeView) C() *Container {
 
 // TreeView interface
 
+func (self *TreeView) GetLevelIndentation() int {
+	return int(C.gtk_tree_view_get_level_indentation(self.object))
+}
+
+func (self *TreeView) GetShowExpanders() bool {
+	b := C.gtk_tree_view_get_show_expanders(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetLevelIndentation(indentation int) {
+	C.gtk_tree_view_set_level_indentation(self.object, C.gint(indentation))
+}
+
+func (self *TreeView) SetShowExpanders(enabled bool) {
+	b := gobject.GBool(enabled)
+	defer b.Free()
+	C.gtk_tree_view_set_show_expanders(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
 func (self *TreeView) GetModel() TreeModelLike {
 	m := C.gtk_tree_view_get_model(self.object)
 	if m == nil {
@@ -4584,6 +4603,10 @@ func (self *TreeView) GetModel() TreeModelLike {
 		return model.(TreeModelLike)
 	}
 	return nil
+}
+
+func (self *TreeView) SetModel(model TreeModelLike) {
+	C.gtk_tree_view_set_model(self.object, model.ITreeModel().object)
 }
 
 func (self *TreeView) AppendColumn(column *TreeViewColumn) int {
