@@ -4667,14 +4667,161 @@ func (self *TreeView) SetModel(model TreeModelLike) {
 	C.gtk_tree_view_set_model(self.object, model.ITreeModel().object)
 }
 
-func (self *TreeView) AppendColumn(column *TreeViewColumn) int {
-	return int(C.gtk_tree_view_append_column(self.object, column.object))
+func (self *TreeView) GetSelection() *TreeSelection {
+	s := C.gtk_tree_view_get_selection(self.object)
+	
+	sel, err := gobject.ConvertToGo(unsafe.Pointer(s))
+	if err == nil {
+		return sel.(*TreeSelection)
+	}
+	return nil
+}
+
+func (self *TreeView) GetHeadersVisible() bool {
+	b := C.gtk_tree_view_get_headers_visible(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetHeadersVisible(headersVisible bool) {
+	b := gobject.GBool(headersVisible)
+	defer b.Free()
+	C.gtk_tree_view_set_headers_visible(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) ColumnsAutoSize() {
+	C.gtk_tree_view_columns_autosize(self.object)
+}
+
+func (self *TreeView) GetHeadersClickable() bool {
+	b := C.gtk_tree_view_get_headers_clickable(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetHeadersClickable(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_tree_view_set_headers_clickable(self.object, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *TreeView) SetRulesHint(setting bool) {
 	b := gobject.GBool(setting)
 	defer b.Free()
 	C.gtk_tree_view_set_rules_hint(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) GetRulesHint() bool {
+	b := C.gtk_tree_view_get_rules_hint(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) AppendColumn(column *TreeViewColumn) int {
+	return int(C.gtk_tree_view_append_column(self.object, column.object))
+}
+
+func (self *TreeView) RemoveColumn(colum *TreeViewColumn) int {
+	return int(C.gtk_tree_view_remove_column(self.object, colum.object))
+}
+
+func (self *TreeView) InsertColumn(colum *TreeViewColumn, position int) int {
+	return int(C.gtk_tree_view_insert_column(self.object, colum.object, C.gint(position)))
+}
+
+//TODO: gtk_tree_view_insert_column_with_attributes
+//TODO: gtk_tree_view_insert_column_with_data_func
+
+func (self *TreeView) GetColumn(n int) *TreeViewColumn {
+	tc := C.gtk_tree_view_get_column(self.object, C.gint(n))
+	if tc == nil {
+		return nil
+	}
+
+	column, err := gobject.ConvertToGo(unsafe.Pointer(tc))
+	if err == nil {
+		return column.(*TreeColumn)
+	}
+	return nil
+}
+
+//TODO: gtk_tree_view_get_columns
+
+func (self *TreeView) MoveColumnAfter(column, baseColumn *TreeViewColumn) {
+	var base *C.GtkTreeViewColumn = nil
+	if baseColumn != nil {
+		base = baseColumn.object
+	}
+	C.gtk_tree_view_move_column_after(self.object, column.object, base)
+}
+
+func (self *TreeView) SetExpanderColumn(column *TreeViewColumn) {
+	var col *C.GtkTreeViewColumn = nil
+	if column != nil {
+		col = column.object
+	}
+	C.gtk_tree_view_set_expander_column(self.object, col)
+}
+
+func (self *TreeView) GetExpanderColumn() *TreeViewColumn {
+	ec := C.gtk_tree_view_get_expander_column(self.object)
+
+	if ec != nil {
+		expanderCol, err := gobject.ConvertToGo(unsafe.Pointer(ec))
+		if err == nil {
+			return expanderCol.(*TreeViewColumn)
+		}
+		return nil
+	}
+	return nil
+}
+
+//TODO: gtk_tree_view_set_column_drag_function
+
+func (self *TreeView) ScrollToPoint(xTree, yTree int) {
+	C.gtk_tree_view_scroll_to_point(self.object, C.gint(xTree), C.gint(yTree))
+}
+
+func (self *TreeView) ScrollToCell(path *TreePath, column *TreeViewColumn, useAlign bool, rowAlign, colAlign float32) {
+	var p *C.GtkTreePath = nil
+	var c *C.GtkTreeViewColumn = nil
+	b := gobject.GBool(useAlign)
+	defer b.Free()
+
+	if path != nil {
+		p = path.object
+	}
+
+	if column != nil {
+		c = column.object
+	}
+	C.gtk_tree_view_scroll_to_cell(self.object, p, c, *((*C.gboolean)(b.GetPtr())), C.gfloat(rowAlign), C.gfloat(colAlign))
+}
+
+func (self *TreeView) SetCursor(path *TreePath, focusColumn *TreeViewColumn, startEditing bool) {
+	var c *C.GtkTreeViewColumn = nil
+	if focusColumn != nil {
+		c = focusColumn.object
+	}
+	
+	b := gobject.GBool(startEditing)
+	defer b.Free()
+
+	C.gtk_tree_view_set_cursor(self.object, path.object, c, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) SetCursorOnCell(path *TreePath, focusColumn *TreeViewColumn, focusCell CellRendererLike, startEditing bool) {
+	var c *C.GtkTreeViewColumn = nil
+	var r *C.GtkCellRenderer = nil
+
+	if focusColumn != nil {
+		c = focusColumn.object
+	}
+
+	if focusCell != nil {
+		r = focusCell.CRenderer().object
+	}
+	
+	b := gobject.GBool(startEditing)
+	defer b.Free()
+	C.gtk_tree_view_set_cursor_on_cell(self.object, path.object, c, r, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *TreeView) SetSearchColumn(column int) {
