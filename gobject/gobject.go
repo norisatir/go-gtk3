@@ -232,6 +232,12 @@ func createClosure(f interface{}, data ...interface{}) ClosureFunc {
 	}
 }
 
+func CreateCustomClosure(f interface{}, data ...interface{}) (ClosureFunc, int64) {
+	cFunc := createClosure(f, data...)
+
+	return cFunc, getUniqueID()
+}
+
 func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError) {
 	s_id := SignalLookup(name, GetTypeFromInstance(obj.ToNative()))
 
