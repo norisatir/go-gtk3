@@ -1,7 +1,8 @@
 package main
 
-import "github.com/norisatir/go-gtk3/gtk3"
 import "github.com/norisatir/go-gtk3/gobject"
+import "github.com/norisatir/go-gtk3/gdk3"
+import "github.com/norisatir/go-gtk3/gtk3"
 import "time"
 
 // Bug struct
@@ -172,11 +173,14 @@ func init() {
 
 
 func main() {
+	gdk3.ThreadsInit()
+	gdk3.ThreadsEnter()
+
 	gtk3.Init()
 	// Create Window
 	window := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL)
 	window.SetTitle("GtkListStore demo")
-	window.Connect("destroy", gtk3.GoMainQuit)
+	window.Connect("destroy", gtk3.MainQuit)
 	window.SetBorderWidth(8)
 
 	vbox := gtk3.NewVBox(8)
@@ -207,7 +211,7 @@ func main() {
 	// Spinner func
 	go func(timeout <-chan int64) {
 		for _ = range timeout {
-			gtk3.FreezeMain.L.Lock()
+			gdk3.ThreadsEnter()
 			var sIter gtk3.TreeIter
 			m := model.(*gtk3.ListStore)
 			m.GetIterFirst(&sIter)
@@ -220,13 +224,13 @@ func main() {
 			}
 
 			m.SetValues(&sIter, gtk3.V{ColumnPulse : pulse, ColumnActive : true})
-			gtk3.FreezeMain.L.Unlock()
+			gdk3.ThreadsLeave()
 		}
 	}(t.C)
 
 	window.SetDefaultSize(280, 250)
 	window.ShowAll()
 
-	gtk3.GoMain(false)
+	gtk3.Main()
 	t.Stop()
 }
