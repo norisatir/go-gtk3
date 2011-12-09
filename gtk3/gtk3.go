@@ -4737,7 +4737,7 @@ func (self *TreeView) GetColumn(n int) *TreeViewColumn {
 
 	column, err := gobject.ConvertToGo(unsafe.Pointer(tc))
 	if err == nil {
-		return column.(*TreeColumn)
+		return column.(*TreeViewColumn)
 	}
 	return nil
 }
