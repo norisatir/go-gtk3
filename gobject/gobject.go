@@ -24,8 +24,14 @@ static inline GType _get_type_from_instance(void* o) {
 
 extern void weak_ref_callback(gpointer data, GObject* object);
 
-static void _g_object_weak_ref(GObject* object) {
-	g_object_weak_ref(object, weak_ref_callback, NULL);
+static void _g_object_weak_ref(GObject* object, gint64 data) {
+	gint64* intdata = (gint64*)malloc(sizeof(gint64));
+	*intdata = data;
+	g_object_weak_ref(object, weak_ref_callback, (gpointer)intdata);
+}
+
+static void destroy_data(gpointer data) {
+	free(data);
 }
 
 static void _g_clear_object(void* object) {
@@ -39,7 +45,6 @@ import "C"
 import "unsafe"
 import "reflect"
 import "time"
-import "fmt"
 
 func GetTypeFromInstance(obj unsafe.Pointer) GType {
 	return GType(C._get_type_from_instance(obj))
@@ -252,13 +257,36 @@ func ClearObject(obj ObjectLike) {
 	C._g_clear_object(obj.ToNative())
 }
 
-func WeakRef(obj ObjectLike) {
+// WeakRef closure stack
+type WeakClosureFunc func()
+
+var _weakClosures map[int64]WeakClosureFunc
+
+func WeakRef(obj ObjectLike, f WeakClosureFunc) int64 {
+	uid := getUniqueID()
+	_weakClosures[uid] = f
 	o := C.to_GObject(obj.ToNative())
-	C._g_object_weak_ref(o)
+	C._g_object_weak_ref(o, C.gint64(uid))
+
+	return uid
 }
+
 //export weak_ref_callback
 func weak_ref_callback(data unsafe.Pointer, obj unsafe.Pointer) {
-	tn := C.getTypeName(obj)
-	s := GoString(unsafe.Pointer(tn))
-	fmt.Println("Finalizing...", s)
+	cint := int64(*((*C.gint64)(data)))
+
+	if f, ok := _weakClosures[cint]; ok {
+		// Call WeakClosureFunc to clean up something
+		f()
+
+		// Remove this closure from _weakClosures
+		delete(_weakClosures, cint)
+	}
+	
+	// Free data
+	C.destroy_data(C.gpointer(data))
+}
+
+func init() {
+	_weakClosures = make(map[int64]WeakClosureFunc)
 }
