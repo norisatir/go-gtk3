@@ -4,7 +4,6 @@ import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
 import "github.com/norisatir/go-gtk3/gtk3"
 import "time"
-import "fmt"
 
 // Bug struct
 type Bug struct {
@@ -211,7 +210,7 @@ func main() {
 	// Make spinner spin
 	t := time.NewTicker(80000000)
 	// Spinner func
-	go func(timeout <-chan int64) {
+	go func(timeout <-chan time.Time) {
 		for _ = range timeout {
 			gdk3.ThreadsEnter()
 			var sIter gtk3.TreeIter
