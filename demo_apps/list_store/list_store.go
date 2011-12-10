@@ -4,6 +4,7 @@ import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
 import "github.com/norisatir/go-gtk3/gtk3"
 import "time"
+import "fmt"
 
 // Bug struct
 type Bug struct {
@@ -193,6 +194,7 @@ func main() {
 	sw.SetShadowType(gtk3.GtkShadow.ETCHED_IN)
 	sw.SetPolicy(gtk3.GtkPolicy.NEVER, gtk3.GtkPolicy.AUTOMATIC)
 	vbox.PackStart(sw, true, true, 0)
+
 
 	// create tree model
 	model := CreateModel()
