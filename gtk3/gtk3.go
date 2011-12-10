@@ -584,10 +584,10 @@ func (self *Container) ForEach(f interface{}, data ...interface{}) {
 //TODO: gtk_container_get_children
 //TODO: gtk_container_get_path_for_child
 
-func (self *Container) ReallocateRedraws(needRedraws bool) {
+func (self *Container) SetReallocateRedraws(needRedraws bool) {
 	b := gobject.GBool(needRedraws)
 	defer b.Free()
-	C.gtk_container_reallocate_redraws(self.object, *((*C.gboolean)(b.GetPtr())))
+	C.gtk_container_set_reallocate_redraws(self.object, *((*C.gboolean)(b.GetPtr())))
 }
 
 func (self *Container) GetFocusChild() WidgetLike {
