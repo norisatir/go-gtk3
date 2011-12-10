@@ -694,6 +694,15 @@ type gtkSelectionMode struct {
 }
 // End GtkSelectionMode }}}
 
+// GtkResizeMode {{{
+var GtkResizeMode gtkResizeMode
+
+type gtkResizeMode struct {
+	PARENT int
+	QUEUE int
+}
+// End GtkResizeMode }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1249,4 +1258,8 @@ func init() {
 	GtkSelectionMode.SINGLE = 1
 	GtkSelectionMode.BROWSE = 2
 	GtkSelectionMode.MULTIPLE = 3
+
+	// Initialize GtkResizeMode
+	GtkResizeMode.PARENT = 0
+	GtkResizeMode.QUEUE = 1
 } /// }}}

@@ -4,6 +4,10 @@ package gtk3
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
+// Exported funcs from our module
+extern void _gtk_callback(GtkWidget* widget, gpointer data);
+
+
 static void _gtk_init(void* argc, void* argv) {
 	gtk_init((int*)argc, (char***)argv);
 }
@@ -48,6 +52,13 @@ static inline GtkTreeView* to_GtkTreeView(void* obj) { return GTK_TREE_VIEW(obj)
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
+
+// GtkContainer funcs {{{
+static void _gtk_container_foreach(GtkContainer* container, gint64* id) {
+	gtk_container_foreach(container, _gtk_callback, (gpointer)id);
+}
+
+//End GtkContainer funcs }}}
 
 // GtkApplication funcs {{{
 static inline int run_app(GtkApplication *app) {
@@ -210,15 +221,11 @@ static inline void gint_array_set_element(gint* vals, int n, gint val) {
 import "C"
 import "unsafe"
 import "runtime"
-import "sync"
 import "fmt"
 import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
 
 // General types and functions {{{
-
-var FreezeMain *sync.Cond
-var mainExit bool
 
 func Init() {
 	C._gtk_init(nil, nil)
@@ -232,26 +239,8 @@ func MainQuit() {
 	C.gtk_main_quit()
 }
 
-func GoMain(blocking bool) {
-	mainExit = false
-	for !mainExit {
-		MainIterationDo(blocking)
-	}
-}
-
-func GoMainQuit() {
-	mainExit = true
-}
-
-func MainIterationDo(blocking bool) {
-	b := gobject.GBool(blocking)
-	defer b.Free()
-
-	FreezeMain.L.Lock()
-	defer FreezeMain.L.Unlock()
-
-	C.gtk_main_iteration_do(*((*C.gboolean)(b.GetPtr())))
-}
+// Map variable for custom closures required by some gtk funcs
+var _closures map[int64]gobject.ClosureFunc
 
 // Convenient map for properties
 type P map[string]interface{}
@@ -565,6 +554,42 @@ func (self *Container) Remove(w WidgetLike) {
 	C.gtk_container_remove(self.object, w.W().object)
 }
 
+func (self *Container) GetResizeMode() int {
+	return int(C.gtk_container_get_resize_mode(self.object))
+}
+
+func (self *Container) SetResizeMode(gtk_ResizeMode int) {
+	C.gtk_container_set_resize_mode(self.object, C.GtkResizeMode(gtk_ResizeMode))
+}
+
+func (self *Container) CheckResize() {
+	C.gtk_container_check_resize(self.object)
+}
+
+func (self *Container) ForEach(f interface{}, data ...interface{}) {
+	forClosure, id := gobject.CreateCustomClosure(f, data...)	
+
+	if forClosure == nil {
+		return
+	}
+
+	addToClosures(id, forClosure)
+	
+	var cId C.gint64 = C.gint64(id)
+	C._gtk_container_foreach(self.object, &cId)
+
+	removeFromClosures(id)
+}
+
+//TODO: gtk_container_get_children
+//TODO: gtk_container_get_path_for_child
+
+func (self *Container) ReallocateRedraws(needRedraws bool) {
+	b := gobject.GBool(needRedraws)
+	defer b.Free()
+	C.gtk_container_reallocate_redraws(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
 func (self *Container) GetFocusChild() WidgetLike {
 	w := C.gtk_container_get_focus_child(self.object)
 	i, err := gobject.ConvertToGo(unsafe.Pointer(w))
@@ -572,6 +597,38 @@ func (self *Container) GetFocusChild() WidgetLike {
 		return i.(WidgetLike)
 	}
 	return nil
+}
+
+func (self *Container) GetFocusVadjustment() *Adjustment {
+	a := C.gtk_container_get_focus_vadjustment(self.object)
+	if a == nil {
+		return nil
+	}
+	adj, err := gobject.ConvertToGo(unsafe.Pointer(a))
+	if err == nil {
+		return adj.(*Adjustment)
+	}
+	return nil
+}
+
+func (self *Container) SetFocusVadjustment(adjustment *Adjustment) {
+	C.gtk_container_set_focus_vadjustment(self.object, adjustment.object)
+}
+
+func (self *Container) GetFocusHadjustment() *Adjustment {
+	a := C.gtk_container_get_focus_hadjustment(self.object)
+	if a == nil {
+		return nil
+	}
+	adj, err := gobject.ConvertToGo(unsafe.Pointer(a))
+	if err == nil {
+		return adj.(*Adjustment)
+	}
+	return nil
+}
+
+func (self *Container) SetFocusHadjustment(adjustment *Adjustment) {
+	C.gtk_container_set_focus_hadjustment(self.object, adjustment.object)
 }
 
 func (self *Container) GetBorderWidth() uint {
@@ -6246,6 +6303,22 @@ func (self *Adjustment) SetUpper(upper float64) {
 // GtkAdjustment
 ////////////////////////////// }}}
 
+// Closure add remove funcs to/from _closures map {{{
+///////////////////////////////////////////////////////////
+
+func addToClosures(key int64, f gobject.ClosureFunc) {
+	_closures[key] = f
+}
+
+func removeFromClosures(key int64) {
+	if _, ok := _closures[key]; ok {
+		delete(_closures, key)
+	}
+}
+//////////////////////////////
+// End Closure add/remove
+////////////////////////////// }}}
+
 // End Miscellaneous }}}
 
 // GtkApplication {{{
@@ -6340,13 +6413,30 @@ func (self *Application) RemoveWindow(window *Window) {
 func (self *Application) Run() {
 	C.run_app(self.object)
 }
+//////////////////////////////
 // END GtkApplication
+////////////////////////////// }}}
+
+// Exported functions {{{
+//////////////////////////////
+
+//export _gtk_callback
+func _gtk_callback(widget, data unsafe.Pointer) {
+	if w, err := gobject.ConvertToGo(widget); err == nil {
+		id := int64(*((*C.gint64)(data)))
+		_closures[id]([]interface{}{w})
+	}
+
+}
+
+//////////////////////////////
+// END Exported functions
 ////////////////////////////// }}}
 
 // GTK3 MODULE init function {{{
 func init() {
-	// Initialize FreezeMain variable
-	FreezeMain = sync.NewCond(new(sync.Mutex))
+	// Initialiize map for closures
+	_closures = make(map[int64]gobject.ClosureFunc)
 
 	// Register GtkApplicaton type
 	gobject.RegisterCType(GtkType.APPLICATION, appFromNative)
