@@ -173,7 +173,7 @@ func SignalLookup(name string, objectType GType) uint32 {
 }
 
 func getUniqueID() int64 {
-	return time.Nanoseconds()
+	return time.Now().UnixNano()
 }
 
 type SignalError struct {
@@ -288,7 +288,7 @@ func weak_ref_callback(data unsafe.Pointer, obj unsafe.Pointer) {
 		// Remove this closure from _weakClosures
 		delete(_weakClosures, cint)
 	}
-	
+
 	// Free data
 	C.destroy_data(C.gpointer(data))
 }
