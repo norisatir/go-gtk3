@@ -10,6 +10,7 @@ static void _gdk_threads_init() {
 static inline GdkDisplay* to_GdkDisplay(void* obj) { return GDK_DISPLAY(obj); }
 static inline GdkDevice* to_GdkDevice(void* obj) { return GDK_DEVICE(obj); }
 static inline GdkScreen* to_GdkScreen(void* obj) { return GDK_SCREEN(obj); }
+static inline GdkWindow* to_GdkWindow(void* obj) { return GDK_WINDOW(obj); }
 
 */
 // #cgo pkg-config: gdk-3.0
@@ -200,6 +201,62 @@ func (self Screen) Get(properties []string) map[string]interface{} {
 // End GdkScreen
 ////////////////////////////// }}}
 
+// GdkWindow {{{
+//////////////////////////////
+
+// GdkWindow type
+type Window struct {
+	object *C.GdkWindow
+}
+
+// Clear Window struct when it goes out of reach
+func windowFinalizer(w *Window) {
+	runtime.SetFinalizer(w, func(w *Window) { gobject.Unref(w) })
+}
+
+// Conversion function
+func newWindowFromNative(obj unsafe.Pointer) interface{} {
+	w := &Window{}
+	w.object = C.to_GdkWindow(obj)
+
+	if gobject.IsObjectFloating(w) {
+		gobject.RefSink(w)
+	} else {
+		gobject.Ref(w)
+	}
+	windowFinalizer(w)
+
+	return w
+}
+
+func nativeFromWindow(w interface{}) *gobject.GValue {
+	if window, ok := w.(*Window); ok {
+		gv := gobject.CreateCGValue(GdkType.WINDOW, window.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self Window) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Window) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data)
+}
+
+func (self Window) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Window) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+//////////////////////////////
+// End GdkWindow
+////////////////////////////// }}}
+
 
 // GDK3 INIT FUNCS {{{
 func init() {
@@ -214,5 +271,9 @@ func init() {
 	// Register GdkScreen type
 	gobject.RegisterCType(GdkType.SCREEN, newScreenFromNative)
 	gobject.RegisterGoType(GdkType.SCREEN, nativeFromScreen)
+
+	//Register GdkWindow type
+	gobject.RegisterCType(GdkType.WINDOW, newWindowFromNative)
+	gobject.RegisterGoType(GdkType.WINDOW, nativeFromWindow)
 }
 // End GDK3 INIT FUNCS }}}

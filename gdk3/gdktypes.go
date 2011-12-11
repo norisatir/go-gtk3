@@ -16,6 +16,7 @@ type gdkTypes struct {
 	EVENT     g.GType
 	DISPLAY	  g.GType
 	SCREEN    g.GType
+	WINDOW    g.GType
 }
 
 func init() {
@@ -24,6 +25,7 @@ func init() {
 	GdkType.EVENT = g.GType(C.gdk_event_get_type())
 	GdkType.DISPLAY = g.GType(C.gdk_display_get_type())
 	GdkType.SCREEN = g.GType(C.gdk_screen_get_type())
+	GdkType.WINDOW = g.GType(C.gdk_window_get_type())
 
 	// Register Rectangle
 	g.RegisterCType(GdkType.RECTANGLE, newRectangleFromNative)
