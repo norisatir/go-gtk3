@@ -14,13 +14,14 @@ type gdkTypes struct {
 	DEVICE    g.GType
 	RECTANGLE g.GType
 	EVENT     g.GType
+	DISPLAY	  g.GType
 }
 
 func init() {
-	GdkType = gdkTypes{}
 	GdkType.DEVICE = g.GType(C.gdk_device_get_type())
 	GdkType.RECTANGLE = g.GType(C.gdk_rectangle_get_type())
 	GdkType.EVENT = g.GType(C.gdk_event_get_type())
+	GdkType.DISPLAY = g.GType(C.gdk_display_get_type())
 
 	// Register Rectangle
 	g.RegisterCType(GdkType.RECTANGLE, newRectangleFromNative)
