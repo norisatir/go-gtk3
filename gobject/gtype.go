@@ -19,6 +19,18 @@ static inline const gchar* getGValueTypeName(GValue* v) {
 	return G_VALUE_TYPE_NAME(v);
 }
 
+static inline gboolean is_type_object(GType t) {
+	return G_TYPE_IS_OBJECT(t);
+}
+
+static inline gboolean is_type_boxed(GType t) {
+	return G_TYPE_IS_BOXED(t);
+}
+
+static inline gboolean boxed_in_gvalue(GValue* v) {
+	return G_VALUE_HOLDS_BOXED(v);
+}
+
 static inline gboolean pointer_in_gvalue(GValue* v) {
 	return G_VALUE_HOLDS_POINTER(v);
 }
@@ -52,6 +64,17 @@ type FuncToGo func(unsafe.Pointer) interface{}
 // and conversion function to Go type
 // Every module has to register it's own type and conversion function
 var gtypes map[GType]FuncToGo
+
+// IsObjectType returns true if given type is derived from GObject
+func IsObjectType(t GType) bool {
+	b := C.is_type_object(C.GType(t))
+	return GoBool(unsafe.Pointer(&b))
+}
+// IsBoxedType returns true if given type is derived from GBoxed
+func IsBoxedType(t GType) bool {
+	b := C.is_type_boxed(C.GType(t))
+	return GoBool(unsafe.Pointer(&b))
+}
 
 // Get Type ID
 func GetTypeID(obj unsafe.Pointer) GType {
@@ -170,19 +193,26 @@ func (self GValue) GetPtr() unsafe.Pointer {
 	// Now things get tricky
 	// We know the type, but how is it stored?
 
+	// Is it object?
+	isIt := C.object_in_gvalue(self.value)
+	if GoBool(unsafe.Pointer(&isIt)) {
+		o := C.g_value_get_object(self.value)
+		return unsafe.Pointer(o)
+	}
+
+	// Is it boxed?
+	if IsBoxedType(self.gtype) {
+		val := C.g_value_get_boxed(self.value)
+		return unsafe.Pointer(val)
+	}
+
 	// Is it pointer?
-	isIt := C.pointer_in_gvalue(self.value)
+	isIt = C.pointer_in_gvalue(self.value)
 	if GoBool(unsafe.Pointer(&isIt)) {
 		val := C.g_value_get_pointer(self.value)
 		return unsafe.Pointer(val)
 	}
 
-	// Is it object?
-	isIt = C.object_in_gvalue(self.value)
-	if GoBool(unsafe.Pointer(&isIt)) {
-		o := C.g_value_get_object(self.value)
-		return unsafe.Pointer(o)
-	}
 	//Hmmm....
 	ptr := C.g_value_peek_pointer(self.value)
 	if ptr != nil {
@@ -208,33 +238,37 @@ func CreateCGValue(tn GType, object ...unsafe.Pointer) *GValue {
 
 	// Foundamental types are special
 	// TODO: Handle more cases, like creating GValue from GdkEvents
-	switch tn {
-	case G_TYPE_STRING:
-		C.g_value_take_string(&cv, (*C.gchar)(obj))
-	case G_TYPE_BOOLEAN:
-		C.g_value_set_boolean(&cv, *((*C.gboolean)(obj)))
-	case G_TYPE_CHAR:
-		C.g_value_set_char(&cv, *((*C.gchar)(obj)))
-	case G_TYPE_INT:
-		C.g_value_set_int(&cv, *((*C.gint)(obj)))
-	case G_TYPE_LONG:
-		C.g_value_set_long(&cv, *((*C.glong)(obj)))
-	case G_TYPE_INT64:
-		C.g_value_set_int64(&cv, *((*C.gint64)(obj)))
-	case G_TYPE_UCHAR:
-		C.g_value_set_uchar(&cv, *((*C.guchar)(obj)))
-	case G_TYPE_UINT:
-		C.g_value_set_uint(&cv, *((*C.guint)(obj)))
-	case G_TYPE_ULONG:
-		C.g_value_set_ulong(&cv, *((*C.gulong)(obj)))
-	case G_TYPE_UINT64:
-		C.g_value_set_uint64(&cv, *((*C.guint64)(obj)))
-	case G_TYPE_FLOAT:
-		C.g_value_set_float(&cv, *((*C.gfloat)(obj)))
-	case G_TYPE_DOUBLE:
-		C.g_value_set_double(&cv, *((*C.gdouble)(obj)))
-	default:
+	switch {
+	case IsObjectType(tn):
 		C.g_value_set_object(&cv, C.gpointer(obj))
+	case IsBoxedType(tn):
+		C.g_value_take_boxed(&cv, C.gconstpointer(obj))
+	case tn == G_TYPE_STRING:
+		C.g_value_take_string(&cv, (*C.gchar)(obj))
+	case tn == G_TYPE_BOOLEAN:
+		C.g_value_set_boolean(&cv, *((*C.gboolean)(obj)))
+	case tn == G_TYPE_CHAR:
+		C.g_value_set_char(&cv, *((*C.gchar)(obj)))
+	case tn == G_TYPE_INT:
+		C.g_value_set_int(&cv, *((*C.gint)(obj)))
+	case tn == G_TYPE_LONG:
+		C.g_value_set_long(&cv, *((*C.glong)(obj)))
+	case tn == G_TYPE_INT64:
+		C.g_value_set_int64(&cv, *((*C.gint64)(obj)))
+	case tn == G_TYPE_UCHAR:
+		C.g_value_set_uchar(&cv, *((*C.guchar)(obj)))
+	case tn == G_TYPE_UINT:
+		C.g_value_set_uint(&cv, *((*C.guint)(obj)))
+	case tn == G_TYPE_ULONG:
+		C.g_value_set_ulong(&cv, *((*C.gulong)(obj)))
+	case tn == G_TYPE_UINT64:
+		C.g_value_set_uint64(&cv, *((*C.guint64)(obj)))
+	case tn == G_TYPE_FLOAT:
+		C.g_value_set_float(&cv, *((*C.gfloat)(obj)))
+	case tn == G_TYPE_DOUBLE:
+		C.g_value_set_double(&cv, *((*C.gdouble)(obj)))
+	case tn == G_TYPE_POINTER:
+		C.g_value_set_pointer(&cv, C.gpointer(obj))
 	}
 
 	gv := GValue{tn, &cv}
@@ -274,9 +308,16 @@ func ConvertToC(gotype interface{}) *GValue {
 		if f, ok := ctypes[t]; ok {
 			return f(o)
 		}
+	case BoxedLike:
+		o := gotype.(BoxedLike)
+		t := o.GetBoxType()
+		if f, ok := ctypes[t]; ok {
+			return f(o)
+		}
 	}
 	return nil
 }
+
 
 func init() {
 	C.g_type_init()

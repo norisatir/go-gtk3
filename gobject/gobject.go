@@ -293,6 +293,11 @@ func weak_ref_callback(data unsafe.Pointer, obj unsafe.Pointer) {
 	C.destroy_data(C.gpointer(data))
 }
 
+// BoxedLike interface for Boxed values
+type BoxedLike interface {
+	GetBoxType() GType
+}
+
 func init() {
 	_weakClosures = make(map[int64]WeakClosureFunc)
 }
