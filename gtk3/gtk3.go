@@ -6,7 +6,14 @@ package gtk3
 
 // Exported funcs from our module
 extern void _gtk_callback(GtkWidget* widget, gpointer data);
+extern gboolean _gtk_entry_completion_match_func(GtkEntryCompletion* completion,
+											 const gchar* key,
+											 GtkTreeIter* iter,
+											 gpointer user_data);
 
+static void free_id(gpointer data) {
+	free(data);
+}
 
 static void _gtk_init(void* argc, void* argv) {
 	gtk_init((int*)argc, (char***)argv);
@@ -28,6 +35,7 @@ static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
 static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BUFFER(obj); }
 static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
+static inline GtkEntryCompletion* to_GtkEntryCompletion(void* obj) { return GTK_ENTRY_COMPLETION(obj); }
 static inline GtkDialog* to_GtkDialog(void* obj) { return GTK_DIALOG(obj); }
 static inline GtkMessageDialog* to_GtkMessageDialog(void* obj) { return GTK_MESSAGE_DIALOG(obj); }
 static inline GtkSeparator* to_GtkSeparator(void* obj) { return GTK_SEPARATOR(obj); }
@@ -132,6 +140,17 @@ static const gchar* _gtk_entry_get_placeholder_text(GtkEntry* entry) {
 #endif
 }
 // End GtkEntry funcs }}}
+
+// GtkEntryCompletion funcs {{{
+
+void _gtk_entry_completion_set_match_func(GtkEntryCompletion* completion, gint64 func_data) {
+	gint64* data = (gint64*)malloc(sizeof(gint64));
+	*data = func_data;
+	
+	gtk_entry_completion_set_match_func(completion, _gtk_entry_completion_match_func, (gpointer)data, free_id);
+}
+
+// End GtkEntryCompletion funcs }}}
 
 // GtkDialog funcs {{{
 static inline GtkDialog* _dialog_new_with_buttons(const gchar* title,
@@ -2616,8 +2635,247 @@ func (self *Entry) GetOverwriteMode() bool {
 	b := C.gtk_entry_get_overwrite_mode(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
+func (self *Entry) SetCompletion(completion *EntryCompletion) {
+	C.gtk_entry_set_completion(self.object, completion.object)
+}
 //////////////////////////////
 // END GtkEntry
+////////////////////////////// }}}
+
+// GtkEntryCompletion {{{
+//////////////////////////////
+
+// GtkEntryCompletion type
+type EntryCompletion struct {
+	object *C.GtkEntryCompletion
+}
+
+func NewEntryCompletion() *EntryCompletion {
+	ec := &EntryCompletion{}
+	ec.object = C.gtk_entry_completion_new()
+
+	if gobject.IsObjectFloating(ec) {
+		gobject.RefSink(ec)
+	}
+	entryCompletionFinalizer(ec)
+
+	return ec
+}
+
+//TODO: gtk_entry_completion_new_with_area
+
+// Clear EntryCompletion struct when it goes out of reach
+func entryCompletionFinalizer(ec *EntryCompletion) {
+	runtime.SetFinalizer(ec, func(ec *EntryCompletion) { gobject.Unref(ec) })
+}
+
+// Conversion funcs
+func newEntryCompletionFromNative(obj unsafe.Pointer) interface{} {
+	ec := &EntryCompletion{}
+	ec.object = C.to_GtkEntryCompletion(obj)
+
+	if gobject.IsObjectFloating(ec) {
+		gobject.RefSink(ec)
+	} else {
+		gobject.Ref(ec)
+	}
+	entryCompletionFinalizer(ec)
+
+	return ec
+}
+
+func nativeFromEntryCompletion(ec interface{}) *gobject.GValue {
+	entryCompletion, ok := ec.(*EntryCompletion)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.ENTRY_COMPLETION, entryCompletion.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be Object-like
+func (self EntryCompletion) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self EntryCompletion) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self EntryCompletion) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self EntryCompletion) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// EntryCompletion interface
+
+func (self *EntryCompletion) GetEntry() WidgetLike {
+	w := C.gtk_entry_completion_get_entry(self.object)
+
+	if w == nil {
+		return nil
+	}
+
+	widget, err := gobject.ConvertToGo(unsafe.Pointer(w))
+	if err == nil {
+		return widget.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *EntryCompletion) SetModel(model TreeModelLike) {
+	var m *C.GtkTreeModel = nil
+
+	if model != nil {
+		m = model.ITreeModel().object
+	}
+
+	C.gtk_entry_completion_set_model(self.object, m)
+}
+
+func (self *EntryCompletion) GetModel() TreeModelLike {
+	m := C.gtk_entry_completion_get_model(self.object)
+	
+	if m == nil {
+		return nil
+	}
+
+	model, err := gobject.ConvertToGo(unsafe.Pointer(m))
+
+	if err == nil {
+		return model.(TreeModelLike)
+	}
+	return nil
+}
+
+func (self *EntryCompletion) SetMatchFunc(f interface{}, data ...interface{}) {
+	clFunc, id := gobject.CreateCustomClosure(f, data...)
+
+	if clFunc == nil {
+		return
+	}
+
+	// Add closure to local closure map
+	addToClosures(id, clFunc)
+
+	// Register closure to C
+	C._gtk_entry_completion_set_match_func(self.object, C.gint64(id))
+
+	// Add WeakRef, so that when object is destroyed, closure func removes
+	// our closure from local closure map
+	gobject.WeakRef(self, func() { removeFromClosures(id) })
+}
+
+func (self *EntryCompletion) SetMinimumKeyLength(length int) {
+	C.gtk_entry_completion_set_minimum_key_length(self.object, C.gint(length))
+}
+
+func (self *EntryCompletion) GetMinimumKeyLength() int {
+	return int(C.gtk_entry_completion_get_minimum_key_length(self.object))
+}
+
+func (self *EntryCompletion) Complete() {
+	C.gtk_entry_completion_complete(self.object)
+}
+
+func (self *EntryCompletion) GetCompletionPrefix() string {
+	s := C.gtk_entry_completion_get_completion_prefix(self.object)
+	
+	if s == nil {
+		return ""
+	}
+
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *EntryCompletion) InsertPrefix() {
+	C.gtk_entry_completion_insert_prefix(self.object)
+}
+
+func (self *EntryCompletion) InsertActionText(index int, text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+	C.gtk_entry_completion_insert_action_text(self.object, C.gint(index), (*C.gchar)(s.GetPtr()))
+}
+
+func (self *EntryCompletion) InsertActionMarkup(index int, markup string) {
+	s := gobject.GString(markup)
+	defer s.Free()
+	C.gtk_entry_completion_insert_action_markup(self.object, C.gint(index), (*C.gchar)(s.GetPtr()))
+}
+
+func (self *EntryCompletion) DeleteAction(index int) {
+	C.gtk_entry_completion_delete_action(self.object, C.gint(index))
+}
+
+func (self *EntryCompletion) SetTextColumn(column int) {
+	C.gtk_entry_completion_set_text_column(self.object, C.gint(column))
+}
+
+func (self *EntryCompletion) GetTextColumn() int {
+	return int(C.gtk_entry_completion_get_text_column(self.object))
+}
+
+func (self *EntryCompletion) SetInlineCompletion(inlineCompletion bool) {
+	b := gobject.GBool(inlineCompletion)
+	defer b.Free()
+	C.gtk_entry_completion_set_inline_completion(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *EntryCompletion) GetInlineCompletion() bool {
+	b := C.gtk_entry_completion_get_inline_completion(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *EntryCompletion) SetInlineSelection(inlineSelection bool) {
+	b := gobject.GBool(inlineSelection)
+	defer b.Free()
+	C.gtk_entry_completion_set_inline_selection(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *EntryCompletion) GetInlineSelection() bool {
+	b := C.gtk_entry_completion_get_inline_selection(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *EntryCompletion) SetPopupCompletion(popupCompletion bool) {
+	b := gobject.GBool(popupCompletion)
+	defer b.Free()
+	C.gtk_entry_completion_set_popup_completion(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *EntryCompletion) GetPopupCompletion() bool {
+	b := C.gtk_entry_completion_get_popup_completion(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *EntryCompletion) SetPopupSetWidth(popupSetWidth bool) {
+	b := gobject.GBool(popupSetWidth)
+	defer b.Free()
+	C.gtk_entry_completion_set_popup_set_width(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *EntryCompletion) GetPopupSetWidth() bool {
+	b := C.gtk_entry_completion_get_popup_set_width(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *EntryCompletion) SetPopupSingleMatch(popupSingleMatch bool) {
+	b := gobject.GBool(popupSingleMatch)
+	defer b.Free()
+	C.gtk_entry_completion_set_popup_single_match(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *EntryCompletion) GetPopupSingleMatch() bool {
+	b := C.gtk_entry_completion_get_popup_single_match(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+//////////////////////////////
+// END GtkEntryCompletion
 ////////////////////////////// }}}
 
 // End Numeric/Text Data Entry }}}
@@ -6429,6 +6687,24 @@ func _gtk_callback(widget, data unsafe.Pointer) {
 
 }
 
+//export _gtk_entry_completion_match_func
+func _gtk_entry_completion_match_func(completion, key, iter, userData unsafe.Pointer) C.gboolean {
+	entryCompletion,_ := gobject.ConvertToGo(completion)
+	s := gobject.GoString(key)
+	inIter := &TreeIter{*((*C.GtkTreeIter)(iter))}
+
+	closureId := *((*C.gint64)(userData))
+
+	var res bool
+	if c, ok := _closures[int64(closureId)]; ok {
+		res = c([]interface{}{entryCompletion, s, inIter})
+	}
+	b := gobject.GBool(res)
+	defer b.Free()
+
+	return *((*C.gboolean)(b.GetPtr()))
+}
+
 //////////////////////////////
 // END Exported functions
 ////////////////////////////// }}}
@@ -6485,6 +6761,10 @@ func init() {
 	// Register GtkEntry type
 	gobject.RegisterCType(GtkType.ENTRY, newEntryFromNative)
 	gobject.RegisterGoType(GtkType.ENTRY, nativeFromEntry)
+
+	// Register GtkEntryCompletion type
+	gobject.RegisterCType(GtkType.ENTRY_COMPLETION, newEntryCompletionFromNative)
+	gobject.RegisterGoType(GtkType.ENTRY_COMPLETION, nativeFromEntryCompletion)
 
 	// Register GtkDialog type
 	gobject.RegisterCType(GtkType.DIALOG, newDialogFromNative)
