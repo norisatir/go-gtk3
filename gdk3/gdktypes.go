@@ -15,11 +15,10 @@ type gdkTypes struct {
 	RECTANGLE g.GType
 	RGBA      g.GType
 	EVENT     g.GType
-	DISPLAY	  g.GType
+	DISPLAY   g.GType
 	SCREEN    g.GType
 	WINDOW    g.GType
 }
-
 
 // Basic Types
 
@@ -96,9 +95,9 @@ func (self Rectangle) Union(r2 Rectangle) Rectangle {
 
 // GdkRGBA type
 type RGBA struct {
-	Red float64
+	Red   float64
 	Green float64
-	Blue float64
+	Blue  float64
 	Alpha float64
 }
 

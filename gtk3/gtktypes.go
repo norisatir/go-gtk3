@@ -687,9 +687,9 @@ type gtkSortType struct {
 var GtkSelectionMode gtkSelectionMode
 
 type gtkSelectionMode struct {
-	NONE int
-	SINGLE int
-	BROWSE int
+	NONE     int
+	SINGLE   int
+	BROWSE   int
 	MULTIPLE int
 }
 // End GtkSelectionMode }}}
@@ -699,7 +699,7 @@ var GtkResizeMode gtkResizeMode
 
 type gtkResizeMode struct {
 	PARENT int
-	QUEUE int
+	QUEUE  int
 }
 // End GtkResizeMode }}}
 

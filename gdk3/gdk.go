@@ -257,7 +257,6 @@ func (self Window) Get(properties []string) map[string]interface{} {
 // End GdkWindow
 ////////////////////////////// }}}
 
-
 // GDK3 INIT FUNCS {{{
 func init() {
 	// Register GdkDisplay type

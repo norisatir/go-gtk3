@@ -318,7 +318,6 @@ func ConvertToC(gotype interface{}) *GValue {
 	return nil
 }
 
-
 func init() {
 	C.g_type_init()
 	gtypes = make(map[GType]FuncToGo)
