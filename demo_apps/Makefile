@@ -5,6 +5,7 @@ all:
 	cd entry_buffer && gomake
 	cd dialog && gomake
 	cd list_store && gomake
+	cd entry_completion && gomake
 
 clean:
 	cd gtkapplication && gomake clean
@@ -13,3 +14,4 @@ clean:
 	cd entry_buffer && gomake clean
 	cd dialog && gomake clean
 	cd list_store && gomake clean
+	cd entry_completion && gomake clean

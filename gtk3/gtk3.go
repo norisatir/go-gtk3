@@ -4,12 +4,13 @@ package gtk3
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-// Exported funcs from our module
+// Exported funcs from our module {{{
 extern void _gtk_callback(GtkWidget* widget, gpointer data);
 extern gboolean _gtk_entry_completion_match_func(GtkEntryCompletion* completion,
 											 const gchar* key,
 											 GtkTreeIter* iter,
 											 gpointer user_data);
+// End Exported funcs }}}
 
 static void free_id(gpointer data) {
 	free(data);
