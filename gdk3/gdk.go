@@ -9,6 +9,7 @@ static void _gdk_threads_init() {
 
 static inline GdkDisplay* to_GdkDisplay(void* obj) { return GDK_DISPLAY(obj); }
 static inline GdkDevice* to_GdkDevice(void* obj) { return GDK_DEVICE(obj); }
+static inline GdkScreen* to_GdkScreen(void* obj) { return GDK_SCREEN(obj); }
 
 */
 // #cgo pkg-config: gdk-3.0
@@ -51,6 +52,8 @@ func newDisplayFromNative(obj unsafe.Pointer) interface{} {
 
 	if gobject.IsObjectFloating(d) {
 		gobject.RefSink(d)
+	} else {
+		gobject.Ref(d)
 	}
 	displayFinalizer(d)
 
@@ -93,11 +96,24 @@ type Device struct {
 	object *C.GdkDevice
 }
 
+// Clear Device struct when it goes out of reach
+func deviceFinalizer(d *Device) {
+	runtime.SetFinalizer(d, func(d *Device) { gobject.Unref(d) })
+}
+
 // Conversion function
 func newDeviceFromNative(obj unsafe.Pointer) interface{} {
-	d := Device{}
+	d := &Device{}
 	d.object = C.to_GdkDevice(obj)
-	return &d
+
+	if gobject.IsObjectFloating(d) {
+		gobject.RefSink(d)
+	} else {
+		gobject.Ref(d)
+	}
+	deviceFinalizer(d)
+
+	return d
 }
 
 func nativeFromDevice(d interface{}) *gobject.GValue {
@@ -128,6 +144,62 @@ func (self Device) Get(properties []string) map[string]interface{} {
 // End GdkDevice
 ////////////////////////////// }}}
 
+// GdkScreen {{{
+//////////////////////////////
+
+// GdkScreen type
+type Screen struct {
+	object *C.GdkScreen
+}
+
+// Clear Screen struct when it goes out of reach
+func screenFinalizer(s *Screen) {
+	runtime.SetFinalizer(s, func(s *Screen) { gobject.Unref(s) })
+}
+
+// Conversion function
+func newScreenFromNative(obj unsafe.Pointer) interface{} {
+	s := &Screen{}
+	s.object = C.to_GdkScreen(obj)
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	} else {
+		gobject.Ref(s)
+	}
+	screenFinalizer(s)
+
+	return s
+}
+
+func nativeFromScreen(s interface{}) *gobject.GValue {
+	if screen, ok := s.(*Screen); ok {
+		gv := gobject.CreateCGValue(GdkType.SCREEN, screen.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self Screen) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Screen) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data)
+}
+
+func (self Screen) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Screen) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+//////////////////////////////
+// End GdkScreen
+////////////////////////////// }}}
+
 
 // GDK3 INIT FUNCS {{{
 func init() {
@@ -135,8 +207,12 @@ func init() {
 	gobject.RegisterCType(GdkType.DISPLAY, newDisplayFromNative)
 	gobject.RegisterGoType(GdkType.DISPLAY, nativeFromDisplay)
 
-	// Register GdkDevice to gobject
+	// Register GdkDevice type
 	gobject.RegisterCType(GdkType.DEVICE, newDeviceFromNative)
 	gobject.RegisterGoType(GdkType.DEVICE, nativeFromDevice)
+
+	// Register GdkScreen type
+	gobject.RegisterCType(GdkType.SCREEN, newScreenFromNative)
+	gobject.RegisterGoType(GdkType.SCREEN, nativeFromScreen)
 }
 // End GDK3 INIT FUNCS }}}
