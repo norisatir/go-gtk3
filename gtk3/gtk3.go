@@ -3661,11 +3661,18 @@ func (self CellRenderer) Get(properties []string) map[string]interface{} {
 // Interface functions
 
 func (self *CellRenderer) GetAlignedArea(w WidgetLike, gtk_CellRendererState_flags int, cellArea gdk3.Rectangle) gdk3.Rectangle {
-	ca := gdk3.NativeRectangle(cellArea)
+	ca := gobject.ConvertToC(cellArea)
+	defer ca.Free()
+
 	var alignedArea C.GdkRectangle
+
 	C.gtk_cell_renderer_get_aligned_area(self.object, w.W().object, C.GtkCellRendererState(gtk_CellRendererState_flags),
-		(*C.GdkRectangle)(ca), &alignedArea)
-	return gdk3.CreateRectangle(unsafe.Pointer(&alignedArea))
+		(*C.GdkRectangle)(ca.GetPtr()), &alignedArea)
+	
+	if rec, err := gobject.ConvertToGo(unsafe.Pointer(&alignedArea), gdk3.GdkType.RECTANGLE); err == nil {
+		return rec.(gdk3.Rectangle)
+	}
+	return gdk3.Rectangle{}
 }
 
 //TODO: gtk_cell_renderer_render
@@ -4748,10 +4755,12 @@ func (self *TreeViewColumn) CellSetCellData(model TreeModelLike, iter *TreeIter,
         *((*C.gboolean)(b2.GetPtr())))
 }
 
-func (self *TreeViewColumn) CellGetSize(rec *gdk3.Rectangle) (xOffset, yOffset, width, height int) {
-    rectangle := gdk3.NativeRectangle(*rec)
+func (self *TreeViewColumn) CellGetSize(rec gdk3.Rectangle) (xOffset, yOffset, width, height int) {
+	rectangle := gobject.ConvertToC(rec)
+	defer rectangle.Free()
+
     var x,y,w,h C.gint
-    C.gtk_tree_view_column_cell_get_size(self.object, (*C.GdkRectangle)(rectangle), &x, &y, &w, &h)
+    C.gtk_tree_view_column_cell_get_size(self.object, (*C.GdkRectangle)(rectangle.GetPtr()), &x, &y, &w, &h)
     xOffset = int(x)
     yOffset = int(y)
     width = int(w)
