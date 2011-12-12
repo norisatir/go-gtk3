@@ -703,6 +703,19 @@ type gtkResizeMode struct {
 }
 // End GtkResizeMode }}}
 
+// GtkAssistantPage {{{
+var GtkAssistantPage gtkAssistantPage
+
+type gtkAssistantPage struct {
+	CONTENT int
+	INTRO int
+	CONFIRM int
+	SUMMARY int
+	PROGRESS int
+	CUSTOM int
+}
+// End GtkAssistantPageType }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1262,4 +1275,12 @@ func init() {
 	// Initialize GtkResizeMode
 	GtkResizeMode.PARENT = 0
 	GtkResizeMode.QUEUE = 1
+
+	// Initialize GtkAssistantPage
+	GtkAssistantPage.CONTENT = 0
+	GtkAssistantPage.INTRO = 1
+	GtkAssistantPage.CONFIRM = 2
+	GtkAssistantPage.SUMMARY = 3
+	GtkAssistantPage.PROGRESS = 4
+	GtkAssistantPage.CUSTOM = 5
 } /// }}}

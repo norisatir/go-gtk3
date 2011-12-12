@@ -26,6 +26,7 @@ static inline GApplication* to_GApplication(GtkApplication* g) { return G_APPLIC
 static inline GtkWidget* to_GtkWidget(void* obj) { return GTK_WIDGET(obj); }
 static inline GtkContainer* to_GtkContainer(void *obj) { return GTK_CONTAINER(obj); }
 static inline GtkWindow* to_GtkWindow(void* obj) { return GTK_WINDOW(obj); }
+static inline GtkAssistant* to_GtkAssistant(void* obj) { return GTK_ASSISTANT(obj); }
 static inline GtkBox* to_GtkBox(void* obj) { return GTK_BOX(obj); }
 static inline GtkButtonBox* to_GtkButtonBox(void* obj) { return GTK_BUTTON_BOX(obj); }
 static inline GtkFrame* to_GtkFrame(void* obj) { return GTK_FRAME(obj); }
@@ -1690,6 +1691,31 @@ func invisibleFinalizer(i *Invisible) {
 	runtime.SetFinalizer(i, func(i *Invisible) { gobject.Unref(i) })
 }
 
+// Conversion funcs
+func newInvisibleFromNative(obj unsafe.Pointer) interface{} {
+	i := &Invisible{}
+	i.object = C.to_GtkInvisible(obj)
+
+	if gobject.IsObjectFloating(i) {
+		gobject.RefSink(i)
+	} else {
+		gobject.Ref(i)
+	}
+	i.Widget = NewWidget(obj)
+	invisibleFinalizer(i)
+
+	return i
+}
+
+func nativeFromInvisible(i interface{}) *gobject.GValue {
+	inv, ok := i.(*Invisible)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.INVISIBLE, inv.ToNative())
+		return gv
+	}
+	return nil
+}
+
 // To be object like
 func (self Invisible) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
@@ -1728,6 +1754,181 @@ func (self *Invisible) GetScreen() *gdk3.Screen {
 }
 //////////////////////////////
 // END GtkInvisible
+////////////////////////////// }}}
+
+// GtkAssistant {{{
+//////////////////////////////
+
+// GtkAssistant type
+type Assistant struct {
+	object *C.GtkAssistant
+	*Window
+}
+
+// Clear Assistant struct when it goes out of reach
+func assistantFinalizer(as *Assistant) {
+	runtime.SetFinalizer(as, func(as *Assistant) { gobject.Unref(as) })
+}
+
+func NewAssistant() *Assistant {
+	as := &Assistant{}
+	o := C.gtk_assistant_new()
+	as.object = C.to_GtkAssistant(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(as) {
+		gobject.RefSink(as)
+	}
+	as.Window = newWindowFromNative(unsafe.Pointer(o)).(*Window)
+	assistantFinalizer(as)
+
+	return as
+}
+
+// Conversion funcs
+func newAssistantFromNative(obj unsafe.Pointer) interface{} {
+	as := &Assistant{}
+	as.object = C.to_GtkAssistant(obj)
+
+	if gobject.IsObjectFloating(as) {
+		gobject.RefSink(as)
+	} else {
+		gobject.Ref(as)
+	}
+	as.Window = newWindowFromNative(obj).(*Window)
+	assistantFinalizer(as)
+
+	return as
+}
+
+func nativeFromAssistant(as interface{}) *gobject.GValue {
+	assistant, ok := as.(*Assistant)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.ASSISTANT, assistant.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object like
+func (self Assistant) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Assistant) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Assistant) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Assistant) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// Assistant interface
+
+func (self *Assistant) GetCurrentPage() int {
+	return int(C.gtk_assistant_get_current_page(self.object))
+}
+
+func (self *Assistant) SetCurrentPage(pageNum int) {
+	C.gtk_assistant_set_current_page(self.object, C.gint(pageNum))
+}
+
+func (self *Assistant) GetNPages() int {
+	return int(C.gtk_assistant_get_n_pages(self.object))
+}
+
+func (self *Assistant) GetNthPage(pageNum int) WidgetLike {
+	w := C.gtk_assistant_get_nth_page(self.object, C.gint(pageNum))
+
+	if w == nil {
+		return nil
+	}
+
+	wid, err := gobject.ConvertToGo(unsafe.Pointer(w))
+	if err == nil {
+		return wid.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *Assistant) PrependPage(page WidgetLike) int {
+	return int(C.gtk_assistant_prepend_page(self.object, page.W().object))
+}
+
+func (self *Assistant) AppendPage(page WidgetLike) int {
+	return int(C.gtk_assistant_append_page(self.object, page.W().object))
+}
+
+func (self *Assistant) InsertPage(page WidgetLike, position int) int {
+	return int(C.gtk_assistant_insert_page(self.object, page.W().object, C.gint(position)))
+}
+
+func (self *Assistant) RemovePage(pageNum int) {
+	C.gtk_assistant_remove_page(self.object, C.gint(pageNum))
+}
+
+//TODO: gtk_assistant_set_forward_page_func
+
+func (self *Assistant) SetPageType(page WidgetLike, gtk_AssistantPage int) {
+	C.gtk_assistant_set_page_type(self.object, page.W().object, C.GtkAssistantPageType(gtk_AssistantPage))
+}
+
+func (self *Assistant) GetPageType(page WidgetLike) int {
+	return int(C.gtk_assistant_get_page_type(self.object, page.W().object))
+}
+
+func (self *Assistant) SetPageTitle(page WidgetLike, title string) {
+	s := gobject.GString(title)
+	defer s.Free()
+
+	C.gtk_assistant_set_page_title(self.object, page.W().object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Assistant) GetPageTitle(page WidgetLike) string {
+	s := C.gtk_assistant_get_page_title(self.object, page.W().object)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *Assistant) SetPageComplete(page WidgetLike, complete bool) {
+	b := gobject.GBool(complete)
+	defer b.Free()
+	C.gtk_assistant_set_page_complete(self.object, page.W().object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Assistant) GetPageComplete(page WidgetLike) bool {
+	b := C.gtk_assistant_get_page_complete(self.object, page.W().object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Assistant) AddActionWidget(child WidgetLike) {
+	C.gtk_assistant_add_action_widget(self.object, child.W().object)
+}
+
+func (self *Assistant) RemoveActionWidget(child WidgetLike) {
+	C.gtk_assistant_remove_action_widget(self.object, child.W().object)
+}
+
+func (self *Assistant) UpdateButtonsState() {
+	C.gtk_assistant_update_buttons_state(self.object)
+}
+
+func (self *Assistant) Commit() {
+	C.gtk_assistant_commit(self.object)
+}
+
+func (self *Assistant) NextPage() {
+	C.gtk_assistant_next_page(self.object)
+}
+
+func (self *Assistant) PreviousPage() {
+	C.gtk_assistant_previous_page(self.object)
+}
+
+//////////////////////////////
+// END GtkAssistant
 ////////////////////////////// }}}
 
 // End Windows }}}
@@ -7150,6 +7351,14 @@ func init() {
 	// Register GtkWindow type
 	gobject.RegisterCType(GtkType.WINDOW, newWindowFromNative)
 	gobject.RegisterGoType(GtkType.WINDOW, nativeFromWindow)
+
+	// Register GtkInvisible type
+	gobject.RegisterCType(GtkType.INVISIBLE, newInvisibleFromNative)
+	gobject.RegisterGoType(GtkType.INVISIBLE, nativeFromInvisible)
+
+	// Register GtkAssistant type
+	gobject.RegisterCType(GtkType.ASSISTANT, newAssistantFromNative)
+	gobject.RegisterGoType(GtkType.ASSISTANT, nativeFromAssistant)
 
 	// Register GtkBox type
 	gobject.RegisterCType(GtkType.BOX, newBoxFromNative)
