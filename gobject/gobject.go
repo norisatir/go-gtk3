@@ -172,7 +172,7 @@ func SignalLookup(name string, objectType GType) uint32 {
 	return uint32(s)
 }
 
-func getUniqueID() int64 {
+func GetUniqueID() int64 {
 	return time.Now().UnixNano()
 }
 
@@ -235,7 +235,7 @@ func createClosure(f interface{}, data ...interface{}) ClosureFunc {
 func CreateCustomClosure(f interface{}, data ...interface{}) (ClosureFunc, int64) {
 	cFunc := createClosure(f, data...)
 
-	return cFunc, getUniqueID()
+	return cFunc, GetUniqueID()
 }
 
 func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError) {
@@ -244,7 +244,7 @@ func Connect(obj ObjectLike, name string, f interface{}, data ...interface{}) (*
 	if s_id == 0 {
 		return nil, &SignalError{"Signal not found"}
 	}
-	uid := getUniqueID()
+	uid := GetUniqueID()
 	c := createClosure(f, data...)
 	cloEl := RegisterHandler(obj, name, uid, c)
 	return cloEl, nil
@@ -269,7 +269,7 @@ type WeakClosureFunc func()
 var _weakClosures map[int64]WeakClosureFunc
 
 func WeakRef(obj ObjectLike, f WeakClosureFunc) int64 {
-	uid := getUniqueID()
+	uid := GetUniqueID()
 	_weakClosures[uid] = f
 	o := C.to_GObject(obj.ToNative())
 	C._g_object_weak_ref(o, C.gint64(uid))
