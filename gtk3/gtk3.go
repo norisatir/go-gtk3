@@ -490,16 +490,16 @@ func (self *Widget) GetPreferredSize() (minimumSize, naturalSize Requisition) {
 	return
 }
 
-func (self *Widget) SetEvents(events gdk3.GdkEventMask) {
-	C.gtk_widget_set_events(self.object, C.gint(events))
+func (self *Widget) SetEvents(gdk_EventMask int) {
+	C.gtk_widget_set_events(self.object, C.gint(gdk_EventMask))
 }
 
-func (self *Widget) AddEvents(events gdk3.GdkEventMask) {
-	C.gtk_widget_add_events(self.object, C.gint(events))
+func (self *Widget) AddEvents(gdk_EventMask int) {
+	C.gtk_widget_add_events(self.object, C.gint(gdk_EventMask))
 }
 
-func (self *Widget) GetEvents() gdk3.GdkEventMask {
-	return gdk3.GdkEventMask(C.gtk_widget_get_events(self.object))
+func (self *Widget) GetEvents() int {
+	return int(C.gtk_widget_get_events(self.object))
 }
 
 func (self *Widget) Map() {
