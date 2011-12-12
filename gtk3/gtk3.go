@@ -31,6 +31,7 @@ static inline GtkButtonBox* to_GtkButtonBox(void* obj) { return GTK_BUTTON_BOX(o
 static inline GtkFrame* to_GtkFrame(void* obj) { return GTK_FRAME(obj); }
 static inline GtkGrid* to_GtkGrid(void* obj) { return GTK_GRID(obj); }
 static inline GtkLabel* to_GtkLabel(void* obj) { return GTK_LABEL(obj); }
+static inline GtkProgressBar* to_GtkProgressBar(void* obj) { return GTK_PROGRESS_BAR(obj); }
 static inline GtkImage* to_GtkImage(void* obj) { return GTK_IMAGE(obj); }
 static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
@@ -2044,6 +2045,152 @@ func (self *Label) GetTrackVisitedLinks() bool {
 }
 //////////////////////////////
 // END GtkLabel
+////////////////////////////// }}}
+
+// GtkProgressBar {{{
+//////////////////////////////
+
+// GtkProgressBar type
+type ProgressBar struct {
+	object *C.GtkProgressBar
+	*Widget
+}
+
+func NewProgressBar() *ProgressBar {
+	pb := &ProgressBar{}
+	o := C.gtk_progress_bar_new()
+	pb.object = C.to_GtkProgressBar(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(pb) {
+		gobject.RefSink(pb)
+	}
+	pb.Widget = NewWidget(unsafe.Pointer(o))
+	progressBarFinalizer(pb)
+
+	return pb
+}
+
+// Clear ProgressBar struct when it goes out of reach
+func progressBarFinalizer(pb *ProgressBar) {
+	runtime.SetFinalizer(pb, func(pb *ProgressBar) { gobject.Unref(pb) })
+}
+
+// Conversion funcs
+func newProgressBarFromNative(obj unsafe.Pointer) interface{} {
+	pb := &ProgressBar{}
+	pb.object = C.to_GtkProgressBar(obj)
+
+	if gobject.IsObjectFloating(pb) {
+		gobject.RefSink(pb)
+	} else {
+		gobject.Ref(pb)
+	}
+	pb.Widget = NewWidget(obj)
+	progressBarFinalizer(pb)
+
+	return pb
+}
+
+func nativeFromProgressBar(pb interface{}) *gobject.GValue {
+	progress, ok := pb.(*ProgressBar)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.PROGRESS_BAR, progress.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object like
+func (self ProgressBar) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ProgressBar) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ProgressBar) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+
+}
+
+func (self ProgressBar) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be widget-like
+func (self ProgressBar) W() *Widget {
+	return self.Widget
+}
+
+// ProgressBar interface
+
+func (self *ProgressBar) Pulse() {
+	C.gtk_progress_bar_pulse(self.object)
+}
+
+func (self *ProgressBar) SetFraction(fraction float64) {
+	C.gtk_progress_bar_set_fraction(self.object, C.gdouble(fraction))
+}
+
+func (self *ProgressBar) GetFraction() float64 {
+	return float64(C.gtk_progress_bar_get_fraction(self.object))
+}
+
+func (self *ProgressBar) SetInverted(inverted bool) {
+	b := gobject.GBool(inverted)
+	defer b.Free()
+	C.gtk_progress_bar_set_inverted(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ProgressBar) GetInverted() bool {
+	b := C.gtk_progress_bar_get_inverted(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ProgressBar) SetShowText(showText bool) {
+	b := gobject.GBool(showText)
+	defer b.Free()
+	C.gtk_progress_bar_set_show_text(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ProgressBar) GetShowText() bool {
+	b := C.gtk_progress_bar_get_show_text(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ProgressBar) SetText(text interface{}) {
+	if text == nil {
+		C.gtk_progress_bar_set_text(self.object, nil)
+		return
+	}
+	if st, ok := text.(string); ok {
+		s := gobject.GString(st)
+		defer s.Free()
+		C.gtk_progress_bar_set_text(self.object, (*C.gchar)(s.GetPtr()))
+	}
+}
+
+func (self *ProgressBar) GetText() string {
+	s := C.gtk_progress_bar_get_text(self.object)
+	if s == nil {
+		return ""
+	}
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+//TODO: gtk_progress_bar_set_ellipsize
+//TODO: gtk_progress_bar_get_ellipsize
+
+func (self *ProgressBar) SetPulseStep(fraction float64) {
+	C.gtk_progress_bar_set_pulse_step(self.object, C.gdouble(fraction))
+}
+
+func (self *ProgressBar) GetPulseStep() float64 {
+	return float64(C.gtk_progress_bar_get_pulse_step(self.object))
+}
+//////////////////////////////
+// End GtkProgressBar
 ////////////////////////////// }}}
 
 // GtkImage {{{
@@ -6915,6 +7062,10 @@ func init() {
 	// Register GtkLabel type
 	gobject.RegisterCType(GtkType.LABEL, newLabelFromNative)
 	gobject.RegisterGoType(GtkType.LABEL, nativeFromLabel)
+
+	// Register GtkProgressBar type
+	gobject.RegisterCType(GtkType.PROGRESS_BAR, newProgressBarFromNative)
+	gobject.RegisterGoType(GtkType.PROGRESS_BAR, nativeFromProgressBar)
 
 	// Register GtkImage type
 	gobject.RegisterCType(GtkType.IMAGE, newImageFromNative)
