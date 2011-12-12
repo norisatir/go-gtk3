@@ -39,6 +39,7 @@ static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
 static inline GtkEntryCompletion* to_GtkEntryCompletion(void* obj) { return GTK_ENTRY_COMPLETION(obj); }
 static inline GtkDialog* to_GtkDialog(void* obj) { return GTK_DIALOG(obj); }
 static inline GtkMessageDialog* to_GtkMessageDialog(void* obj) { return GTK_MESSAGE_DIALOG(obj); }
+static inline GtkInvisible* to_GtkInvisible(void* obj) { return GTK_INVISIBLE(obj); }
 static inline GtkSeparator* to_GtkSeparator(void* obj) { return GTK_SEPARATOR(obj); }
 static inline GtkAdjustment* to_GtkAdjustment(void* obj) { return GTK_ADJUSTMENT(obj); }
 static inline GtkRange* to_GtkRange(void* obj) { return GTK_RANGE(obj); }
@@ -1643,6 +1644,88 @@ func (self *MessageDialog) FormatSecondaryMarkup(format string, args ...interfac
 }
 //////////////////////////////
 // END GtkMessageDialog
+////////////////////////////// }}}
+
+// GtkInvisible {{{
+//////////////////////////////
+
+// GtkInvisible type
+type Invisible struct {
+	object *C.GtkInvisible
+	*Widget
+}
+
+func NewInvisible() *Invisible {
+	i := &Invisible{}
+	o := C.gtk_invisible_new()
+	i.object = C.to_GtkInvisible(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(i) {
+		gobject.RefSink(i)
+	}
+	i.Widget = NewWidget(unsafe.Pointer(o))
+	invisibleFinalizer(i)
+
+	return i
+}
+
+func NewInvisibleForScreen(screen *gdk3.Screen) *Invisible {
+	i := &Invisible{}
+	o := C.gtk_invisible_new_for_screen((*C.GdkScreen)(screen.ToNative()))
+	i.object = C.to_GtkInvisible(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(i) {
+		gobject.RefSink(i)
+	}
+	i.Widget = NewWidget(unsafe.Pointer(o))
+	invisibleFinalizer(i)
+
+	return i
+}
+
+// Clear Invisible struct when it goes out of reach
+func invisibleFinalizer(i *Invisible) {
+	runtime.SetFinalizer(i, func(i *Invisible) { gobject.Unref(i) })
+}
+
+// To be object like
+func (self Invisible) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Invisible) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Invisible) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Invisible) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be widget-like
+func (self Invisible) W() *Widget {
+	return self.Widget
+}
+
+// Invisible interface
+
+func (self *Invisible) SetScreen(screen *gdk3.Screen) {
+	C.gtk_invisible_set_screen(self.object, (*C.GdkScreen)(screen.ToNative()))
+}
+
+func (self *Invisible) GetScreen() *gdk3.Screen {
+	s := C.gtk_invisible_get_screen(self.object)
+	
+	if scr, err := gobject.ConvertToGo(unsafe.Pointer(s)); err == nil {
+		return scr.(*gdk3.Screen)
+	}
+	return nil
+}
+//////////////////////////////
+// END GtkInvisible
 ////////////////////////////// }}}
 
 // End Windows }}}
