@@ -395,18 +395,7 @@ func (self Widget) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// Widget standard funcs
-func (self *Widget) Show() {
-	C.gtk_widget_show(self.object)
-}
-
-func (self *Widget) ShowNow() {
-	C.gtk_widget_show_now(self.object)
-}
-
-func (self *Widget) ShowAll() {
-	C.gtk_widget_show_all(self.object)
-}
+// Widget inteface
 
 func (self *Widget) Destroy() {
 	C.gtk_widget_destroy(self.object)
@@ -418,9 +407,33 @@ func (self *Widget) InDestruction() bool {
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
+func (self *Widget) Show() {
+	C.gtk_widget_show(self.object)
+}
+
+func (self *Widget) ShowNow() {
+	C.gtk_widget_show_now(self.object)
+}
+
 func (self *Widget) Hide() {
 	C.gtk_widget_hide(self.object)
 }
+
+func (self *Widget) ShowAll() {
+	C.gtk_widget_show_all(self.object)
+}
+
+//TODO: gtk_widget_draw
+
+func (self *Widget) QueueDraw() {
+	C.gtk_widget_queue_draw(self.object)
+}
+
+//TODO: gtk_widget_add_accelerator
+//TODO: gtk_widget_remove_accelerator
+//TODO: gtk_widget_set_accel_path
+//TODO: gtk_widget_list_accel_closures
+//TODO: gtk_widget_can_activate_accel
 
 func (self *Widget) Activate() bool {
 	b := C.gtk_widget_activate(self.object)
@@ -429,6 +442,21 @@ func (self *Widget) Activate() bool {
 
 func (self *Widget) Reparent(new_parent WidgetLike) {
 	C.gtk_widget_reparent(self.object, new_parent.W().object)
+}
+
+func (self *Widget) Intersect(area gdk3.Rectangle) (bool, gdk3.Rectangle) {
+	var rec C.GdkRectangle
+	cArea := gobject.ConvertToC(area)
+	defer cArea.Free()
+
+	b := C.gtk_widget_intersect(self.object, (*C.GdkRectangle)(cArea.GetPtr()), &rec)
+	retBool := gobject.GoBool(unsafe.Pointer(&b))
+
+	if rectangle, err := gobject.ConvertToGo(unsafe.Pointer(&rec), gdk3.GdkType.RECTANGLE); err == nil {
+		return retBool, rectangle.(gdk3.Rectangle)
+	}
+
+	return retBool, gdk3.Rectangle{}
 }
 
 func (self *Widget) IsFocus() bool {
@@ -462,6 +490,54 @@ func (self *Widget) SetParent(parent WidgetLike) {
 	C.gtk_widget_set_parent(self.object, parent.W().object)
 }
 
+func (self *Widget) SetParentWindow(parentWindow *gdk3.Window) {
+	C.gtk_widget_set_parent_window(self.object, (*C.GdkWindow)(parentWindow.ToNative()))
+}
+
+func (self *Widget) GetParentWindow() *gdk3.Window {
+	pw := C.gtk_widget_get_parent_window(self.object)
+	
+	if parWindow, err := gobject.ConvertToGo(unsafe.Pointer(pw)); err == nil {
+		return parWindow.(*gdk3.Window)
+	}
+	return nil
+}
+
+func (self *Widget) SetEvents(gdk_EventMask int) {
+	C.gtk_widget_set_events(self.object, C.gint(gdk_EventMask))
+}
+
+func (self *Widget) GetEvents() int {
+	return int(C.gtk_widget_get_events(self.object))
+}
+
+func (self *Widget) AddEvents(gdk_EventMask int) {
+	C.gtk_widget_add_events(self.object, C.gint(gdk_EventMask))
+}
+
+func (self *Widget) SetDeviceEvents(device *gdk3.Device, gdk_EventMask int) {
+	C.gtk_widget_set_device_events(self.object, (*C.GdkDevice)(device.ToNative()), C.GdkEventMask(gdk_EventMask))
+}
+
+func (self *Widget) GetDeviceEvents(device *gdk3.Device) int {
+	return int(C.gtk_widget_get_device_events(self.object, (*C.GdkDevice)(device.ToNative())))
+}
+
+func (self *Widget) AddDeviceEvents(device *gdk3.Device, gdk_EventMask int) {
+	C.gtk_widget_add_device_events(self.object, (*C.GdkDevice)(device.ToNative()), C.GdkEventMask(gdk_EventMask))
+}
+
+func (self *Widget) SetDeviceEnabled(device *gdk3.Device, enabled bool) {
+	b := gobject.GBool(enabled)
+	defer b.Free()
+	C.gtk_widget_set_device_enabled(self.object, (*C.GdkDevice)(device.ToNative()), *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Widget) GetDeviceEnabled(device *gdk3.Device) bool {
+	b := C.gtk_widget_get_device_enabled(self.object, (*C.GdkDevice)(device.ToNative()))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
 func (self *Widget) GetTopLevel() WidgetLike {
 	w := C.gtk_widget_get_toplevel(self.object)
 	if tl, err := gobject.ConvertToGo(unsafe.Pointer(&w)); err == nil {
@@ -481,6 +557,30 @@ func (self *Widget) GetAncestor(widget_type gobject.GType) WidgetLike {
 	return nil
 }
 
+//TODO: gdk_widget_get_visual
+//TODO: gdk_widget_set_visual
+
+func (self *Widget) GetPointer() (x, y int) {
+	var cx, cy C.gint
+	C.gtk_widget_get_pointer(self.object, &cx, &cy)
+
+	return int(cx), int(cy)
+}
+
+func (self *Widget) IsAncestor(ancestor WidgetLike) bool {
+	b := C.gtk_widget_is_ancestor(self.object, ancestor.W().object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Widget) TranslateCoordinates(destWidget WidgetLike, srcX, srcY int) (b bool, destX, destY int) {
+	var cx, cy C.gint
+	cb := C.gtk_widget_translate_coordinates(self.object, destWidget.W().object, C.gint(srcX), C.gint(srcY), &cx, &cy)
+	b = gobject.GoBool(unsafe.Pointer(&cb)) 
+	destX = int(cx)
+	destY = int(cy)
+	return
+}
+
 func (self *Widget) GetPreferredSize() (minimumSize, naturalSize Requisition) {
 	var min, nat C.GtkRequisition
 	C.gtk_widget_get_preferred_size(self.object, &min, &nat)
@@ -490,25 +590,6 @@ func (self *Widget) GetPreferredSize() (minimumSize, naturalSize Requisition) {
 	return
 }
 
-func (self *Widget) SetEvents(gdk_EventMask int) {
-	C.gtk_widget_set_events(self.object, C.gint(gdk_EventMask))
-}
-
-func (self *Widget) AddEvents(gdk_EventMask int) {
-	C.gtk_widget_add_events(self.object, C.gint(gdk_EventMask))
-}
-
-func (self *Widget) GetEvents() int {
-	return int(C.gtk_widget_get_events(self.object))
-}
-
-func (self *Widget) Map() {
-	C.gtk_widget_map(self.object)
-}
-
-func (self *Widget) Unmap() {
-	C.gtk_widget_unmap(self.object)
-}
 //////////////////////////////
 // END GtkWidget
 ////////////////////////////// }}}
