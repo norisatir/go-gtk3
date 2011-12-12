@@ -35,6 +35,7 @@ static inline GtkProgressBar* to_GtkProgressBar(void* obj) { return GTK_PROGRESS
 static inline GtkImage* to_GtkImage(void* obj) { return GTK_IMAGE(obj); }
 static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
+static inline GtkCheckButton* to_GtkCheckButton(void* obj) { return GTK_CHECK_BUTTON(obj); }
 static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BUFFER(obj); }
 static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
 static inline GtkEntryCompletion* to_GtkEntryCompletion(void* obj) { return GTK_ENTRY_COMPLETION(obj); }
@@ -2607,6 +2608,113 @@ func (self *ToggleButton) SetInconsistent(setting bool) {
 }
 //////////////////////////////
 // END GtkToggleButton
+////////////////////////////// }}}
+
+// GtkCheckButton {{{
+//////////////////////////////
+
+// GtkCheckButton type
+type CheckButton struct {
+	object *C.GtkCheckButton
+	*ToggleButton
+}
+
+// Clear CheckButton struct when it goes out of reach
+func checkButtonFinalizer(cb *CheckButton) {
+	runtime.SetFinalizer(cb, func(cb *CheckButton) { gobject.Unref(cb) })
+}
+
+func NewCheckButton() *CheckButton {
+	cb := &CheckButton{}
+	o := C.gtk_check_button_new()
+	cb.object = C.to_GtkCheckButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.ToggleButton = newToggleButtonFromNative(unsafe.Pointer(o)).(*ToggleButton)
+	checkButtonFinalizer(cb)
+
+	return cb
+}
+
+func NewCheckButtonWithLabel(label string) *CheckButton {
+	cb := &CheckButton{}
+	s := gobject.GString(label)
+	defer s.Free()
+	
+	o := C.gtk_check_button_new_with_label((*C.gchar)(s.GetPtr()))
+	cb.object = C.to_GtkCheckButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.ToggleButton = newToggleButtonFromNative(unsafe.Pointer(o)).(*ToggleButton)
+	checkButtonFinalizer(cb)
+
+	return cb
+}
+
+func NewCheckButtonWithMnemonic(label string) *CheckButton {
+	cb := &CheckButton{}
+	s := gobject.GString(label)
+	defer s.Free()
+	
+	o := C.gtk_check_button_new_with_mnemonic((*C.gchar)(s.GetPtr()))
+	cb.object = C.to_GtkCheckButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.ToggleButton = newToggleButtonFromNative(unsafe.Pointer(o)).(*ToggleButton)
+	checkButtonFinalizer(cb)
+
+	return cb
+}
+
+// Conversion funcs
+func newCheckButtonFromNative(obj unsafe.Pointer) interface{} {
+	cb := &CheckButton{}
+	cb.object = C.to_GtkCheckButton(obj)
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	} else {
+		gobject.Ref(cb)
+	}
+	cb.ToggleButton = newToggleButtonFromNative(obj).(*ToggleButton)
+	checkButtonFinalizer(cb)
+
+	return cb
+}
+
+func nativeFromCheckButton(cb interface{}) *gobject.GValue {
+	check, ok := cb.(*CheckButton)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CHECK_BUTTON, check.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CheckButton) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CheckButton) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CheckButton) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CheckButton) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+//////////////////////////////
+// END GtkCheckButton
 ////////////////////////////// }}}
 
 // End Buttons and Toggles }}}
@@ -7078,6 +7186,10 @@ func init() {
 	//Register GtkToggleButton type
 	gobject.RegisterCType(GtkType.TOGGLE_BUTTON, newToggleButtonFromNative)
 	gobject.RegisterGoType(GtkType.TOGGLE_BUTTON, nativeFromToggleButton)
+
+	// Register GtkCheckButton type
+	gobject.RegisterCType(GtkType.CHECK_BUTTON, newCheckButtonFromNative)
+	gobject.RegisterGoType(GtkType.CHECK_BUTTON, nativeFromCheckButton)
 
 	// Register GtkEntryBuffer type
 	gobject.RegisterCType(GtkType.ENTRY_BUFFER, newEntryBufferFromNative)
