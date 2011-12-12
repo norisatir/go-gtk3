@@ -585,6 +585,22 @@ func (self *Widget) TranslateCoordinates(destWidget WidgetLike, srcX, srcY int) 
 	return
 }
 
+func (self *Widget) GetHalign() int {
+	return int(C.gtk_widget_get_halign(self.object))
+}
+
+func (self *Widget) SetHalign(gtk_Align int) {
+	C.gtk_widget_set_halign(self.object, C.GtkAlign(gtk_Align))
+}
+
+func (self *Widget) GetValign() int {
+	return int(C.gtk_widget_get_valign(self.object))
+}
+
+func (self *Widget) SetValign(gtk_align int) {
+	C.gtk_widget_set_valign(self.object, C.GtkAlign(gtk_align))
+}
+
 func (self *Widget) GetPreferredSize() (minimumSize, naturalSize Requisition) {
 	var min, nat C.GtkRequisition
 	C.gtk_widget_get_preferred_size(self.object, &min, &nat)

@@ -716,6 +716,17 @@ type gtkAssistantPage struct {
 }
 // End GtkAssistantPageType }}}
 
+// GtkAlign {{{
+var GtkAlign gtkAlign
+
+type gtkAlign struct {
+	FILL int
+	START int
+	END int
+	CENTER int
+}
+// End GtkAlign }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1283,4 +1294,10 @@ func init() {
 	GtkAssistantPage.SUMMARY = 3
 	GtkAssistantPage.PROGRESS = 4
 	GtkAssistantPage.CUSTOM = 5
+
+	// Initialize GtkAlign
+	GtkAlign.FILL = 0
+	GtkAlign.START = 1
+	GtkAlign.END = 2
+	GtkAlign.CENTER = 3
 } /// }}}
