@@ -4828,7 +4828,11 @@ func (self *CellView) GetDisplayedRow() *TreePath {
 	return nil
 }
 
-//TODO: gtk_cell_view_set_background_color
+func (self *CellView) SetBackgrundColor(color gdk3.Color) {
+	c := gobject.ConvertToC(color)
+	defer c.Free()
+	C.gtk_cell_view_set_background_color(self.object, (*C.GdkColor)(c.GetPtr()))
+}
 
 func (self *CellView) SetBackgroundRGBA(rgba gdk3.RGBA) {
 	r := gobject.ConvertToC(rgba)
