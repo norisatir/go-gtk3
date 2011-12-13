@@ -16,7 +16,7 @@ extern void _gtk_cell_layout_data_func(GtkCellLayout* cell_layout,
 									GtkTreeModel* tree_model,
 									GtkTreeIter* iter,
 									gpointer data);
-extern void _g_destroy_notify(gpointer data);
+extern void _g_gtk_destroy_notify(gpointer data);
 // End Exported funcs }}}
 
 static void _gtk_init(void* argc, void* argv) {
@@ -158,7 +158,7 @@ void _gtk_entry_completion_set_match_func(GtkEntryCompletion* completion, gint64
 	gint64* data = (gint64*)malloc(sizeof(gint64));
 	*data = func_data;
 
-	gtk_entry_completion_set_match_func(completion, _gtk_entry_completion_match_func, (gpointer)data, _g_destroy_notify);
+	gtk_entry_completion_set_match_func(completion, _gtk_entry_completion_match_func, (gpointer)data, _g_gtk_destroy_notify);
 }
 
 // End GtkEntryCompletion funcs }}}
@@ -219,7 +219,7 @@ static void _gtk_cell_area_foreach(GtkCellArea* area, gint64 id) {
 static void _gtk_cell_layout_set_cell_data_func(GtkCellLayout* layout, GtkCellRenderer* cell, gint64 id) {
 	gint64* uid = (gint64*)malloc(sizeof(gint64));
 	*uid = id;
-	gtk_cell_layout_set_cell_data_func(layout, cell, _gtk_cell_layout_data_func, (gpointer)uid, _g_destroy_notify);
+	gtk_cell_layout_set_cell_data_func(layout, cell, _gtk_cell_layout_data_func, (gpointer)uid, _g_gtk_destroy_notify);
 }
 
 //End GtkCellLayout funcs }}}
@@ -7774,8 +7774,8 @@ func _gtk_cell_layout_data_func(cellLayout, cell, treeModel, iter, data unsafe.P
 	}
 }
 
-//export _g_destroy_notify
-func _g_destroy_notify(data unsafe.Pointer) {
+//export _g_gtk_destroy_notify
+func _g_gtk_destroy_notify(data unsafe.Pointer) {
 	id := *((*C.gint)(data))
 	if _, ok := _closures[int64(id)]; ok {
 		delete(_closures, int64(id))
