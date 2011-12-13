@@ -21,7 +21,7 @@ func main() {
 	assistant.Connect("cancel", func() { assistant.Destroy()})
 	assistant.Connect("close", func() { assistant.Destroy()})
 	assistant.Connect("apply", OnAssistantApply, progress, assistant) 
-	assistant.Connect("prepare", OnAssistantPrepare, assistant)
+	assistant.Connect("prepare", OnAssistantPrepare)
 
 	assistant.Show()
 	gtk3.Main()
