@@ -54,6 +54,7 @@ static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(o
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
 static inline GtkCellArea* to_GtkCellArea(void* obj) { return GTK_CELL_AREA(obj); }
+static inline GtkCellAreaContext* to_GtkCellAreaContext(void* obj) { return GTK_CELL_AREA_CONTEXT(obj); }
 static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
 static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
@@ -4330,7 +4331,7 @@ func (self *CellArea) Remove(renderer CellRendererLike) {
 }
 
 func (self *CellArea) HasRenderer(renderer CellRendererLike) bool {
-	b := C.gtk_cell_area_has_renderer(self.object, renderer.CRenderer().object) 
+	b := C.gtk_cell_area_has_renderer(self.object, renderer.CRenderer().object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
@@ -4342,6 +4343,131 @@ func (self *CellArea) Foreach(callback interface{}, data ...interface{}) {
 }
 //////////////////////////////
 // End GtkCellArea
+////////////////////////////// }}}
+
+// GtkCellAreaContext {{{
+//////////////////////////////
+
+// GtkCellAreaContext type
+type CellAreaContext struct {
+	object *C.GtkCellAreaContext
+}
+
+// Clear CellAreaContext struct when it goes out of reach
+func cellAreaContextFinalizer(ca *CellAreaContext) {
+	runtime.SetFinalizer(ca, func(ca *CellAreaContext) { gobject.Unref(ca) })
+}
+
+// Conversion funcs
+func newCellAreaContextFromNative(obj unsafe.Pointer) interface{} {
+	ca := &CellAreaContext{}
+	ca.object = C.to_GtkCellAreaContext(obj)
+
+	if gobject.IsObjectFloating(ca) {
+		gobject.RefSink(ca)
+	} else {
+		gobject.Ref(ca)
+	}
+	cellAreaContextFinalizer(ca)
+
+	return ca
+}
+
+func nativeFromCellAreaContext(ca interface{}) *gobject.GValue {
+	cell, ok := ca.(*CellAreaContext)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_AREA_CONTEXT, cell.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellAreaContext) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellAreaContext) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellAreaContext) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellAreaContext) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// CellAreaContext interface
+
+func (self *CellAreaContext) GetArea() *CellArea {
+	ar := C.gtk_cell_area_context_get_area(self.object)
+	if ar == nil {
+		return nil
+	}
+	area, _ := gobject.ConvertToGo(unsafe.Pointer(ar))
+
+	return area.(*CellArea)
+}
+
+func (self *CellAreaContext) Allocate(width, height int) {
+	C.gtk_cell_area_context_allocate(self.object, C.gint(width), C.gint(height))
+}
+
+func (self *CellAreaContext) Reset() {
+	C.gtk_cell_area_context_reset(self.object)
+}
+
+func (self *CellAreaContext) GetPreferredWidth() (mWidth, nWidth int) {
+	var m, n C.gint
+	C.gtk_cell_area_context_get_preferred_width(self.object, &m, &n)
+	mWidth = int(m)
+	nWidth = int(n)
+	return
+}
+
+func (self *CellAreaContext) GetPreferredHeight() (mHeight, nHeight int) {
+	var m, n C.gint
+	C.gtk_cell_area_context_get_preferred_width(self.object, &m, &n)
+	mHeight = int(m)
+	nHeight = int(n)
+	return
+}
+
+func (self *CellAreaContext) GetPreferredHeightForWidth(width int) (mHeight, nHeight int) {
+	var m, n C.gint
+	C.gtk_cell_area_context_get_preferred_height_for_width(self.object, C.gint(width), &m, &n)
+	mHeight = int(m)
+	nHeight = int(n)
+	return
+}
+
+func (self *CellAreaContext) GetPreferredWidthForHeight(height int) (mWidth, nWidth int) {
+	var m, n C.gint
+	C.gtk_cell_area_context_get_preferred_width_for_height(self.object, C.gint(height), &m, &n)
+	mWidth = int(m)
+	nWidth = int(n)
+	return
+}
+
+func (self *CellAreaContext) GetAllocation() (width, height int) {
+	var w, h C.gint
+	C.gtk_cell_area_context_get_allocation(self.object, &w, &h)
+	width = int(w)
+	height = int(h)
+	return
+}
+
+func (self *CellAreaContext) PushPreferredWidth(minimumWidth, naturalWidth int) {
+	C.gtk_cell_area_context_push_preferred_width(self.object, C.gint(minimumWidth), C.gint(naturalWidth))
+}
+
+func (self *CellAreaContext) PushPreferredHeight(minimumHeight, naturalHeight int) {
+	C.gtk_cell_area_context_push_preferred_height(self.object, C.gint(minimumHeight), C.gint(naturalHeight))
+}
+//////////////////////////////
+// End GtkCellAreaContext
 ////////////////////////////// }}}
 
 // GtkCellRenderer {{{
@@ -7467,7 +7593,7 @@ func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
 	}
 	b := gobject.GBool(res)
 	defer b.Free()
-	
+
 	return *((*C.gboolean)(b.GetPtr()))
 }
 
@@ -7589,6 +7715,10 @@ func init() {
 	// Register GtkCellArea type
 	gobject.RegisterCType(GtkType.CELL_AREA, newCellAreaFromNative)
 	gobject.RegisterGoType(GtkType.CELL_AREA, nativeFromCellArea)
+
+	// Register GtkCellAreaContext type
+	gobject.RegisterCType(GtkType.CELL_AREA_CONTEXT, newCellAreaContextFromNative)
+	gobject.RegisterGoType(GtkType.CELL_AREA_CONTEXT, nativeFromCellAreaContext)
 
 	// Register GtkCellRenderer type
 	gobject.RegisterCType(GtkType.CELL_RENDERER, newCellRendererFromNative)
