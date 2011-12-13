@@ -11,12 +11,13 @@ extern gboolean _gtk_entry_completion_match_func(GtkEntryCompletion* completion,
 											 GtkTreeIter* iter,
 											 gpointer user_data);
 extern gboolean _gtk_cell_callback(GtkCellRenderer* renderer, gpointer data);
-
+extern void _gtk_cell_layout_data_func(GtkCellLayout* cell_layout,
+									GtkCellRenderer* cell,
+									GtkTreeModel* tree_model,
+									GtkTreeIter* iter,
+									gpointer data);
+extern void _g_destroy_notify(gpointer data);
 // End Exported funcs }}}
-
-static void free_id(gpointer data) {
-	free(data);
-}
 
 static void _gtk_init(void* argc, void* argv) {
 	gtk_init((int*)argc, (char***)argv);
@@ -55,6 +56,7 @@ static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(o
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
 static inline GtkCellArea* to_GtkCellArea(void* obj) { return GTK_CELL_AREA(obj); }
 static inline GtkCellAreaContext* to_GtkCellAreaContext(void* obj) { return GTK_CELL_AREA_CONTEXT(obj); }
+static inline GtkCellLayout* to_GtkCellLayout(void* obj) { return GTK_CELL_LAYOUT(obj); }
 static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
 static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
@@ -156,7 +158,7 @@ void _gtk_entry_completion_set_match_func(GtkEntryCompletion* completion, gint64
 	gint64* data = (gint64*)malloc(sizeof(gint64));
 	*data = func_data;
 
-	gtk_entry_completion_set_match_func(completion, _gtk_entry_completion_match_func, (gpointer)data, free_id);
+	gtk_entry_completion_set_match_func(completion, _gtk_entry_completion_match_func, (gpointer)data, _g_destroy_notify);
 }
 
 // End GtkEntryCompletion funcs }}}
@@ -213,6 +215,15 @@ static void _gtk_cell_area_foreach(GtkCellArea* area, gint64 id) {
 
 //End GtkCellArea funcs }}}
 
+// GtkCellLayout funcs {{{
+static void _gtk_cell_layout_set_cell_data_func(GtkCellLayout* layout, GtkCellRenderer* cell, gint64 id) {
+	gint64* uid = (gint64*)malloc(sizeof(gint64));
+	*uid = id;
+	gtk_cell_layout_set_cell_data_func(layout, cell, _gtk_cell_layout_data_func, (gpointer)uid, _g_destroy_notify);
+}
+
+//End GtkCellLayout funcs }}}
+
 // Gtk*Store funcs {{{
 static inline GType* gtype_array_new(int n) {
 	return g_new0(GType, n);
@@ -260,6 +271,7 @@ import "runtime"
 import "fmt"
 import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdk3"
+import "github.com/norisatir/go-gtk3/glib"
 
 // General types and functions {{{
 
@@ -349,6 +361,11 @@ type TreeModelLike interface {
 // CellRendererLike interface must have method CRenderer()
 type CellRendererLike interface {
 	CRenderer() *CellRenderer
+}
+
+// CellLayoutLike interface must have method ICellLayout
+type CellLayoutLike interface {
+	ICellLayout() *CellLayout
 }
 //////////////////////////////
 // END Interfaces
@@ -4470,6 +4487,152 @@ func (self *CellAreaContext) PushPreferredHeight(minimumHeight, naturalHeight in
 // End GtkCellAreaContext
 ////////////////////////////// }}}
 
+// GtkCellLayout interface {{{
+//////////////////////////////
+
+// GtkCellLayout type
+type CellLayout struct {
+	object *C.GtkCellLayout
+}
+
+// Clear CellLayout when it goes out of reach
+func cellLayoutFinalizer(cl *CellLayout) {
+	runtime.SetFinalizer(cl, func(cl *CellLayout) { gobject.Unref(cl) })
+}
+
+// Conversion funcs
+func newCellLayoutFromNative(obj unsafe.Pointer) interface{} {
+	cl := &CellLayout{}
+	cl.object = C.to_GtkCellLayout(obj)
+
+	if gobject.IsObjectFloating(cl) {
+		gobject.RefSink(cl)
+	} else {
+		gobject.Ref(cl)
+	}
+	cellLayoutFinalizer(cl)
+
+	return cl
+}
+
+func nativeFromCellLayout(cl interface{}) *gobject.GValue {
+	cell, ok := cl.(*CellLayout)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_LAYOUT, cell.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// Simulate object-like
+func (self CellLayout) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellLayout) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return nil, nil
+	//return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellLayout) Set(properties map[string]interface{}) {
+	//gobject.Set(self, properties)
+}
+
+func (self CellLayout) Get(properties []string) map[string]interface{} {
+	return nil
+	//return gobject.Get(self, properties)
+}
+
+// CellLayout interface
+
+func (self *CellLayout) PackStart(cell CellRendererLike, expand bool) {
+	b := gobject.GBool(expand)
+	defer b.Free()
+	C.gtk_cell_layout_pack_start(self.object, cell.CRenderer().object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellLayout) PackEnd(cell CellRendererLike, expand bool) {
+	b := gobject.GBool(expand)
+	defer b.Free()
+	C.gtk_cell_layout_pack_end(self.object, cell.CRenderer().object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellLayout) GetArea() *CellArea {
+	ar := C.gtk_cell_layout_get_area(self.object)
+	if ar == nil {
+		return nil
+	}
+
+	area, err := gobject.ConvertToGo(unsafe.Pointer(ar))
+	if err == nil {
+		return area.(*CellArea)
+	}
+	return nil
+}
+
+func (self *CellLayout) GetCells() *glib.GList {
+	gl := C.gtk_cell_layout_get_cells(self.object)
+	if gl == nil {
+		return nil
+	}
+
+	goGlist := glib.NewGListFromNative(unsafe.Pointer(gl))
+
+	// this GList must be freed, but not cell renderers inside
+	goGlist.GC_Free = true
+	goGlist.GC_FreeFull = false
+	// Set finalizer
+	glib.GListFinalizer(goGlist)
+
+	// CellRenderers are inside this GList so we add conversion func
+	// that converts C CellRenderers to Go CellRenderer struct
+	goGlist.ConversionFunc = func(obj unsafe.Pointer) interface{} {
+		renderer, err := gobject.ConvertToGo(obj)
+		if err == nil {
+			return renderer.(CellRendererLike)
+		}
+		return nil
+	}
+
+	return goGlist
+}
+
+func (self *CellLayout) Reorder(cell CellRendererLike, position int) {
+	C.gtk_cell_layout_reorder(self.object, cell.CRenderer().object, C.gint(position))
+}
+
+func (self *CellLayout) Clear() {
+	C.gtk_cell_layout_clear(self.object)
+}
+
+func (self *CellLayout) AddAttribute(cell CellRendererLike, attribute string, column int) {
+	s := gobject.GString(attribute)
+	defer s.Free()
+	C.gtk_cell_layout_add_attribute(self.object, cell.CRenderer().object, (*C.gchar)(s.GetPtr()), C.gint(column))
+}
+
+func (self *CellLayout) ClearAttributes(cell CellRendererLike) {
+	C.gtk_cell_layout_clear_attributes(self.object, cell.CRenderer().object)
+}
+
+func (self *CellLayout) SetAttributes(cell CellRendererLike, attributes A) {
+	self.ClearAttributes(cell)
+
+	for _, attr := range attributes {
+		self.AddAttribute(cell, attr.Attribute, attr.Column)
+	}
+}
+
+func (self *CellLayout) SetCellDataFunc(renderer CellRendererLike, f interface{}, data ...interface{}) {
+	cl, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = cl
+	C._gtk_cell_layout_set_cell_data_func(self.object, renderer.CRenderer().object, C.gint64(id))
+}
+
+//////////////////////////////
+// End GtkCellLayout interface
+////////////////////////////// }}}
+
 // GtkCellRenderer {{{
 //////////////////////////////
 
@@ -7597,6 +7760,29 @@ func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
 	return *((*C.gboolean)(b.GetPtr()))
 }
 
+//export _gtk_cell_layout_data_func
+func _gtk_cell_layout_data_func(cellLayout, cell, treeModel, iter, data unsafe.Pointer) {
+	id := *((*C.gint)(data))
+
+	goCellLayout, _ := gobject.ConvertToGo(cellLayout)
+	goCell, _ := gobject.ConvertToGo(cell)
+	goTreeModel, _ := gobject.ConvertToGo(treeModel)
+	inIter := &TreeIter{*((*C.GtkTreeIter)(iter))}
+
+	if c, ok := _closures[int64(id)]; ok {
+		c([]interface{}{goCellLayout, goCell, goTreeModel, inIter})
+	}
+}
+
+//export _g_destroy_notify
+func _g_destroy_notify(data unsafe.Pointer) {
+	id := *((*C.gint)(data))
+	if _, ok := _closures[int64(id)]; ok {
+		delete(_closures, int64(id))
+	}
+	C.free(data)
+}
+
 //////////////////////////////
 // END Exported functions
 ////////////////////////////// }}}
@@ -7719,6 +7905,10 @@ func init() {
 	// Register GtkCellAreaContext type
 	gobject.RegisterCType(GtkType.CELL_AREA_CONTEXT, newCellAreaContextFromNative)
 	gobject.RegisterGoType(GtkType.CELL_AREA_CONTEXT, nativeFromCellAreaContext)
+
+	// Register GtkCellLayout interface type
+	gobject.RegisterCType(GtkType.CELL_LAYOUT, newCellLayoutFromNative)
+	gobject.RegisterGoType(GtkType.CELL_LAYOUT, nativeFromCellLayout)
 
 	// Register GtkCellRenderer type
 	gobject.RegisterCType(GtkType.CELL_RENDERER, newCellRendererFromNative)
