@@ -377,6 +377,20 @@ func NewWidget(o unsafe.Pointer) *Widget {
 	return w
 }
 
+func newWidgetFromNative(obj unsafe.Pointer) interface{} {
+	w := &Widget{}
+	w.object = C.to_GtkWidget(obj)
+
+	if gobject.IsObjectFloating(w) {
+		gobject.RefSink(w)
+	} else {
+		gobject.Ref(w)
+	}
+	widgetFinalizer(w)
+
+	return w
+}
+
 // Clear Widget struct when it goes out of reach
 func widgetFinalizer(w *Widget) {
 	runtime.SetFinalizer(w, func(w *Widget) { gobject.Unref(w) })
@@ -7360,6 +7374,8 @@ func init() {
 	// Initialiize map for closures
 	_closures = make(map[int64]gobject.ClosureFunc)
 
+	// Register GtkWidget type
+	gobject.RegisterCType(GtkType.WIDGET, newWidgetFromNative)
 	// Register GtkApplicaton type
 	gobject.RegisterCType(GtkType.APPLICATION, appFromNative)
 	gobject.RegisterGoType(GtkType.APPLICATION, nativeFromApp)
