@@ -13,6 +13,12 @@ static void _g_timeout_add_full(gint priority, guint interval, gint64 id) {
 	g_timeout_add_full(priority, interval, _g_source_func, (gpointer)uid, _g_destroy_notify);
 }
 
+static void _g_idle_add_full(gint priority, gint64 id) {
+	gint64* uid = (gint64*)malloc(sizeof(gint64));
+	*uid = id;
+	g_idle_add_full(priority, _g_source_func, (gpointer)uid, _g_destroy_notify);
+}
+
 */
 // #cgo pkg-config: gobject-2.0
 import "C"
@@ -130,6 +136,12 @@ func GTimeoutAddFull(priority int, interval uint, callback interface{}, data ...
 	cl, id := gobject.CreateCustomClosure(callback, data...)
 	_closures[id] = cl
 	C._g_timeout_add_full(C.gint(priority), C.guint(interval), C.gint64(id))
+}
+
+func GIdleAddFull(priority int, callback interface{}, data ...interface{}) {
+	cl, id := gobject.CreateCustomClosure(callback, data...)
+	_closures[id] = cl
+	C._g_idle_add_full(C.gint(priority), C.gint64(id))
 }
 
 // Exported functions
