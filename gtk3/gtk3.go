@@ -10,6 +10,8 @@ extern gboolean _gtk_entry_completion_match_func(GtkEntryCompletion* completion,
 											 const gchar* key,
 											 GtkTreeIter* iter,
 											 gpointer user_data);
+extern gboolean _gtk_cell_callback(GtkCellRenderer* renderer, gpointer data);
+
 // End Exported funcs }}}
 
 static void free_id(gpointer data) {
@@ -51,6 +53,7 @@ static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SC
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
+static inline GtkCellArea* to_GtkCellArea(void* obj) { return GTK_CELL_AREA(obj); }
 static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
 static inline GtkCellRendererProgress* to_GtkCellRendererProgress(void* obj) { return GTK_CELL_RENDERER_PROGRESS(obj); }
@@ -200,6 +203,14 @@ static inline gint _gtk_tree_path_get_indice(gint* indices, int index) {
 	return *(indices + index);
 }
 //End GtkTreePath func }}}
+
+// GtkCellArea funcs {{{
+static void _gtk_cell_area_foreach(GtkCellArea* area, gint64 id) {
+	gint64* uid = &id;
+	gtk_cell_area_foreach(area, _gtk_cell_callback, (gpointer)uid);
+}
+
+//End GtkCellArea funcs }}}
 
 // Gtk*Store funcs {{{
 static inline GType* gtype_array_new(int n) {
@@ -4254,6 +4265,85 @@ func (self *TreeStore) MoveAfter(iter, position *TreeIter) {
 // END GtkTreeStore
 ////////////////////////////// }}}
 
+// GtkCellArea {{{
+//////////////////////////////
+
+// GtkCellArea type
+type CellArea struct {
+	object *C.GtkCellArea
+}
+
+// Clear CellArea struct when it goes out of reach
+func cellAreaFinalizer(ca *CellArea) {
+	runtime.SetFinalizer(ca, func(ca *CellArea) { gobject.Unref(ca) })
+}
+
+// Conversion funcs
+func newCellAreaFromNative(obj unsafe.Pointer) interface{} {
+	ca := &CellArea{}
+	ca.object = C.to_GtkCellArea(obj)
+
+	if gobject.IsObjectFloating(ca) {
+		gobject.RefSink(ca)
+	} else {
+		gobject.Ref(ca)
+	}
+	cellAreaFinalizer(ca)
+
+	return ca
+}
+
+func nativeFromCellArea(ca interface{}) *gobject.GValue {
+	cell, ok := ca.(*CellArea)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_AREA, cell.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellArea) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellArea) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellArea) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellArea) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// CellArea interface
+
+func (self *CellArea) Add(renderer CellRendererLike) {
+	C.gtk_cell_area_add(self.object, renderer.CRenderer().object)
+}
+
+func (self *CellArea) Remove(renderer CellRendererLike) {
+	C.gtk_cell_area_remove(self.object, renderer.CRenderer().object)
+}
+
+func (self *CellArea) HasRenderer(renderer CellRendererLike) bool {
+	b := C.gtk_cell_area_has_renderer(self.object, renderer.CRenderer().object) 
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellArea) Foreach(callback interface{}, data ...interface{}) {
+	f, id := gobject.CreateCustomClosure(callback, data...)
+	_closures[id] = f
+	C._gtk_cell_area_foreach(self.object, C.gint64(id))
+	delete(_closures, id)
+}
+//////////////////////////////
+// End GtkCellArea
+////////////////////////////// }}}
+
 // GtkCellRenderer {{{
 //////////////////////////////
 
@@ -7365,6 +7455,22 @@ func _gtk_entry_completion_match_func(completion, key, iter, userData unsafe.Poi
 	return *((*C.gboolean)(b.GetPtr()))
 }
 
+//export _gtk_cell_callback
+func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
+	id := *((*C.gint64)(data))
+
+	rend, _ := gobject.ConvertToGo(renderer)
+
+	var res bool
+	if c, ok := _closures[int64(id)]; ok {
+		res = c([]interface{}{rend})
+	}
+	b := gobject.GBool(res)
+	defer b.Free()
+	
+	return *((*C.gboolean)(b.GetPtr()))
+}
+
 //////////////////////////////
 // END Exported functions
 ////////////////////////////// }}}
@@ -7479,6 +7585,10 @@ func init() {
 	// Register GtkTreeStore type
 	gobject.RegisterCType(GtkType.TREE_STORE, newTreeStoreFromNative)
 	gobject.RegisterGoType(GtkType.TREE_STORE, nativeFromTreeStore)
+
+	// Register GtkCellArea type
+	gobject.RegisterCType(GtkType.CELL_AREA, newCellAreaFromNative)
+	gobject.RegisterGoType(GtkType.CELL_AREA, nativeFromCellArea)
 
 	// Register GtkCellRenderer type
 	gobject.RegisterCType(GtkType.CELL_RENDERER, newCellRendererFromNative)
