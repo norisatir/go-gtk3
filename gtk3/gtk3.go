@@ -673,6 +673,21 @@ func (self *Widget) GetPreferredSize() (minimumSize, naturalSize Requisition) {
 	return
 }
 
+func (self *Widget) RenderIconPixbuf(stockId string, gtk_IconSize int) *gdkpixbuf.Pixbuf {
+	s := gobject.GString(stockId)
+	defer s.Free()
+	p := C.gtk_widget_render_icon_pixbuf(self.object, (*C.gchar)(s.GetPtr()), C.GtkIconSize(gtk_IconSize))
+
+	if p == nil {
+		return nil
+	}
+
+	if pix, err := gobject.ConvertToGo(unsafe.Pointer(p)); err == nil {
+		return pix.(*gdkpixbuf.Pixbuf)
+	}
+	return nil
+}
+
 //////////////////////////////
 // END GtkWidget
 ////////////////////////////// }}}
