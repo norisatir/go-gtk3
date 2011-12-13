@@ -17,6 +17,9 @@ extern void _gtk_cell_layout_data_func(GtkCellLayout* cell_layout,
 									GtkTreeIter* iter,
 									gpointer data);
 extern void _g_gtk_destroy_notify(gpointer data);
+extern gboolean _gtk_tree_view_row_separator_func(GtkTreeModel* model,
+									GtkTreeIter* iter,
+									gpointer data);
 // End Exported funcs }}}
 
 static void _gtk_init(void* argc, void* argv) {
@@ -68,6 +71,7 @@ static inline GtkCellRendererCombo* to_GtkCellRendererCombo(void* obj) { return 
 static inline GtkCellRendererSpin* to_GtkCellRendererSpin(void* obj) { return GTK_CELL_RENDERER_SPIN(obj); }
 static inline GtkTreeViewColumn* to_GtkTreeViewColumn(void* obj) { return GTK_TREE_VIEW_COLUMN(obj); }
 static inline GtkTreeView* to_GtkTreeView(void* obj) { return GTK_TREE_VIEW(obj); }
+static inline GtkComboBox* to_GtkComboBox(void* obj) { return GTK_COMBO_BOX(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -224,6 +228,15 @@ static void _gtk_cell_layout_set_cell_data_func(GtkCellLayout* layout, GtkCellRe
 
 //End GtkCellLayout funcs }}}
 
+// GtkComboBox funcs {{{
+static void _gtk_combo_box_set_row_separator_func(GtkComboBox* combo_box, gint64 id) {
+	gint64* uid = (gint64*)malloc(sizeof(gint64));
+	*uid = id;
+	gtk_combo_box_set_row_separator_func(combo_box, _gtk_tree_view_row_separator_func, (gpointer)uid, _g_gtk_destroy_notify);
+}
+
+//End GtkComboBox funcs }}}
+
 // Gtk*Store funcs {{{
 static inline GType* gtype_array_new(int n) {
 	return g_new0(GType, n);
@@ -361,6 +374,11 @@ type TreeModelLike interface {
 // CellRendererLike interface must have method CRenderer()
 type CellRendererLike interface {
 	CRenderer() *CellRenderer
+}
+
+// CellAreaLike interface must have method CArea()
+type CellAreaLike interface {
+	CArea() *CellArea
 }
 
 // CellLayoutLike interface must have method ICellLayout
@@ -6187,6 +6205,349 @@ func (self *TreeView) SetSearchColumn(column int) {
 
 // End Tree, List and Icon Grid Widgets }}}
 
+// Menus, Combo Box, Toolbar {{{
+
+// GtkComboBox {{{
+//////////////////////////////
+
+// GtkComboBox type
+type ComboBox struct {
+	object *C.GtkComboBox
+	*Container
+	*CellLayout
+}
+
+func NewComboBox() *ComboBox {
+	cb := &ComboBox{}
+	o := C.gtk_combo_box_new()
+	cb.object = C.to_GtkComboBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
+	comboBoxFinalizer(cb)
+
+	return cb
+}
+
+func NewComboBoxWithEntry() *ComboBox {
+	cb := &ComboBox{}
+	o := C.gtk_combo_box_new_with_entry()
+	cb.object = C.to_GtkComboBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
+	comboBoxFinalizer(cb)
+
+	return cb
+}
+
+func NewComboBoxWithModel(model TreeModelLike) *ComboBox {
+	cb := &ComboBox{}
+	o := C.gtk_combo_box_new_with_model(model.ITreeModel().object)
+	cb.object = C.to_GtkComboBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
+	comboBoxFinalizer(cb)
+
+	return cb
+}
+
+func NewComboBoxWithModelAndEntry(model TreeModelLike) *ComboBox {
+	cb := &ComboBox{}
+	o := C.gtk_combo_box_new_with_model_and_entry(model.ITreeModel().object)
+	cb.object = C.to_GtkComboBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
+	comboBoxFinalizer(cb)
+
+	return cb
+}
+
+func NewComboBoxWithArea(area CellAreaLike) *ComboBox {
+	cb := &ComboBox{}
+	o := C.gtk_combo_box_new_with_area(area.CArea().object)
+	cb.object = C.to_GtkComboBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
+	comboBoxFinalizer(cb)
+
+	return cb
+}
+
+func NewComboBoxWithAreaAndEntry(area CellAreaLike) *ComboBox {
+	cb := &ComboBox{}
+	o := C.gtk_combo_box_new_with_area_and_entry(area.CArea().object)
+	cb.object = C.to_GtkComboBox(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	}
+	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
+	comboBoxFinalizer(cb)
+
+	return cb
+}
+
+// Clear ComboBox struct when it goes out of reach
+func comboBoxFinalizer(cb *ComboBox) {
+	runtime.SetFinalizer(cb, func(cb *ComboBox) { gobject.Unref(cb) })
+}
+
+// Conversion funcs
+func newComboBoxFromNative(obj unsafe.Pointer) interface{} {
+	cb := &ComboBox{}
+	cb.object = C.to_GtkComboBox(obj)
+
+	if gobject.IsObjectFloating(cb) {
+		gobject.RefSink(cb)
+	} else {
+		gobject.Ref(cb)
+	}
+	cb.Container = NewContainer(obj)
+	cb.CellLayout = newCellLayoutFromNative(obj).(*CellLayout)
+	comboBoxFinalizer(cb)
+
+	return cb
+}
+
+func nativeFromComboBox(cb interface{}) *gobject.GValue {
+	combo, ok := cb.(*ComboBox)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.COMBO_BOX, combo.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be Object-like
+func (self ComboBox) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ComboBox) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ComboBox) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self ComboBox) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-like
+func (self ComboBox) C() *Container {
+	return self.Container
+}
+
+// Implement CellLayoutLike
+func (self ComboBox) ICellLayout() *CellLayout {
+	return self.CellLayout
+}
+
+// ComboBox interface
+
+func (self *ComboBox) GetWrapWidth() int {
+	return int(C.gtk_combo_box_get_wrap_width(self.object))
+}
+
+func (self *ComboBox) SetWrapWidth(width int) {
+	C.gtk_combo_box_set_wrap_width(self.object, C.gint(width))
+}
+
+func (self *ComboBox) GetRowSpanColumn() int {
+	return int(C.gtk_combo_box_get_row_span_column(self.object))
+}
+
+func (self *ComboBox) SetRowSpanColumn(rowSpan int) {
+	C.gtk_combo_box_set_row_span_column(self.object, C.gint(rowSpan))
+}
+
+func (self *ComboBox) GetColumnSpanColumn() int {
+	return int(C.gtk_combo_box_get_column_span_column(self.object))
+}
+
+func (self *ComboBox) SetColumnSpanColumn(columnSpan int) {
+	C.gtk_combo_box_set_column_span_column(self.object, C.gint(columnSpan))
+}
+
+func (self *ComboBox) GetActive() int {
+	return int(C.gtk_combo_box_get_active(self.object))
+}
+
+func (self *ComboBox) SetActive(index int) {
+	C.gtk_combo_box_set_active(self.object, C.gint(index))
+}
+
+func (self *ComboBox) GetActiveIter(iter *TreeIter) bool {
+	b := C.gtk_combo_box_get_active_iter(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ComboBox) SetActiveIter(iter *TreeIter) {
+	C.gtk_combo_box_set_active_iter(self.object, &iter.object)
+}
+
+func (self *ComboBox) GetIdColumn() int {
+	return int(C.gtk_combo_box_get_id_column(self.object))
+}
+
+func (self *ComboBox) SetIdColumn(idColumn int) {
+	C.gtk_combo_box_set_id_column(self.object, C.gint(idColumn))
+}
+
+func (self *ComboBox) GetActiveId() string {
+	s := C.gtk_combo_box_get_active_id(self.object)
+	if s == nil {
+		return ""
+	}
+	sd := C.g_strdup(s)
+	return gobject.GoString(unsafe.Pointer(sd))
+}
+
+func (self *ComboBox) SetActiveId(activeId interface{}) bool {
+	if activeId == nil {
+		C.gtk_combo_box_set_active_id(self.object, nil)
+		return true
+	}
+
+	if s, ok := activeId.(string); ok {
+		st := gobject.GString(s)
+		defer st.Free()
+		b := C.gtk_combo_box_set_active_id(self.object, (*C.gchar)(st.GetPtr()))
+		return gobject.GoBool(unsafe.Pointer(&b))
+	}
+	return false
+}
+
+func (self *ComboBox) GetModel() TreeModelLike {
+	m := C.gtk_combo_box_get_model(self.object)
+	if m == nil {
+		return nil
+	}
+
+	if model, err := gobject.ConvertToGo(unsafe.Pointer(m)); err == nil {
+		return model.(TreeModelLike)
+	}
+	return nil
+}
+
+func (self *ComboBox) SetModel(model TreeModelLike) {
+	if model == nil {
+		C.gtk_combo_box_set_model(self.object, nil)
+	}
+	C.gtk_combo_box_set_model(self.object, model.ITreeModel().object)
+}
+
+func (self *ComboBox) PopupForDevice(device *gdk3.Device) {
+	C.gtk_combo_box_popup_for_device(self.object, (*C.GdkDevice)(device.ToNative()))
+}
+
+func (self *ComboBox) Popup() {
+	C.gtk_combo_box_popup(self.object)
+}
+
+func (self *ComboBox) Popdown() {
+	C.gtk_combo_box_popdown(self.object)
+}
+
+func (self *ComboBox) SetRowSeparatorFunc(f interface{}, data ...interface{}) {
+	call, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = call
+	C._gtk_combo_box_set_row_separator_func(self.object, C.gint64(id))
+}
+
+func (self *ComboBox) SetAddTearoffs(addTearoffs bool) {
+	b := gobject.GBool(addTearoffs)
+	defer b.Free()
+	C.gtk_combo_box_set_add_tearoffs(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ComboBox) GetAddTearoffs() bool {
+	b := C.gtk_combo_box_get_add_tearoffs(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ComboBox) SetTitle(title string) {
+	s := gobject.GString(title)
+	defer s.Free()
+	C.gtk_combo_box_set_title(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *ComboBox) GetTitle() string {
+	t := C.gtk_combo_box_get_title(self.object)
+	s := C.g_strdup(t)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *ComboBox) SetFocusOnClick(focusOnClick bool) {
+	b := gobject.GBool(focusOnClick)
+	defer b.Free()
+	C.gtk_combo_box_set_focus_on_click(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ComboBox) GetFocusOnClick() bool {
+	b := C.gtk_combo_box_get_focus_on_click(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ComboBox) SetButtonSensitivity(gtk_Sensitivity int) {
+	C.gtk_combo_box_set_button_sensitivity(self.object, C.GtkSensitivityType(gtk_Sensitivity))
+}
+
+func (self *ComboBox) GetButtonSensitivity() int {
+	return int(C.gtk_combo_box_get_button_sensitivity(self.object))
+}
+
+func (self *ComboBox) GetHasEntry() bool {
+	b := C.gtk_combo_box_get_has_entry(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ComboBox) SetEntryTextColumn(textColumn int) {
+	C.gtk_combo_box_set_entry_text_column(self.object, C.gint(textColumn))
+}
+
+func (self *ComboBox) GetEntryTextColumn() int {
+	return int(C.gtk_combo_box_get_entry_text_column(self.object))
+}
+
+func (self *ComboBox) SetPopupFixedWidth(fixed bool) {
+	b := gobject.GBool(fixed)
+	defer b.Free()
+	C.gtk_combo_box_set_popup_fixed_width(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ComboBox) GetPopupFixedWidth() bool {
+	b := C.gtk_combo_box_get_popup_fixed_width(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+//////////////////////////////
+// End GtkComboBox
+////////////////////////////// }}}
+
+// End Menus, Combo Box, Toolbar }}}
+
 // Layout Containers {{{
 
 // GtkGrid {{{
@@ -7772,6 +8133,22 @@ func _gtk_cell_layout_data_func(cellLayout, cell, treeModel, iter, data unsafe.P
 	if c, ok := _closures[int64(id)]; ok {
 		c([]interface{}{goCellLayout, goCell, goTreeModel, inIter})
 	}
+}
+
+//export _gtk_tree_view_row_separator_func
+func _gtk_tree_view_row_separator_func(model, iter, data unsafe.Pointer) C.gboolean {
+	id := *((*C.gint)(data))
+	m, _ := gobject.ConvertToGo(model)
+	inIter := &TreeIter{*((*C.GtkTreeIter)(iter))}
+
+	var res bool
+	if c, ok := _closures[int64(id)]; ok {
+		res = c([]interface{}{m, inIter})
+	}
+	b := gobject.GBool(res)
+	defer b.Free()
+
+	return *((*C.gboolean)(b.GetPtr()))
 }
 
 //export _g_gtk_destroy_notify
