@@ -14,6 +14,7 @@ type gdkTypes struct {
 	DEVICE    g.GType
 	RECTANGLE g.GType
 	RGBA      g.GType
+	COLOR     g.GType
 	EVENT     g.GType
 	DISPLAY   g.GType
 	SCREEN    g.GType
@@ -139,12 +140,61 @@ func (self RGBA) ToNative() unsafe.Pointer {
 }
 // End RGBA type }}}
 
+// GdkColor {{{
+
+// GdkColor type
+type Color struct {
+	Pixel uint32
+	Red   uint16
+	Green uint16
+	Blue  uint16
+}
+
+//Conversion func
+func newColorFromNative(obj unsafe.Pointer) interface{} {
+	cColor := *((*C.GdkColor)(obj))
+
+	color := Color{}
+	color.Pixel = uint32(cColor.pixel)
+	color.Red = uint16(cColor.red)
+	color.Green = uint16(cColor.green)
+	color.Blue = uint16(cColor.blue)
+
+	return color
+}
+
+func nativeFromColor(c interface{}) *g.GValue {
+	if col, ok := c.(Color); ok {
+		gv := g.CreateCGValue(GdkType.COLOR, col.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be BoxedLike
+func (self Color) GetBoxType() g.GType {
+	return GdkType.COLOR
+}
+
+func (self Color) ToNative() unsafe.Pointer {
+	var cColor C.GdkColor
+
+	cColor.pixel = C.guint32(self.Pixel)
+	cColor.red = C.guint16(self.Red)
+	cColor.green = C.guint16(self.Green)
+	cColor.blue = C.guint16(self.Blue)
+
+	return unsafe.Pointer(&cColor)
+}
+// End Color type }}}
+
 // GDK3 INIT FUNC {{{
 func init() {
 	C.gdk_init(nil, nil)
 	GdkType.DEVICE = g.GType(C.gdk_device_get_type())
 	GdkType.RECTANGLE = g.GType(C.gdk_rectangle_get_type())
 	GdkType.RGBA = g.GType(C.gdk_rgba_get_type())
+	GdkType.COLOR = g.GType(C.gdk_color_get_type())
 	GdkType.EVENT = g.GType(C.gdk_event_get_type())
 	GdkType.DISPLAY = g.GType(C.gdk_display_get_type())
 	GdkType.SCREEN = g.GType(C.gdk_screen_get_type())
