@@ -1,13 +1,10 @@
 package main
 
 import "github.com/norisatir/go-gtk3/gtk3"
-import "github.com/norisatir/go-gtk3/gdk3"
 import "github.com/norisatir/go-gtk3/glib"
 import "fmt"
 
 func main() {
-	gdk3.ThreadsInit()
-	gdk3.ThreadsEnter()
 	gtk3.Init()
 
 	assistant := gtk3.NewAssistant()
