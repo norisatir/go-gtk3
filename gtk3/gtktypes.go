@@ -707,12 +707,12 @@ type gtkResizeMode struct {
 var GtkAssistantPage gtkAssistantPage
 
 type gtkAssistantPage struct {
-	CONTENT int
-	INTRO int
-	CONFIRM int
-	SUMMARY int
+	CONTENT  int
+	INTRO    int
+	CONFIRM  int
+	SUMMARY  int
 	PROGRESS int
-	CUSTOM int
+	CUSTOM   int
 }
 // End GtkAssistantPageType }}}
 
@@ -720,9 +720,9 @@ type gtkAssistantPage struct {
 var GtkAlign gtkAlign
 
 type gtkAlign struct {
-	FILL int
-	START int
-	END int
+	FILL   int
+	START  int
+	END    int
 	CENTER int
 }
 // End GtkAlign }}}

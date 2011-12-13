@@ -22,7 +22,7 @@ import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type ListClosure func(unsafe.Pointer)
-type ConverterFunc func(unsafe.Pointer)interface{}
+type ConverterFunc func(unsafe.Pointer) interface{}
 
 var _closures map[int64]gobject.ClosureFunc
 
@@ -35,11 +35,11 @@ var _closures map[int64]gobject.ClosureFunc
 // IF GC_FreeFull it true then GC will call g_slist_free_full
 // even if GC_Free is true/false (it is ignored).
 type GSList struct {
-	object *C.GSList
-	GC_Free bool
-	GC_FreeFull bool
+	object         *C.GSList
+	GC_Free        bool
+	GC_FreeFull    bool
 	ConversionFunc ConverterFunc
-	DestroyFunc ListClosure
+	DestroyFunc    ListClosure
 }
 
 // NewGSList returns new GSList with first element initialized.
@@ -64,7 +64,7 @@ func NewGSListFromNative(list unsafe.Pointer) *GSList {
 
 // GSList finalizer
 func GSListFinalizer(gsl *GSList) {
-	runtime.SetFinalizer(gsl, func(gsl *GSList) { 
+	runtime.SetFinalizer(gsl, func(gsl *GSList) {
 		if gsl.GC_FreeFull {
 			gsl.FreeFull()
 			return
@@ -99,7 +99,7 @@ func (self *GSList) NthData(n uint) interface{} {
 		return nil
 	}
 
-    if self.ConversionFunc != nil {
+	if self.ConversionFunc != nil {
 		return self.ConversionFunc(unsafe.Pointer(data))
 	}
 	return data
@@ -111,7 +111,7 @@ func (self *GSList) Length() uint {
 
 func (self *GSList) Foreach(f interface{}, data ...interface{}) {
 	// Create id and closure
-	cl,_ := gobject.CreateCustomClosure(f, data...)
+	cl, _ := gobject.CreateCustomClosure(f, data...)
 	listLength := int(self.Length())
 
 	for i := 0; i < listLength; i++ {
@@ -158,11 +158,11 @@ func _g_destroy_notify(user_data unsafe.Pointer) {
 var GPriority gPriority
 
 type gPriority struct {
-	HIGH int
-	DEFAULT int
-	HIGH_IDLE int
+	HIGH         int
+	DEFAULT      int
+	HIGH_IDLE    int
 	DEFAULT_IDLE int
-	LOW int
+	LOW          int
 }
 
 func init() {

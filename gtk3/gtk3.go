@@ -514,7 +514,7 @@ func (self *Widget) SetParentWindow(parentWindow *gdk3.Window) {
 
 func (self *Widget) GetParentWindow() *gdk3.Window {
 	pw := C.gtk_widget_get_parent_window(self.object)
-	
+
 	if parWindow, err := gobject.ConvertToGo(unsafe.Pointer(pw)); err == nil {
 		return parWindow.(*gdk3.Window)
 	}
@@ -593,7 +593,7 @@ func (self *Widget) IsAncestor(ancestor WidgetLike) bool {
 func (self *Widget) TranslateCoordinates(destWidget WidgetLike, srcX, srcY int) (b bool, destX, destY int) {
 	var cx, cy C.gint
 	cb := C.gtk_widget_translate_coordinates(self.object, destWidget.W().object, C.gint(srcX), C.gint(srcY), &cx, &cy)
-	b = gobject.GoBool(unsafe.Pointer(&cb)) 
+	b = gobject.GoBool(unsafe.Pointer(&cb))
 	destX = int(cx)
 	destY = int(cy)
 	return
@@ -1776,7 +1776,7 @@ func (self *Invisible) SetScreen(screen *gdk3.Screen) {
 
 func (self *Invisible) GetScreen() *gdk3.Screen {
 	s := C.gtk_invisible_get_screen(self.object)
-	
+
 	if scr, err := gobject.ConvertToGo(unsafe.Pointer(s)); err == nil {
 		return scr.(*gdk3.Screen)
 	}
@@ -2873,7 +2873,7 @@ func NewCheckButtonWithLabel(label string) *CheckButton {
 	cb := &CheckButton{}
 	s := gobject.GString(label)
 	defer s.Free()
-	
+
 	o := C.gtk_check_button_new_with_label((*C.gchar)(s.GetPtr()))
 	cb.object = C.to_GtkCheckButton(unsafe.Pointer(o))
 
@@ -2890,7 +2890,7 @@ func NewCheckButtonWithMnemonic(label string) *CheckButton {
 	cb := &CheckButton{}
 	s := gobject.GString(label)
 	defer s.Free()
-	
+
 	o := C.gtk_check_button_new_with_mnemonic((*C.gchar)(s.GetPtr()))
 	cb.object = C.to_GtkCheckButton(unsafe.Pointer(o))
 

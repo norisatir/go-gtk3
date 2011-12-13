@@ -20,7 +20,7 @@ type EventLike interface {
 // GdkEventAny
 type EventAny struct {
 	eventType int
-	window *Window
+	window    *Window
 	sendEvent bool
 }
 
