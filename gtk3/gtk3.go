@@ -59,6 +59,7 @@ static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(o
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
 static inline GtkCellArea* to_GtkCellArea(void* obj) { return GTK_CELL_AREA(obj); }
 static inline GtkCellAreaContext* to_GtkCellAreaContext(void* obj) { return GTK_CELL_AREA_CONTEXT(obj); }
+static inline GtkCellView* to_GtkCellView(void* obj) { return GTK_CELL_VIEW(obj); }
 static inline GtkCellLayout* to_GtkCellLayout(void* obj) { return GTK_CELL_LAYOUT(obj); }
 static inline GtkCellRenderer* to_GtkCellRenderer(void* obj) { return GTK_CELL_RENDERER(obj); }
 static inline GtkCellRendererText* to_GtkCellRendererText(void* obj) { return GTK_CELL_RENDERER_TEXT(obj); }
@@ -283,6 +284,7 @@ import "unsafe"
 import "runtime"
 import "fmt"
 import "github.com/norisatir/go-gtk3/gobject"
+import "github.com/norisatir/go-gtk3/gdkpixbuf"
 import "github.com/norisatir/go-gtk3/gdk3"
 import "github.com/norisatir/go-gtk3/glib"
 
@@ -4651,6 +4653,214 @@ func (self *CellLayout) SetCellDataFunc(renderer CellRendererLike, f interface{}
 // End GtkCellLayout interface
 ////////////////////////////// }}}
 
+// GtkCellView {{{
+//////////////////////////////
+
+// GtkCellView type
+type CellView struct {
+	object *C.GtkCellView
+	*Widget
+}
+
+func NewCellView() *CellView {
+	cv := &CellView{}
+	o := C.gtk_cell_view_new()
+	cv.object = C.to_GtkCellView(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cv) {
+		gobject.RefSink(cv)
+	}
+	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cellViewFinalizer(cv)
+
+	return cv
+}
+
+func NewCellViewWithContext(area CellAreaLike, context *CellAreaContext) *CellView {
+	cv := &CellView{}
+	o := C.gtk_cell_view_new_with_context(area.CArea().object, context.object)
+	cv.object = C.to_GtkCellView(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cv) {
+		gobject.RefSink(cv)
+	}
+	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cellViewFinalizer(cv)
+
+	return cv
+}
+
+func NewCellViewWithText(text string) *CellView {
+	cv := &CellView{}
+	s := gobject.GString(text)
+	defer s.Free()
+
+	o := C.gtk_cell_view_new_with_text((*C.gchar)(s.GetPtr()))
+	cv.object = C.to_GtkCellView(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cv) {
+		gobject.RefSink(cv)
+	}
+	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cellViewFinalizer(cv)
+
+	return cv
+}
+
+func NewCellViewWithMarkup(markup string) *CellView {
+	cv := &CellView{}
+	s := gobject.GString(markup)
+	defer s.Free()
+
+	o := C.gtk_cell_view_new_with_markup((*C.gchar)(s.GetPtr()))
+	cv.object = C.to_GtkCellView(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cv) {
+		gobject.RefSink(cv)
+	}
+	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cellViewFinalizer(cv)
+
+	return cv
+}
+
+func NewCellViewWithPixbuf(pixbuf *gdkpixbuf.Pixbuf) *CellView {
+	cv := &CellView{}
+	o := C.gtk_cell_view_new_with_pixbuf((*C.GdkPixbuf)(pixbuf.ToNative()))
+	cv.object = C.to_GtkCellView(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(cv) {
+		gobject.RefSink(cv)
+	}
+	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cellViewFinalizer(cv)
+
+	return cv
+}
+
+// Clear CellView struct when it goes out of reach
+func cellViewFinalizer(cv *CellView) {
+	runtime.SetFinalizer(cv, func(cv *CellView) { gobject.Unref(cv) })
+}
+
+// Conversion funcs
+func newCellViewFromNative(obj unsafe.Pointer) interface{} {
+	cv := &CellView{}
+	cv.object = C.to_GtkCellView(obj)
+
+	if gobject.IsObjectFloating(cv) {
+		gobject.RefSink(cv)
+	} else {
+		gobject.Ref(cv)
+	}
+	cv.Widget = NewWidget(obj)
+	cellViewFinalizer(cv)
+
+	return cv
+}
+
+func nativeFromCellView(cv interface{}) *gobject.GValue {
+	cell, ok := cv.(*CellView)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.CELL_VIEW, cell.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self CellView) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self CellView) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self CellView) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self CellView) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be widget-like
+func (self CellView) W() *Widget {
+	return self.Widget
+}
+
+// CellView interface
+
+func (self *CellView) SetModel(model TreeModelLike) {
+	if model == nil {
+		C.gtk_cell_view_set_model(self.object, nil)
+	}
+	C.gtk_cell_view_set_model(self.object, model.ITreeModel().object)
+}
+
+func (self *CellView) GetModel() TreeModelLike {
+	model := C.gtk_cell_view_get_model(self.object)
+	if model == nil {
+		return nil
+	}
+
+	if m, err := gobject.ConvertToGo(unsafe.Pointer(model)); err == nil {
+		return m.(TreeModelLike)
+	}
+	return nil
+}
+
+func (self *CellView) SetDisplayedRow(path *TreePath) {
+	C.gtk_cell_view_set_displayed_row(self.object, path.object)
+}
+
+func (self *CellView) GetDisplayedRow() *TreePath {
+	p := C.gtk_cell_view_get_displayed_row(self.object)
+
+	if p == nil {
+		return nil
+	}
+
+	if path, err := gobject.ConvertToGo(unsafe.Pointer(p)); err == nil {
+		return path.(*TreePath)
+	}
+	return nil
+}
+
+//TODO: gtk_cell_view_set_background_color
+
+func (self *CellView) SetBackgroundRGBA(rgba gdk3.RGBA) {
+	r := gobject.ConvertToC(rgba)
+	defer r.Free()
+	C.gtk_cell_view_set_background_rgba(self.object, (*C.GdkRGBA)(r.GetPtr()))
+}
+
+func (self *CellView) SetDrawSensitive(drawSensitive bool) {
+	b := gobject.GBool(drawSensitive)
+	defer b.Free()
+	C.gtk_cell_view_set_draw_sensitive(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellView) GetDrawSensitive() bool {
+	b := C.gtk_cell_view_get_draw_sensitive(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *CellView) SetFitModel(fitModel bool) {
+	b := gobject.GBool(fitModel)
+	defer b.Free()
+	C.gtk_cell_view_set_fit_model(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *CellView) GetFitModel() bool {
+	b := C.gtk_cell_view_get_fit_model(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+//////////////////////////////
+// End GtkCellView
+////////////////////////////// }}}
+
 // GtkCellRenderer {{{
 //////////////////////////////
 
@@ -8286,6 +8496,10 @@ func init() {
 	// Register GtkCellLayout interface type
 	gobject.RegisterCType(GtkType.CELL_LAYOUT, newCellLayoutFromNative)
 	gobject.RegisterGoType(GtkType.CELL_LAYOUT, nativeFromCellLayout)
+
+	// Register GtkCellView type
+	gobject.RegisterCType(GtkType.CELL_VIEW, newCellViewFromNative)
+	gobject.RegisterGoType(GtkType.CELL_VIEW, nativeFromCellView)
 
 	// Register GtkCellRenderer type
 	gobject.RegisterCType(GtkType.CELL_RENDERER, newCellRendererFromNative)
