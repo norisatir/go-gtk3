@@ -1201,7 +1201,7 @@ func (self *Range) SetSliderSizeFixed(sizeFixed bool) {
 // Window type
 type Window struct {
 	object *C.GtkWindow
-	*Container
+	*Bin
 }
 
 // Create new window
@@ -1213,7 +1213,7 @@ func NewWindow(windowType int) (w *Window) {
 	if gobject.IsObjectFloating(w) {
 		gobject.RefSink(w)
 	}
-	w.Container = NewContainer(unsafe.Pointer(o))
+	w.Bin = NewBin(unsafe.Pointer(o))
 	windowFinalizer(w)
 
 	return w
@@ -1234,7 +1234,7 @@ func newWindowFromNative(obj unsafe.Pointer) interface{} {
 	} else {
 		gobject.Ref(w)
 	}
-	w.Container = NewContainer(obj)
+	w.Bin = NewBin(obj)
 	windowFinalizer(w)
 
 	return w
@@ -1266,9 +1266,9 @@ func (self Window) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// To be container-like
-func (self Window) C() *Container {
-	return self.Container
+// To be bin-like
+func (self Window) CBin() *Bin {
+	return self.Bin
 }
 
 // Window interface
@@ -2734,7 +2734,7 @@ func (self Image) W() *Widget {
 // GtkButton type
 type Button struct {
 	object *C.GtkButton
-	*Container
+	*Bin
 }
 
 //Create and return new button Structure
@@ -2746,7 +2746,7 @@ func NewButton() *Button {
 	if gobject.IsObjectFloating(b) {
 		gobject.RefSink(b)
 	}
-	b.Container = NewContainer(unsafe.Pointer(o))
+	b.Bin = NewBin(unsafe.Pointer(o))
 	buttonFinalizer(b)
 
 	return b
@@ -2763,7 +2763,7 @@ func NewButtonWithLabel(label string) *Button {
 	if gobject.IsObjectFloating(b) {
 		gobject.RefSink(b)
 	}
-	b.Container = NewContainer(unsafe.Pointer(o))
+	b.Bin = NewBin(unsafe.Pointer(o))
 	buttonFinalizer(b)
 
 	return b
@@ -2785,7 +2785,7 @@ func NewButtonWithMnemonic(label string) *Button {
 	if gobject.IsObjectFloating(b) {
 		gobject.RefSink(b)
 	}
-	b.Container = NewContainer(unsafe.Pointer(o))
+	b.Bin = NewBin(unsafe.Pointer(o))
 	buttonFinalizer(b)
 
 	return b
@@ -2806,7 +2806,7 @@ func newButtonFromNative(obj unsafe.Pointer) interface{} {
 	} else {
 		gobject.Ref(b)
 	}
-	b.Container = NewContainer(obj)
+	b.Bin = NewBin(obj)
 	buttonFinalizer(b)
 
 	return b
@@ -2838,8 +2838,8 @@ func (self Button) Get(properties []string) map[string]interface{} {
 }
 
 // To be container like
-func (self Button) C() *Container {
-	return self.Container
+func (self Button) CBin() *Bin {
+	return self.Bin
 }
 
 // Button interface
@@ -6620,7 +6620,7 @@ func (self *TreeView) SetSearchColumn(column int) {
 // GtkComboBox type
 type ComboBox struct {
 	object *C.GtkComboBox
-	*Container
+	*Bin
 	*CellLayout
 }
 
@@ -6632,7 +6632,7 @@ func NewComboBox() *ComboBox {
 	if gobject.IsObjectFloating(cb) {
 		gobject.RefSink(cb)
 	}
-	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.Bin = NewBin(unsafe.Pointer(o))
 	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
 	comboBoxFinalizer(cb)
 
@@ -6647,7 +6647,7 @@ func NewComboBoxWithEntry() *ComboBox {
 	if gobject.IsObjectFloating(cb) {
 		gobject.RefSink(cb)
 	}
-	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.Bin = NewBin(unsafe.Pointer(o))
 	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
 	comboBoxFinalizer(cb)
 
@@ -6662,7 +6662,7 @@ func NewComboBoxWithModel(model TreeModelLike) *ComboBox {
 	if gobject.IsObjectFloating(cb) {
 		gobject.RefSink(cb)
 	}
-	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.Bin = NewBin(unsafe.Pointer(o))
 	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
 	comboBoxFinalizer(cb)
 
@@ -6677,7 +6677,7 @@ func NewComboBoxWithModelAndEntry(model TreeModelLike) *ComboBox {
 	if gobject.IsObjectFloating(cb) {
 		gobject.RefSink(cb)
 	}
-	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.Bin = NewBin(unsafe.Pointer(o))
 	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
 	comboBoxFinalizer(cb)
 
@@ -6692,7 +6692,7 @@ func NewComboBoxWithArea(area CellAreaLike) *ComboBox {
 	if gobject.IsObjectFloating(cb) {
 		gobject.RefSink(cb)
 	}
-	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.Bin = NewBin(unsafe.Pointer(o))
 	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
 	comboBoxFinalizer(cb)
 
@@ -6707,7 +6707,7 @@ func NewComboBoxWithAreaAndEntry(area CellAreaLike) *ComboBox {
 	if gobject.IsObjectFloating(cb) {
 		gobject.RefSink(cb)
 	}
-	cb.Container = NewContainer(unsafe.Pointer(o))
+	cb.Bin = NewBin(unsafe.Pointer(o))
 	cb.CellLayout = newCellLayoutFromNative(unsafe.Pointer(o)).(*CellLayout)
 	comboBoxFinalizer(cb)
 
@@ -6729,7 +6729,7 @@ func newComboBoxFromNative(obj unsafe.Pointer) interface{} {
 	} else {
 		gobject.Ref(cb)
 	}
-	cb.Container = NewContainer(obj)
+	cb.Bin = NewBin(obj)
 	cb.CellLayout = newCellLayoutFromNative(obj).(*CellLayout)
 	comboBoxFinalizer(cb)
 
@@ -6762,9 +6762,9 @@ func (self ComboBox) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// To be container-like
-func (self ComboBox) C() *Container {
-	return self.Container
+// To be bin-like
+func (self ComboBox) CBin() *Bin {
+	return self.Bin
 }
 
 // Implement CellLayoutLike
@@ -7744,7 +7744,7 @@ func (self *Notebook) GetActionWidget(gtk_Pack int) WidgetLike {
 // Frame type
 type Frame struct {
 	object *C.GtkFrame
-	*Container
+	*Bin
 }
 
 func NewFrame(label string) *Frame {
@@ -7759,7 +7759,7 @@ func NewFrame(label string) *Frame {
 	if gobject.IsObjectFloating(f) {
 		gobject.RefSink(f)
 	}
-	f.Container = NewContainer(unsafe.Pointer(o))
+	f.Bin = NewBin(unsafe.Pointer(o))
 	frameFinalizer(f)
 
 	return f
@@ -7780,7 +7780,7 @@ func newFrameFromNative(obj unsafe.Pointer) interface{} {
 	} else {
 		gobject.Ref(f)
 	}
-	f.Container = NewContainer(unsafe.Pointer(f.object))
+	f.Bin = NewBin(unsafe.Pointer(f.object))
 	frameFinalizer(f)
 
 	return f
@@ -7813,9 +7813,9 @@ func (self Frame) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// To be container-lie
-func (self Frame) C() *Container {
-	return self.Container
+// To be bin-like
+func (self Frame) CBin() *Bin {
+	return self.Bin
 }
 
 // Frame interface
@@ -8048,7 +8048,7 @@ func (self Scrollbar) R() *Range {
 // GtkScrolledWindow type
 type ScrolledWindow struct {
 	object *C.GtkScrolledWindow
-	*Container
+	*Bin
 }
 
 func NewScrolledWindow(hadjustment, vadjustment *Adjustment) *ScrolledWindow {
@@ -8070,7 +8070,7 @@ func NewScrolledWindow(hadjustment, vadjustment *Adjustment) *ScrolledWindow {
 	if gobject.IsObjectFloating(sw) {
 		gobject.RefSink(sw)
 	}
-	sw.Container = NewContainer(unsafe.Pointer(o))
+	sw.Bin = NewBin(unsafe.Pointer(o))
 	scrolledWindowFinalizer(sw)
 
 	return sw
@@ -8091,7 +8091,7 @@ func newScrolledWindowFromNative(sw unsafe.Pointer) interface{} {
 	} else {
 		gobject.Ref(scrolled)
 	}
-	scrolled.Container = NewContainer(sw)
+	scrolled.Bin = NewBin(sw)
 	scrolledWindowFinalizer(scrolled)
 
 	return scrolled
@@ -8121,6 +8121,11 @@ func (self ScrolledWindow) Set(properties map[string]interface{}) {
 
 func (self ScrolledWindow) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
+}
+
+// To be bin-like
+func (self ScrolledWindow) CBin() *Bin {
+	return self.Bin
 }
 
 // ScrolledWindow interface
