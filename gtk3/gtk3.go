@@ -4368,7 +4368,7 @@ func (self *TreeStore) SetValue(iter *TreeIter, column int, value interface{}) {
 	if value == nil {
 		cval = gobject.CreateCGValue(self.GetColumnType(column))
 	} else {
-		cval := gobject.ConvertToC(value)
+		cval = gobject.ConvertToC(value)
 
 		// If value cannot be converted to fundamnetal
 		// gobject value, then we don't do anything
