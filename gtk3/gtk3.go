@@ -74,6 +74,7 @@ static inline GtkCellRendererSpin* to_GtkCellRendererSpin(void* obj) { return GT
 static inline GtkTreeViewColumn* to_GtkTreeViewColumn(void* obj) { return GTK_TREE_VIEW_COLUMN(obj); }
 static inline GtkTreeView* to_GtkTreeView(void* obj) { return GTK_TREE_VIEW(obj); }
 static inline GtkComboBox* to_GtkComboBox(void* obj) { return GTK_COMBO_BOX(obj); }
+static inline GtkComboBoxText* to_GtkComboBoxText(void* obj) { return GTK_COMBO_BOX_TEXT(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -448,6 +449,11 @@ type CellAreaLike interface {
 // CellLayoutLike interface must have method ICellLayout
 type CellLayoutLike interface {
 	ICellLayout() *CellLayout
+}
+
+// ComboLike interface must have method Combo
+type ComboLike interface {
+	Combo() *ComboBox
 }
 //////////////////////////////
 // END Interfaces
@@ -6953,6 +6959,158 @@ func (self *ComboBox) GetPopupFixedWidth() bool {
 // End GtkComboBox
 ////////////////////////////// }}}
 
+// GtkComboBoxText {{{
+//////////////////////////////
+
+// GtkComboBoxText type
+type ComboBoxText struct {
+	object *C.GtkComboBoxText
+	*ComboBox
+}
+
+func NewComboBoxText() *ComboBoxText {
+	ct := &ComboBoxText{}
+	o := C.gtk_combo_box_text_new()
+	ct.object = C.to_GtkComboBoxText(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(ct) {
+		gobject.RefSink(ct)
+	}
+	ct.ComboBox = newComboBoxFromNative(unsafe.Pointer(o)).(*ComboBox)
+	comboBoxTextFinalizer(ct)
+
+	return ct
+}
+
+func NewComboBoxTextWithEntry() *ComboBoxText {
+	ct := &ComboBoxText{}
+	o := C.gtk_combo_box_text_new_with_entry()
+	ct.object = C.to_GtkComboBoxText(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(ct) {
+		gobject.RefSink(ct)
+	}
+	ct.ComboBox = newComboBoxFromNative(unsafe.Pointer(o)).(*ComboBox)
+	comboBoxTextFinalizer(ct)
+
+	return ct
+}
+
+// Clear ComboBoxText struct when it goes out of reach
+func comboBoxTextFinalizer(ct *ComboBoxText) {
+	runtime.SetFinalizer(ct, func(ct *ComboBoxText) { gobject.Unref(ct) })
+}
+
+// Conversion funcs
+func newComboBoxTextFromNative(obj unsafe.Pointer) interface{} {
+	ct := &ComboBoxText{}
+	ct.object = C.to_GtkComboBoxText(obj)
+
+	if gobject.IsObjectFloating(ct) {
+		gobject.RefSink(ct)
+	} else {
+		gobject.Ref(ct)
+	}
+	ct.ComboBox = newComboBoxFromNative(obj).(*ComboBox)
+	comboBoxTextFinalizer(ct)
+
+	return ct
+}
+
+func nativeFromComboBoxText(ct interface{}) *gobject.GValue {
+	combo, ok := ct.(*ComboBoxText)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.COMBO_BOX_TEXT, combo.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be Object-like
+func (self ComboBoxText) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ComboBoxText) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ComboBoxText) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self ComboBoxText) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be Combo-like
+func (self ComboBoxText) Combo() *ComboBox {
+	return self.ComboBox
+}
+
+// ComboBoxText interface
+
+func (self *ComboBoxText) Append(id, text string) {
+	cid := gobject.GString(id)
+	defer cid.Free()
+	ctext := gobject.GString(text)
+	defer ctext.Free()
+
+	C.gtk_combo_box_text_append(self.object, (*C.gchar)(cid.GetPtr()), (*C.gchar)(ctext.GetPtr()))
+}
+
+func (self *ComboBoxText) Prepend(id, text string) {
+	cid := gobject.GString(id)
+	defer cid.Free()
+	ctext := gobject.GString(text)
+	defer ctext.Free()
+
+	C.gtk_combo_box_text_prepend(self.object, (*C.gchar)(cid.GetPtr()), (*C.gchar)(ctext.GetPtr()))
+}
+
+func (self *ComboBoxText) Insert(position int, id, text string) {
+	cid := gobject.GString(id)
+	defer cid.Free()
+	ctext := gobject.GString(text)
+	defer ctext.Free()
+
+	C.gtk_combo_box_text_insert(self.object, C.gint(position), (*C.gchar)(cid.GetPtr()), (*C.gchar)(ctext.GetPtr()))
+}
+
+func (self *ComboBoxText) AppendText(text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+	C.gtk_combo_box_text_append_text(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *ComboBoxText) PrependText(text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+	C.gtk_combo_box_text_prepend_text(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *ComboBoxText) InsertText(position int, text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+	C.gtk_combo_box_text_insert_text(self.object, C.gint(position), (*C.gchar)(s.GetPtr()))
+}
+
+func (self *ComboBoxText) Remove(position int) {
+	C.gtk_combo_box_text_remove(self.object, C.gint(position))
+}
+
+func (self *ComboBoxText) RemoveAll() {
+	C.gtk_combo_box_text_remove_all(self.object)
+}
+
+func (self *ComboBoxText) GetActiveText() string {
+	s := C.gtk_combo_box_text_get_active_text(self.object)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+//////////////////////////////
+// End GtkComboBoxText
+////////////////////////////// }}}
+
 // End Menus, Combo Box, Toolbar }}}
 
 // Layout Containers {{{
@@ -8763,6 +8921,10 @@ func init() {
 	// Register GtkComboBox
 	gobject.RegisterCType(GtkType.COMBO_BOX, newComboBoxFromNative)
 	gobject.RegisterGoType(GtkType.COMBO_BOX, nativeFromComboBox)
+
+	// Register GtkComboBoxText
+	gobject.RegisterCType(GtkType.COMBO_BOX_TEXT, newComboBoxTextFromNative)
+	gobject.RegisterGoType(GtkType.COMBO_BOX_TEXT, nativeFromComboBoxText)
 
 	// Register GtkNotebook
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
