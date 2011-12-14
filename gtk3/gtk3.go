@@ -744,6 +744,13 @@ func (self *Widget) RenderIconPixbuf(stockId string, gtk_IconSize int) *gdkpixbu
 	return nil
 }
 
+func (self *Widget) OverrideColor(gtk_StateFlags int, color *gdk3.RGBA) {
+	if color == nil {
+		C.gtk_widget_override_color(self.object, C.GtkStateFlags(gtk_StateFlags), nil)
+	}
+	C.gtk_widget_override_color(self.object, C.GtkStateFlags(gtk_StateFlags), (*C.GdkRGBA)(color.ToNative()))
+}
+
 //////////////////////////////
 // END GtkWidget
 ////////////////////////////// }}}
