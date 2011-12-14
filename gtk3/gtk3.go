@@ -31,6 +31,7 @@ static void _gtk_init(void* argc, void* argv) {
 static inline GApplication* to_GApplication(GtkApplication* g) { return G_APPLICATION(g); }
 static inline GtkWidget* to_GtkWidget(void* obj) { return GTK_WIDGET(obj); }
 static inline GtkContainer* to_GtkContainer(void *obj) { return GTK_CONTAINER(obj); }
+static inline GtkBin* to_GtkBin(void *obj) { return GTK_BIN(obj); }
 static inline GtkWindow* to_GtkWindow(void* obj) { return GTK_WINDOW(obj); }
 static inline GtkAssistant* to_GtkAssistant(void* obj) { return GTK_ASSISTANT(obj); }
 static inline GtkBox* to_GtkBox(void* obj) { return GTK_BOX(obj); }
@@ -396,6 +397,11 @@ type WidgetLike interface {
 type ContainerLike interface {
 	C() *Container
 	WidgetLike
+}
+
+// Bin-like interface must have method CBin()
+type BinLike interface {
+	CBin() *Bin
 }
 
 // Window-like interface must have method Wnd()
@@ -902,6 +908,88 @@ func (self *Container) SetBorderWidth(width uint) {
 }
 //////////////////////////////
 // END GtkContainer
+////////////////////////////// }}}
+
+// GtkBin {{{
+//////////////////////////////
+
+// GtkBin type
+type Bin struct {
+	object *C.GtkBin
+	*Container
+}
+
+func NewBin(obj unsafe.Pointer) *Bin {
+	b := &Bin{}
+	b.object = C.to_GtkBin(obj)
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	} else {
+		gobject.Ref(b)
+	}
+	b.Container = NewContainer(obj)
+	binFinalizer(b)
+
+	return b
+}
+
+// Clear Bin struct when it goes out of reach
+func binFinalizer(b *Bin) {
+	runtime.SetFinalizer(b, func(b *Bin) { gobject.Unref(b) })
+}
+
+// Conversion funcs
+func newBinFromNative(obj unsafe.Pointer) interface{} {
+	return NewBin(obj)
+}
+
+func nativeFromBin(b interface{}) *gobject.GValue {
+	bin, ok := b.(*Bin)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.BIN, bin.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be Object-like
+func (self Bin) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Bin) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Bin) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Bin) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-lie
+func (self Bin) C() *Container {
+	return self.Container
+}
+
+// Bin interface
+
+func (self *Bin) GetChild() WidgetLike {
+	ch := C.gtk_bin_get_child(self.object)
+	if ch == nil {
+		return nil
+	}
+	w, err := gobject.ConvertToGo(unsafe.Pointer(ch))
+	if err == nil {
+		return w.(WidgetLike)
+	}
+	return nil
+}
+//////////////////////////////
+// End GtkBin
 ////////////////////////////// }}}
 
 // GtkRange {{{
@@ -8490,6 +8578,10 @@ func init() {
 
 	// Register GtkWidget type
 	gobject.RegisterCType(GtkType.WIDGET, newWidgetFromNative)
+
+	// Register GtkBin type
+	gobject.RegisterCType(GtkType.BIN, newBinFromNative)
+	gobject.RegisterGoType(GtkType.BIN, nativeFromBin)
 
 	// Register GtkApplicaton type
 	gobject.RegisterCType(GtkType.APPLICATION, appFromNative)
