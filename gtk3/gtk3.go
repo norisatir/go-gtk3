@@ -325,6 +325,81 @@ type CollAttr struct {
 }
 type A []CollAttr
 
+// GtkStockItem {{{
+type StockItem struct {
+    object *C.GtkStockItem
+    StockID string
+    Label   string
+    Modifier int
+    Keyval uint
+    TranslationDomain string
+}
+func NewStockItem() *StockItem {
+    var si C.GtkStockItem
+    gSi := &StockItem{}
+    gSi.object = C.gtk_stock_item_copy(&si)
+    return gSi
+}
+func (self *StockItem) ToNative() unsafe.Pointer {
+    if self.object != nil {
+        C.gtk_stock_item_free(self.object)
+    }
+    var si C.GtkStockItem
+    self.object = C.gtk_stock_item_copy(&si)
+
+    sId := gobject.GString(self.StockID)
+    defer sId.Free()
+    self.object.stock_id = C.g_strdup((*C.gchar)(sId.GetPtr()))
+
+    sLabel := gobject.GString(self.Label)
+    defer sLabel.Free()
+    self.object.label = C.g_strdup((*C.gchar)(sLabel.GetPtr()))
+
+    self.object.modifier = C.GdkModifierType(self.Modifier)
+    self.object.keyval = C.guint(self.Keyval)
+
+    sTD := gobject.GString(self.TranslationDomain)
+    defer sTD.Free()
+    self.object.translation_domain = C.g_strdup((*C.gchar)(sTD.GetPtr()))
+
+    return unsafe.Pointer(self.object)
+}
+
+func (self *StockItem) ReinitializeVals() {
+    if self.object != nil {
+        self.StockID = gobject.GoString(unsafe.Pointer(C.g_strdup(self.object.stock_id)))
+        self.Label = gobject.GoString(unsafe.Pointer(C.g_strdup(self.object.label))) 
+        self.Modifier = int(self.object.modifier)
+        self.Keyval = uint(self.object.keyval)
+        self.TranslationDomain = gobject.GoString(unsafe.Pointer(C.g_strdup(self.object.translation_domain)))
+    }
+}
+
+func (self *StockItem) Free() {
+    if self.object != nil {
+        C.gtk_stock_item_free(self.object)
+    }
+}
+
+// StockItem finalizer
+func stockItemFinalizer(si *StockItem) {
+    runtime.SetFinalizer(si, func(si *StockItem) { si.Free() })
+}
+
+func StockLookup(stockId string) (bool, *StockItem) {
+    si := NewStockItem()
+    s := gobject.GString(stockId)
+    defer s.Free()
+    b := C.gtk_stock_lookup((*C.gchar)(s.GetPtr()), si.object)
+    gb := gobject.GoBool(unsafe.Pointer(&b))
+    if gb {
+        si.ReinitializeVals()
+    }
+    //stockItemFinalizer(si)
+    return gb, si
+}
+// End StockItem }}}
+
 ////////////////////////////// }}}
 
 // Interfaces {{{
@@ -3992,16 +4067,20 @@ func (self ListStore) ITreeModel() *TreeModel {
 // ListStore interface
 
 func (self *ListStore) SetValue(iter *TreeIter, column int, value interface{}) {
-	cval := gobject.ConvertToC(value)
+    if value == nil {
+        C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), nil)
+    } else {
+        cval := gobject.ConvertToC(value)
 
-	// If value cannot be converted to fundamnetal
-	// gobject value, then we don't do anything
-	if cval == nil {
-		return
-	}
-	defer cval.Free()
+        // If value cannot be converted to fundamnetal
+        // gobject value, then we don't do anything
+        if cval == nil {
+            return
+        }
+        defer cval.Free()
 
-	C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
+        C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
+    }
 }
 
 func (self *ListStore) SetValues(iter *TreeIter, values map[int]interface{}) {
