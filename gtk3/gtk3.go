@@ -327,76 +327,57 @@ type A []CollAttr
 
 // GtkStockItem {{{
 type StockItem struct {
-    object *C.GtkStockItem
-    StockID string
-    Label   string
-    Modifier int
-    Keyval uint
-    TranslationDomain string
+	StockID           string
+	Label             string
+	Modifier          int
+	Keyval            uint
+	TranslationDomain string
 }
-func NewStockItem() *StockItem {
-    var si C.GtkStockItem
-    gSi := &StockItem{}
-    gSi.object = C.gtk_stock_item_copy(&si)
-    return gSi
+
+func NewStockItemFromNative(obj unsafe.Pointer) StockItem {
+	si := StockItem{}
+	csi := (*C.GtkStockItem)(obj)
+
+	si.StockID = C.GoString((*C.char)(csi.stock_id))
+	si.Label = C.GoString((*C.char)(csi.label))
+	si.Modifier = int(csi.modifier)
+	si.Keyval = uint(csi.keyval)
+	si.TranslationDomain = C.GoString((*C.char)(csi.translation_domain))
+
+	return si
 }
+
 func (self *StockItem) ToNative() unsafe.Pointer {
-    if self.object != nil {
-        C.gtk_stock_item_free(self.object)
-    }
-    var si C.GtkStockItem
-    self.object = C.gtk_stock_item_copy(&si)
+	var si C.GtkStockItem
 
-    sId := gobject.GString(self.StockID)
-    defer sId.Free()
-    self.object.stock_id = C.g_strdup((*C.gchar)(sId.GetPtr()))
+	sId := gobject.GString(self.StockID)
+	defer sId.Free()
+	si.stock_id = C.g_strdup((*C.gchar)(sId.GetPtr()))
 
-    sLabel := gobject.GString(self.Label)
-    defer sLabel.Free()
-    self.object.label = C.g_strdup((*C.gchar)(sLabel.GetPtr()))
+	sLabel := gobject.GString(self.Label)
+	defer sLabel.Free()
+	si.label = C.g_strdup((*C.gchar)(sLabel.GetPtr()))
 
-    self.object.modifier = C.GdkModifierType(self.Modifier)
-    self.object.keyval = C.guint(self.Keyval)
+	si.modifier = C.GdkModifierType(self.Modifier)
+	si.keyval = C.guint(self.Keyval)
 
-    sTD := gobject.GString(self.TranslationDomain)
-    defer sTD.Free()
-    self.object.translation_domain = C.g_strdup((*C.gchar)(sTD.GetPtr()))
+	sTD := gobject.GString(self.TranslationDomain)
+	defer sTD.Free()
+	si.translation_domain = C.g_strdup((*C.gchar)(sTD.GetPtr()))
 
-    return unsafe.Pointer(self.object)
+	return unsafe.Pointer(&si)
 }
 
-func (self *StockItem) ReinitializeVals() {
-    if self.object != nil {
-        self.StockID = gobject.GoString(unsafe.Pointer(C.g_strdup(self.object.stock_id)))
-        self.Label = gobject.GoString(unsafe.Pointer(C.g_strdup(self.object.label))) 
-        self.Modifier = int(self.object.modifier)
-        self.Keyval = uint(self.object.keyval)
-        self.TranslationDomain = gobject.GoString(unsafe.Pointer(C.g_strdup(self.object.translation_domain)))
-    }
-}
+func StockLookup(stockId string) (bool, StockItem) {
+	var ci C.GtkStockItem
 
-func (self *StockItem) Free() {
-    if self.object != nil {
-        C.gtk_stock_item_free(self.object)
-    }
-}
+	s := gobject.GString(stockId)
+	defer s.Free()
 
-// StockItem finalizer
-func stockItemFinalizer(si *StockItem) {
-    runtime.SetFinalizer(si, func(si *StockItem) { si.Free() })
-}
+	b := C.gtk_stock_lookup((*C.gchar)(s.GetPtr()), &ci)
+	gb := gobject.GoBool(unsafe.Pointer(&b))
 
-func StockLookup(stockId string) (bool, *StockItem) {
-    si := NewStockItem()
-    s := gobject.GString(stockId)
-    defer s.Free()
-    b := C.gtk_stock_lookup((*C.gchar)(s.GetPtr()), si.object)
-    gb := gobject.GoBool(unsafe.Pointer(&b))
-    if gb {
-        si.ReinitializeVals()
-    }
-    //stockItemFinalizer(si)
-    return gb, si
+	return gb, NewStockItemFromNative(unsafe.Pointer(&ci))
 }
 // End StockItem }}}
 
@@ -3863,6 +3844,20 @@ func treeModelFinalizer(tm *TreeModel) {
 	runtime.SetFinalizer(tm, func(tm *TreeModel) { gobject.Unref(tm) })
 }
 
+// Conversion funcs
+func newTreeModelFromNative(obj unsafe.Pointer) interface{} {
+	return NewTreeModel(obj)
+}
+
+func nativeFromTreeModel(tm interface{}) *gobject.GValue {
+	tree, ok := tm.(*TreeModel)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TREE_MODEL, tree.ToNative())
+		return gv
+	}
+	return nil
+}
+
 // To be object-like
 func (self TreeModel) ToNative() unsafe.Pointer {
 	return unsafe.Pointer(self.object)
@@ -3873,10 +3868,11 @@ func (self TreeModel) Connect(name string, f interface{}, data ...interface{}) (
 }
 
 func (self TreeModel) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
 }
 
 func (self TreeModel) Get(properties []string) map[string]interface{} {
-	return nil
+	return gobject.Get(self, properties)
 }
 
 // TreeModel interface
@@ -3889,7 +3885,9 @@ func (self *TreeModel) GetNColumns() int {
 	return int(C.gtk_tree_model_get_n_columns(self.object))
 }
 
-//TODO: gtk_tree_model_get_column_type
+func (self *TreeModel) GetColumnType(index int) gobject.GType {
+	return gobject.GType(C.gtk_tree_model_get_column_type(self.object, C.gint(index)))
+}
 
 func (self *TreeModel) GetIter(iter *TreeIter, path *TreePath) bool {
 	b := C.gtk_tree_model_get_iter(self.object, &iter.object, path.object)
@@ -4067,20 +4065,21 @@ func (self ListStore) ITreeModel() *TreeModel {
 // ListStore interface
 
 func (self *ListStore) SetValue(iter *TreeIter, column int, value interface{}) {
-    if value == nil {
-        C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), nil)
-    } else {
-        cval := gobject.ConvertToC(value)
+	var cval *gobject.GValue
+	if value == nil {
+		cval = gobject.CreateCGValue(self.GetColumnType(column))
+	} else {
+		cval = gobject.ConvertToC(value)
 
-        // If value cannot be converted to fundamnetal
-        // gobject value, then we don't do anything
-        if cval == nil {
-            return
-        }
-        defer cval.Free()
+		// If value cannot be converted to fundamental
+		// gobject value, then we don't do anything
+		if cval == nil {
+			return
+		}
+	}
+	defer cval.Free()
 
-        C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
-    }
+	C.gtk_list_store_set_value(self.object, &iter.object, C.gint(column), (*C.GValue)(cval.ToCGValue()))
 }
 
 func (self *ListStore) SetValues(iter *TreeIter, values map[int]interface{}) {
@@ -4261,12 +4260,17 @@ func (self TreeStore) ITreeModel() *TreeModel {
 // TreeStore interface
 
 func (self *TreeStore) SetValue(iter *TreeIter, column int, value interface{}) {
-	cval := gobject.ConvertToC(value)
+	var cval *gobject.GValue
+	if value == nil {
+		cval = gobject.CreateCGValue(self.GetColumnType(column))
+	} else {
+		cval := gobject.ConvertToC(value)
 
-	// If value cannot be converted to fundamnetal
-	// gobject value, then we don't do anything
-	if cval == nil {
-		return
+		// If value cannot be converted to fundamnetal
+		// gobject value, then we don't do anything
+		if cval == nil {
+			return
+		}
 	}
 	defer cval.Free()
 
@@ -8431,7 +8435,7 @@ func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
 
 //export _gtk_cell_layout_data_func
 func _gtk_cell_layout_data_func(cellLayout, cell, treeModel, iter, data unsafe.Pointer) {
-	id := *((*C.gint)(data))
+	id := *((*C.gint64)(data))
 
 	goCellLayout, _ := gobject.ConvertToGo(cellLayout)
 	goCell, _ := gobject.ConvertToGo(cell)
@@ -8445,7 +8449,7 @@ func _gtk_cell_layout_data_func(cellLayout, cell, treeModel, iter, data unsafe.P
 
 //export _gtk_tree_view_row_separator_func
 func _gtk_tree_view_row_separator_func(model, iter, data unsafe.Pointer) C.gboolean {
-	id := *((*C.gint)(data))
+	id := *((*C.gint64)(data))
 	m, _ := gobject.ConvertToGo(model)
 	inIter := &TreeIter{*((*C.GtkTreeIter)(iter))}
 
@@ -8461,7 +8465,7 @@ func _gtk_tree_view_row_separator_func(model, iter, data unsafe.Pointer) C.gbool
 
 //export _g_gtk_destroy_notify
 func _g_gtk_destroy_notify(data unsafe.Pointer) {
-	id := *((*C.gint)(data))
+	id := *((*C.gint64)(data))
 	if _, ok := _closures[int64(id)]; ok {
 		delete(_closures, int64(id))
 	}
@@ -8479,6 +8483,7 @@ func init() {
 
 	// Register GtkWidget type
 	gobject.RegisterCType(GtkType.WIDGET, newWidgetFromNative)
+
 	// Register GtkApplicaton type
 	gobject.RegisterCType(GtkType.APPLICATION, appFromNative)
 	gobject.RegisterGoType(GtkType.APPLICATION, nativeFromApp)
@@ -8575,6 +8580,10 @@ func init() {
 	gobject.RegisterCType(GtkType.SCROLLED_WINDOW, newScrolledWindowFromNative)
 	gobject.RegisterGoType(GtkType.SCROLLED_WINDOW, nativeFromScrolledWindow)
 
+	// Register GtkTreeModel type
+	gobject.RegisterCType(GtkType.TREE_MODEL, newTreeModelFromNative)
+	gobject.RegisterGoType(GtkType.TREE_MODEL, nativeFromTreeModel)
+
 	// Register GtkListStore type
 	gobject.RegisterCType(GtkType.LIST_STORE, newListStoreFromNative)
 	gobject.RegisterGoType(GtkType.LIST_STORE, nativeFromListStore)
@@ -8646,6 +8655,10 @@ func init() {
 	// Register GtkTreeView
 	gobject.RegisterCType(GtkType.TREE_VIEW, newTreeViewFromNative)
 	gobject.RegisterGoType(GtkType.TREE_VIEW, nativeFromTreeView)
+
+	// Register GtkComboBox
+	gobject.RegisterCType(GtkType.COMBO_BOX, newComboBoxFromNative)
+	gobject.RegisterGoType(GtkType.COMBO_BOX, nativeFromComboBox)
 
 	// Register GtkNotebook
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
