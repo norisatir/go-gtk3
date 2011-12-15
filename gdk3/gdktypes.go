@@ -2,6 +2,12 @@ package gdk3
 
 /*
 #include <gdk/gdk.h>
+#include <stdlib.h>
+
+static GdkRGBA* _new_rgba(void) {
+	GdkRGBA* r = (GdkRGBA*)malloc(sizeof(GdkRGBA));
+	return r;
+}
 
 */
 import "C"
@@ -129,14 +135,14 @@ func (self RGBA) GetBoxType() g.GType {
 }
 
 func (self RGBA) ToNative() unsafe.Pointer {
-	var crgba C.GdkRGBA
+	crgba := C._new_rgba()
 
 	crgba.red = C.gdouble(self.Red)
 	crgba.green = C.gdouble(self.Green)
 	crgba.blue = C.gdouble(self.Blue)
 	crgba.alpha = C.gdouble(self.Alpha)
 
-	return unsafe.Pointer(&crgba)
+	return unsafe.Pointer(crgba)
 }
 // End RGBA type }}}
 
