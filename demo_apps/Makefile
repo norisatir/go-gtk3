@@ -7,6 +7,7 @@ all:
 	cd list_store && gomake
 	cd entry_completion && gomake
 	cd assistant && gomake
+	cd combobox && gomake
 
 clean:
 	cd gtkapplication && gomake clean
@@ -17,3 +18,4 @@ clean:
 	cd list_store && gomake clean
 	cd entry_completion && gomake clean
 	cd assistant && gomake clean
+	cd combobox && gomake clean
