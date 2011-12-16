@@ -39,11 +39,14 @@ static void _g_clear_object(void* object) {
 	g_clear_object(o);
 }
 
+static GBinding* to_GBinding(void* obj) { return G_BINDING(obj); }
+
 */
 // #cgo pkg-config: gobject-2.0
 import "C"
 import "unsafe"
 import "reflect"
+import "runtime"
 import "time"
 
 func GetTypeFromInstance(obj unsafe.Pointer) GType {
@@ -298,6 +301,73 @@ type BoxedLike interface {
 	GetBoxType() GType
 }
 
+// GBinding type
+type GBinding struct {
+	object *C.GBinding
+}
+
+// Clear GBinding struct when it goes out of reach
+func gbindingFinalizer(gb *GBinding) {
+	runtime.SetFinalizer(gb, func(gb *GBinding) { Unref(gb) })
+}
+
+// Conversion funcs
+func gbindingFromNative(obj unsafe.Pointer) interface{} {
+	gb := &GBinding{}
+	gb.object = C.to_GBinding(obj)
+
+	if IsObjectFloating(gb) {
+		RefSink(gb)
+	} else {
+		Ref(gb)
+	}
+	gbindingFinalizer(gb)
+
+	return gb
+}
+
+func (self GBinding) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self GBinding) Connect(name string, f interface{}, data ...interface{}) (*ClosureElement, *SignalError) {
+	return Connect(self, name, f, data...)
+}
+
+func (self GBinding) Set(properties map[string]interface{}) {
+	Set(self, properties)
+}
+
+func (self GBinding) Get(properties []string) map[string]interface{} {
+	return Get(self, properties)
+}
+
+func BindProperty(source ObjectLike, sourceProperty string, dest ObjectLike, destProperty string, g_BindingFlags int) *GBinding {
+	sp := GString(sourceProperty)
+	defer sp.Free()
+	dp := GString(destProperty)
+	defer dp.Free()
+	o := C.g_object_bind_property(C.gpointer(source.ToNative()), (*C.gchar)(sp.GetPtr()),
+		C.gpointer(dest.ToNative()), (*C.gchar)(dp.GetPtr()), C.GBindingFlags(g_BindingFlags))
+
+	return gbindingFromNative(unsafe.Pointer(o)).(*GBinding)
+}
+
+var GBindingFlags gbindingFlags
+
+type gbindingFlags struct {
+	DEFAULT        int
+	BIDIRECTIONAL  int
+	SYNC_CREATE    int
+	INVERT_BOOLEAN int
+}
+
 func init() {
 	_weakClosures = make(map[int64]WeakClosureFunc)
+
+	// Initialize GBindingFlags
+	GBindingFlags.DEFAULT = 0
+	GBindingFlags.BIDIRECTIONAL = 1 << 0
+	GBindingFlags.SYNC_CREATE = 1 << 1
+	GBindingFlags.INVERT_BOOLEAN = 1 << 2
 }
