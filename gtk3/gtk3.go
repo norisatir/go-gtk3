@@ -40,6 +40,7 @@ static inline GtkFrame* to_GtkFrame(void* obj) { return GTK_FRAME(obj); }
 static inline GtkGrid* to_GtkGrid(void* obj) { return GTK_GRID(obj); }
 static inline GtkLabel* to_GtkLabel(void* obj) { return GTK_LABEL(obj); }
 static inline GtkProgressBar* to_GtkProgressBar(void* obj) { return GTK_PROGRESS_BAR(obj); }
+static inline GtkStatusbar* to_GtkStatusbar(void* obj) { return GTK_STATUSBAR(obj); }
 static inline GtkImage* to_GtkImage(void* obj) { return GTK_IMAGE(obj); }
 static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
@@ -2731,6 +2732,123 @@ func (self Image) W() *Widget {
 }
 //////////////////////////////
 // END GtkImage
+////////////////////////////// }}}
+
+// GtkStatusbar {{{
+//////////////////////////////
+
+// GtkStatusbar type
+type Statusbar struct {
+	object *C.GtkStatusbar
+	*Box
+}
+
+func NewStatusBar() *Statusbar {
+	sb := &Statusbar{}
+	o := C.gtk_statusbar_new()
+	sb.object = C.to_GtkStatusbar(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(sb) {
+		gobject.RefSink(sb)
+	}
+	sb.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
+	statusbarFinalizer(sb)
+
+	return sb
+}
+
+// Clear Statusbar struct when it goes out of reach
+func statusbarFinalizer(sb *Statusbar) {
+	runtime.SetFinalizer(sb, func(sb *Statusbar) { gobject.Unref(sb) })
+}
+
+// Conversion funcs
+func newStatusbarFromNative(obj unsafe.Pointer) interface{} {
+	sb := &Statusbar{}
+	sb.object = C.to_GtkStatusbar(obj)
+
+	if gobject.IsObjectFloating(sb) {
+		gobject.RefSink(sb)
+	} else {
+		gobject.Ref(sb)
+	}
+	sb.Box = newBoxFromNative(obj).(*Box)
+	statusbarFinalizer(sb)
+
+	return sb
+}
+
+func nativeFromStatusbar(sb interface{}) *gobject.GValue {
+	status, ok := sb.(*Statusbar)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.STATUSBAR, status.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object like
+func (self Statusbar) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Statusbar) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Statusbar) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+
+}
+
+func (self Statusbar) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be box-like
+func (self Statusbar) CBox() *Box {
+	return self.Box
+}
+
+// Statusbar interface
+
+func (self *Statusbar) GetContextId(contextDesc string) uint {
+	s := gobject.GString(contextDesc)
+	defer s.Free()
+	return uint(C.gtk_statusbar_get_context_id(self.object, (*C.gchar)(s.GetPtr())))
+}
+
+func (self *Statusbar) Push(contextId uint, text string) uint {
+	s := gobject.GString(text)
+	defer s.Free()
+	return uint(C.gtk_statusbar_push(self.object, C.guint(contextId), (*C.gchar)(s.GetPtr())))
+}
+
+func (self *Statusbar) Pop(contextId uint) {
+	C.gtk_statusbar_pop(self.object, C.guint(contextId))
+}
+
+func (self *Statusbar) Remove(contextId, messageId uint) {
+	C.gtk_statusbar_remove(self.object, C.guint(contextId), C.guint(messageId))
+}
+
+func (self *Statusbar) RemoveAll(contextId uint) {
+	C.gtk_statusbar_remove_all(self.object, C.guint(contextId))
+}
+
+func (self *Statusbar) GetMessageArea() WidgetLike {
+	w := C.gtk_statusbar_get_message_area(self.object)
+
+	if w != nil {
+		ma, err := gobject.ConvertToGo(unsafe.Pointer(w))
+		if err == nil {
+			return ma.(WidgetLike)
+		}
+	}
+	return nil
+}
+//////////////////////////////
+// End GtkStatusBar
 ////////////////////////////// }}}
 
 // End Display Widgets }}}
@@ -8788,6 +8906,10 @@ func init() {
 	// Register GtkProgressBar type
 	gobject.RegisterCType(GtkType.PROGRESS_BAR, newProgressBarFromNative)
 	gobject.RegisterGoType(GtkType.PROGRESS_BAR, nativeFromProgressBar)
+
+	// Register GtkStatusbar type
+	gobject.RegisterCType(GtkType.STATUSBAR, newStatusbarFromNative)
+	gobject.RegisterGoType(GtkType.STATUSBAR, nativeFromStatusbar)
 
 	// Register GtkImage type
 	gobject.RegisterCType(GtkType.IMAGE, newImageFromNative)
