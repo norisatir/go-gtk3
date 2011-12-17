@@ -727,6 +727,18 @@ type gtkAlign struct {
 }
 // End GtkAlign }}}
 
+// GtkTextSearchFlags {{{
+
+var GtkTextSearchFlags gtkTextSearchFlags
+
+type gtkTextSearchFlags struct {
+	VISIBLE_ONLY int
+	TEXT_ONLY int
+	CASE_INSENSITIVE int
+}
+
+// End GtkTextSearchFlags }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1300,4 +1312,9 @@ func init() {
 	GtkAlign.START = 1
 	GtkAlign.END = 2
 	GtkAlign.CENTER = 3
+
+	// Initialize GtkTextSearchFlags
+	GtkTextSearchFlags.VISIBLE_ONLY = 1 << 0
+	GtkTextSearchFlags.TEXT_ONLY = 1 << 1
+	GtkTextSearchFlags.CASE_INSENSITIVE = 1 << 2
 } /// }}}

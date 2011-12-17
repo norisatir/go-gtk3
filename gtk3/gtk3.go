@@ -11,6 +11,7 @@ extern gboolean _gtk_entry_completion_match_func(GtkEntryCompletion* completion,
 											 GtkTreeIter* iter,
 											 gpointer user_data);
 extern void _gtk_text_tag_table_foreach_func(GtkTextTag* tag, gpointer data);
+extern gboolean _gtk_text_char_predicate(gunichar ch, gpointer data);
 extern gboolean _gtk_cell_callback(GtkCellRenderer* renderer, gpointer data);
 extern void _gtk_cell_layout_data_func(GtkCellLayout* cell_layout,
 									GtkCellRenderer* cell,
@@ -59,6 +60,7 @@ static inline GtkScrollbar* to_GtkScrollbar(void* obj) { return GTK_SCROLLBAR(ob
 static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SCROLLED_WINDOW(obj); }
 static inline GtkTextTag* to_GtkTextTag(void* obj) { return GTK_TEXT_TAG(obj); }
 static inline GtkTextTagTable* to_GtkTextTagTable(void* obj) { return GTK_TEXT_TAG_TABLE(obj); }
+static inline GtkTextMark* to_GtkTextMark(void* obj) { return GTK_TEXT_MARK(obj); }
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
@@ -219,6 +221,18 @@ static void _gtk_text_tag_table_foreach(GtkTextTagTable* table, gint64 id) {
 }
 
 // End GtkTextTagTable funcs }}}
+
+// GtkTextIter funcs {{{
+
+static gboolean _gtk_text_iter_forward_find_char(GtkTextIter* iter, const GtkTextIter* limit, gint64 data) {
+	return gtk_text_iter_forward_find_char(iter, _gtk_text_char_predicate, (gpointer)(&data), limit);
+}
+
+static gboolean _gtk_text_iter_backward_find_char(GtkTextIter* iter, const GtkTextIter* limit, gint64 data) {
+	return gtk_text_iter_backward_find_char(iter, _gtk_text_char_predicate, (gpointer)(&data), limit);
+}
+
+// End GtkTextIter funcs }}}
 
 // GtkTreePath funcs {{{
 static inline gint _gtk_tree_path_get_indice(gint* indices, int index) {
@@ -4078,6 +4092,673 @@ func (self *TextTagTable) GetSize() int {
 }
 //////////////////////////////
 // End GtkTextTagTable
+////////////////////////////// }}}
+
+// GtkTextMark {{{
+//////////////////////////////
+
+// GtkTextMark type
+type TextMark struct {
+	object *C.GtkTextMark
+}
+
+func NewTextMark(name interface{}, leftGravity bool) *TextMark {
+	var markName *C.gchar = nil
+	if name != nil {
+		if n, ok := name.(string); ok {
+			s := gobject.GString(n)
+			defer s.Free()
+			markName = (*C.gchar)(s.GetPtr())
+		}
+	}
+	b := gobject.GBool(leftGravity)
+	defer b.Free()
+
+	t := &TextMark{}
+	o := C.gtk_text_mark_new(markName, *((*C.gboolean)(b.GetPtr())))
+	t.object = C.to_GtkTextMark(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	}
+	textMarkFinalizer(t)
+
+	return t
+}
+
+// Clear TextMark struct when it goes out of reach
+func textMarkFinalizer(t *TextMark) {
+	runtime.SetFinalizer(t, func(t *TextMark) { gobject.Unref(t) })
+}
+
+// Conversion funcs
+func newTextMarkFromNative(obj unsafe.Pointer) interface{} {
+	t := &TextMark{}
+	t.object = C.to_GtkTextMark(obj)
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	} else {
+		gobject.Ref(t)
+	}
+	textMarkFinalizer(t)
+
+	return t
+}
+
+func nativeFromTextMark(t interface{}) *gobject.GValue {
+	tm, ok := t.(*TextMark)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TEXT_MARK, tm.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TextMark) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TextMark) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TextMark) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TextMark) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// TextMark interface
+
+func (self *TextMark) SetVisible(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_text_mark_set_visible(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextMark) GetVisible() bool {
+	b := C.gtk_text_mark_get_visible(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextMark) GetDeleted() bool {
+	b := C.gtk_text_mark_get_deleted(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextMark) GetName() string {
+	n := C.gtk_text_mark_get_name(self.object)
+	if n != nil {
+		return gobject.GoString(unsafe.Pointer(n))
+	}
+	return ""
+}
+
+//TODO: gtk_text_mark_get_buffer
+
+func (self *TextMark) GetLeftGravity() bool {
+	b := C.gtk_text_mark_get_left_gravity(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//////////////////////////////
+// End GtkTextMark
+////////////////////////////// }}}
+
+// GtkTextIter {{{
+//////////////////////////////
+
+// GtkTextIter type
+type TextIter struct {
+	object C.GtkTextIter
+}
+
+// Conversion funcs
+func newTextIterFromNative(obj unsafe.Pointer) interface{} {
+	ti := &TextIter{*((*C.GtkTextIter)(obj))}
+	return ti
+}
+
+func nativeFromTextIter(ti interface{}) *gobject.GValue {
+	t, ok := ti.(*TextIter)
+	if ok {
+		it := C.gtk_text_iter_copy(&t.object)
+		// New GValue object becomes the owner of it so we don't have to free it
+		gv := gobject.CreateCGValue(GtkType.TEXT_ITER, unsafe.Pointer(it))
+		return gv
+	}
+	return nil
+}
+
+// TextIter is boxed-like
+func (self TextIter) GetBoxedType() gobject.GType {
+	return GtkType.TEXT_ITER
+}
+
+// TextIter interface
+//TODO: gtk_text_iter_get_buffer
+
+func (self *TextIter) Assign(iter *TextIter) {
+	iter.object = self.object
+}
+
+func (self *TextIter) GetOffset() int {
+	return int(C.gtk_text_iter_get_offset(&self.object))
+}
+
+func (self *TextIter) GetLine() int {
+	return int(C.gtk_text_iter_get_line(&self.object))
+}
+
+func (self *TextIter) GetLineOffset() int {
+	return int(C.gtk_text_iter_get_line_offset(&self.object))
+}
+
+func (self *TextIter) GetLineIndex() int {
+	return int(C.gtk_text_iter_get_line_index(&self.object))
+}
+
+func (self *TextIter) GetVisibleLineIndex() int {
+	return int(C.gtk_text_iter_get_visible_line_index(&self.object))
+}
+
+func (self *TextIter) GetVisibleLineOffset() int {
+	return int(C.gtk_text_iter_get_visible_line_offset(&self.object))
+}
+
+func (self *TextIter) GetChar() rune {
+	return rune(C.gtk_text_iter_get_char(&self.object))
+}
+
+func (self *TextIter) GetSlice(end *TextIter) string {
+	s := C.gtk_text_iter_get_slice(&self.object, &end.object)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *TextIter) GetText(end *TextIter) string {
+	s := C.gtk_text_iter_get_text(&self.object, &end.object)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *TextIter) GetVisibleSlice(end *TextIter) string {
+	s := C.gtk_text_iter_get_visible_slice(&self.object, &end.object)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *TextIter) GetVisibleText(end *TextIter) string {
+	s := C.gtk_text_iter_get_visible_text(&self.object, &end.object)
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *TextIter) GetPixbuf() *gdkpixbuf.Pixbuf {
+	p := C.gtk_text_iter_get_pixbuf(&self.object)
+	if p != nil {
+		pix, err := gobject.ConvertToGo(unsafe.Pointer(p))
+		if err == nil {
+			return pix.(*gdkpixbuf.Pixbuf)
+		}
+	}
+	return nil
+}
+
+func (self *TextIter) GetMarks() *glib.GSList {
+	sl := C.gtk_text_iter_get_marks(&self.object)
+	goList := glib.NewGSListFromNative(unsafe.Pointer(sl))
+
+	// Free the list but not elements
+	goList.GC_Free = true
+	goList.GC_FreeFull = false
+	glib.GSListFinalizer(goList)
+
+	// List contains TextMarks so we setup converter func for them
+	goList.ConversionFunc = newTextMarkFromNative
+
+	return goList
+}
+
+func (self *TextIter) GetToggledTags(toggledOn bool) *glib.GSList {
+	b := gobject.GBool(toggledOn)
+	defer b.Free()
+	tags := C.gtk_text_iter_get_toggled_tags(&self.object, *((*C.gboolean)(b.GetPtr())))
+	goList := glib.NewGSListFromNative(unsafe.Pointer(tags))
+
+	// Free the list but not elements
+	goList.GC_Free = true
+	goList.GC_FreeFull = false
+	glib.GSListFinalizer(goList)
+
+	// List contains TextTags so we setup converter func for them
+	goList.ConversionFunc = newTextTagFromNative
+
+	return goList
+}
+
+//TODO: gtk_text_iter_get_child_anchor
+
+func (self *TextIter) BeginsTag(tag *TextTag) bool {
+	var b C.gboolean
+	if tag != nil {
+		b = C.gtk_text_iter_begins_tag(&self.object, tag.object)	
+	} else {
+		b = C.gtk_text_iter_begins_tag(&self.object, nil)
+	}
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) EndsTag(tag *TextTag) bool {
+	var b C.gboolean
+	if tag != nil {
+		b = C.gtk_text_iter_ends_tag(&self.object, tag.object)	
+	} else {
+		b = C.gtk_text_iter_ends_tag(&self.object, nil)
+	}
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) TogglesTag(tag *TextTag) bool {
+	var b C.gboolean
+	if tag != nil {
+		b = C.gtk_text_iter_toggles_tag(&self.object, tag.object)	
+	} else {
+		b = C.gtk_text_iter_toggles_tag(&self.object, nil)
+	}
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) HasTag(tag *TextTag) bool {
+	if tag == nil {
+		return false
+	}
+	b := C.gtk_text_iter_has_tag(&self.object, tag.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) GetTags() *glib.GSList {
+	tags := C.gtk_text_iter_get_tags(&self.object)
+	goList := glib.NewGSListFromNative(unsafe.Pointer(tags))
+
+	// Free the list but not elements
+	goList.GC_Free = true
+	goList.GC_FreeFull = false
+	glib.GSListFinalizer(goList)
+
+	// List contains TextTags so we setup converter func for them
+	goList.ConversionFunc = newTextTagFromNative
+
+	return goList
+}
+
+func (self *TextIter) Editable(defaultSetting bool) bool {
+	b := gobject.GBool(defaultSetting)
+	defer b.Free()
+
+	res := C.gtk_text_iter_editable(&self.object, *((*C.gboolean)(b.GetPtr())))
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextIter) CanInsert(defaultEditability bool) bool {
+	b := gobject.GBool(defaultEditability)
+	defer b.Free()
+	
+	res := C.gtk_text_iter_can_insert(&self.object, *((*C.gboolean)(b.GetPtr())))
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextIter) StartsWord() bool {
+	b := C.gtk_text_iter_starts_word(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) EndsWord() bool {
+	b := C.gtk_text_iter_ends_word(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) InsideWord() bool {
+	b := C.gtk_text_iter_inside_word(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) StartsLine() bool {
+	b := C.gtk_text_iter_starts_line(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) EndsLine() bool {
+	b := C.gtk_text_iter_ends_line(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) StartsSentence() bool {
+	b := C.gtk_text_iter_starts_sentence(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) EndsSentence() bool {
+	b := C.gtk_text_iter_ends_sentence(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) InsideSentence() bool {
+	b := C.gtk_text_iter_inside_sentence(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) IsCursorPosition() bool {
+	b := C.gtk_text_iter_is_cursor_position(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) GetCharsInLine() int {
+	return int(C.gtk_text_iter_get_chars_in_line(&self.object))
+}
+
+func (self *TextIter) GetBytesInLine() int {
+	return int(C.gtk_text_iter_get_bytes_in_line(&self.object))
+}
+
+//TODO: gtk_text_iter_get_attributes
+//TODO: gtk_text_iter_get_language
+
+func (self *TextIter) IsEnd() bool {
+	b := C.gtk_text_iter_is_end(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) IsStart() bool {
+	b := C.gtk_text_iter_is_start(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardChar() bool {
+	b := C.gtk_text_iter_forward_char(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardChar() bool {
+	b := C.gtk_text_iter_forward_char(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardChars(count int) bool {
+	b := C.gtk_text_iter_forward_chars(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardChars(count int) bool {
+	b := C.gtk_text_iter_backward_chars(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardLine() bool {
+	b := C.gtk_text_iter_forward_line(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardLine() bool {
+	b := C.gtk_text_iter_backward_line(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardLines(count int) bool {
+	b := C.gtk_text_iter_forward_lines(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardLines(count int) bool {
+	b := C.gtk_text_iter_backward_lines(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardWordEnds(count int) bool {
+	b := C.gtk_text_iter_forward_word_ends(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardWordStarts(count int) bool {
+	b := C.gtk_text_iter_backward_word_starts(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardWordEnd() bool {
+	b := C.gtk_text_iter_forward_word_end(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardWordStart() bool {
+	b := C.gtk_text_iter_backward_word_start(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardCursorPosition() bool {
+	b := C.gtk_text_iter_forward_cursor_position(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardCursorPosition() bool {
+	b := C.gtk_text_iter_backward_cursor_position(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardCursorPositions(count int) bool {
+	b := C.gtk_text_iter_forward_cursor_positions(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardCursorPositions(count int) bool {
+	b := C.gtk_text_iter_backward_cursor_positions(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardSentenceStart() bool {
+	b := C.gtk_text_iter_backward_sentence_start(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardSentenceStarts(count int) bool {
+	b := C.gtk_text_iter_backward_sentence_starts(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardSentenceEnd() bool {
+	b := C.gtk_text_iter_forward_sentence_end(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardSentenceEnds(count int) bool {
+	b := C.gtk_text_iter_forward_sentence_ends(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardVisibleWordEnds(count int) bool {
+	b := C.gtk_text_iter_forward_visible_word_ends(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardVisibleWordStarts(count int) bool {
+	b := C.gtk_text_iter_backward_visible_word_starts(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardVisibleWordEnd() bool {
+	b := C.gtk_text_iter_forward_visible_word_end(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardVisibleWordStart() bool {
+	b := C.gtk_text_iter_backward_visible_word_start(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardVisibleCursorPosition() bool {
+	b := C.gtk_text_iter_forward_visible_cursor_position(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardVisibleCursorPosition() bool {
+	b := C.gtk_text_iter_backward_visible_cursor_position(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardVisibleCursorPositions(count int) bool {
+	b := C.gtk_text_iter_forward_visible_cursor_positions(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardVisibleCursorPositions(count int) bool {
+	b := C.gtk_text_iter_backward_visible_cursor_positions(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardVisibleLine() bool {
+	b := C.gtk_text_iter_forward_visible_line(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardVisibleLine() bool {
+	b := C.gtk_text_iter_backward_visible_line(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardVisibleLines(count int) bool {
+	b := C.gtk_text_iter_forward_visible_lines(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardVisibleLines(count int) bool {
+	b := C.gtk_text_iter_backward_visible_lines(&self.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) SetOffset(charOffset int) {
+	C.gtk_text_iter_set_offset(&self.object, C.gint(charOffset))
+}
+
+func (self *TextIter) SetLine(lineNumber int) {
+	C.gtk_text_iter_set_line(&self.object, C.gint(lineNumber))
+}
+
+func (self *TextIter) SetLineOffset(charOnLine int) {
+	C.gtk_text_iter_set_line_offset(&self.object, C.gint(charOnLine))
+}
+
+func (self *TextIter) SetLineIndex(bytesOnLine int) {
+	C.gtk_text_iter_set_line_index(&self.object, C.gint(bytesOnLine))
+}
+
+func (self *TextIter) SetVisibleLineIndex(bytesOnLine int) {
+	C.gtk_text_iter_set_visible_line_index(&self.object, C.gint(bytesOnLine))
+}
+
+func (self *TextIter) SetVisibleLineOffset(charOnLine int) {
+	C.gtk_text_iter_set_visible_line_offset(&self.object, C.gint(charOnLine))
+}
+
+func (self *TextIter) ForwardToEnd() {
+	C.gtk_text_iter_forward_to_end(&self.object)
+}
+
+func (self *TextIter) ForwardToLineEnd() bool {
+	b := C.gtk_text_iter_forward_to_line_end(&self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardToTagToggle(tag *TextTag) bool {
+	b := C.gtk_text_iter_forward_to_tag_toggle(&self.object, tag.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardToTagToggle(tag *TextTag) bool {
+	b := C.gtk_text_iter_backward_to_tag_toggle(&self.object, tag.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardFindChar(limit *TextIter, f interface{}, data ...interface{}) bool {
+	call, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = call
+	b := C._gtk_text_iter_forward_find_char(&self.object, &limit.object, C.gint64(id))
+
+	delete(_closures, id)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardFindChar(limit *TextIter, f interface{}, data ...interface{}) bool {
+	call, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = call
+	b := C._gtk_text_iter_backward_find_char(&self.object, &limit.object, C.gint64(id))
+
+	delete(_closures, id)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) ForwardSearch(str string, gtk_TextSearchFlags int, matchStart, matchEnd, limit *TextIter) bool {
+	var s, e, l *C.GtkTextIter = nil, nil, nil
+
+	if matchStart != nil {
+		s = &matchStart.object
+	}
+
+	if matchEnd != nil {
+		e = &matchEnd.object
+	}
+
+	if limit != nil {
+		l = &limit.object
+	}
+
+	cs := gobject.GString(str)
+	defer cs.Free()
+
+	b := C.gtk_text_iter_forward_search(&self.object, (*C.gchar)(cs.GetPtr()), C.GtkTextSearchFlags(gtk_TextSearchFlags), s, e, l)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) BackwardSearch(str string, gtk_TextSearchFlags int, matchStart, matchEnd, limit *TextIter) bool {
+	var s, e, l *C.GtkTextIter = nil, nil, nil
+
+	if matchStart != nil {
+		s = &matchStart.object
+	}
+
+	if matchEnd != nil {
+		e = &matchEnd.object
+	}
+
+	if limit != nil {
+		l = &limit.object
+	}
+
+	cs := gobject.GString(str)
+	defer cs.Free()
+
+	b := C.gtk_text_iter_backward_search(&self.object, (*C.gchar)(cs.GetPtr()), C.GtkTextSearchFlags(gtk_TextSearchFlags), s, e, l)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) Equal(rhs *TextIter) bool {
+	b := C.gtk_text_iter_equal(&self.object, &rhs.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) Compare(rhs *TextIter) bool {
+	b := C.gtk_text_iter_compare(&self.object, &rhs.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) InRange(start, end *TextIter) bool {
+	b := C.gtk_text_iter_in_range(&self.object, &start.object, &end.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextIter) Order(second *TextIter) {
+	C.gtk_text_iter_order(&self.object, &second.object)
+}
+//////////////////////////////
+// End GtkTextIter
 ////////////////////////////// }}}
 
 // End Multiline Text Editor }}}
@@ -9014,6 +9695,20 @@ func _gtk_text_tag_table_foreach_func(tag, data unsafe.Pointer) {
 
 }
 
+//export _gtk_text_char_predicate
+func _gtk_text_char_predicate(ch C.gunichar, data unsafe.Pointer) C.gboolean {
+	id := int64(*((*C.gint64)(data)))
+
+	var res bool
+	if f, ok := _closures[id]; ok {
+		res = f([]interface{}{rune(ch)})
+	}
+	b := gobject.GBool(res)
+	defer b.Free()
+	
+	return *((*C.gboolean)(b.GetPtr()))
+}
+
 //export _gtk_cell_callback
 func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
 	id := *((*C.gint64)(data))
@@ -9192,6 +9887,10 @@ func init() {
 	// Register GtkTextTagTable type
 	gobject.RegisterCType(GtkType.TEXT_TAG_TABLE, newTextTagTableFromNative)
 	gobject.RegisterGoType(GtkType.TEXT_TAG_TABLE, nativeFromTextTagTable)
+
+	// Register GtkTextIter type
+	gobject.RegisterCType(GtkType.TEXT_ITER, newTextIterFromNative)
+	gobject.RegisterGoType(GtkType.TEXT_ITER, nativeFromTextIter)
 
 	// Register GtkTreeModel type
 	gobject.RegisterCType(GtkType.TREE_MODEL, newTreeModelFromNative)
