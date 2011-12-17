@@ -10,6 +10,7 @@ extern gboolean _gtk_entry_completion_match_func(GtkEntryCompletion* completion,
 											 const gchar* key,
 											 GtkTreeIter* iter,
 											 gpointer user_data);
+extern void _gtk_text_tag_table_foreach_func(GtkTextTag* tag, gpointer data);
 extern gboolean _gtk_cell_callback(GtkCellRenderer* renderer, gpointer data);
 extern void _gtk_cell_layout_data_func(GtkCellLayout* cell_layout,
 									GtkCellRenderer* cell,
@@ -56,6 +57,8 @@ static inline GtkAdjustment* to_GtkAdjustment(void* obj) { return GTK_ADJUSTMENT
 static inline GtkRange* to_GtkRange(void* obj) { return GTK_RANGE(obj); }
 static inline GtkScrollbar* to_GtkScrollbar(void* obj) { return GTK_SCROLLBAR(obj); }
 static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SCROLLED_WINDOW(obj); }
+static inline GtkTextTag* to_GtkTextTag(void* obj) { return GTK_TEXT_TAG(obj); }
+static inline GtkTextTagTable* to_GtkTextTagTable(void* obj) { return GTK_TEXT_TAG_TABLE(obj); }
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
@@ -208,6 +211,14 @@ static gdouble _gtk_adjustment_get_minimum_increment(GtkAdjustment* adjustment) 
 #endif
 }
 // End GtkAdjustment funcs }}}
+
+// GtkTextTagTable funcs {{{
+
+static void _gtk_text_tag_table_foreach(GtkTextTagTable* table, gint64 id) {
+	gtk_text_tag_table_foreach(table, _gtk_text_tag_table_foreach_func, (gpointer)(&id));
+}
+
+// End GtkTextTagTable funcs }}}
 
 // GtkTreePath funcs {{{
 static inline gint _gtk_tree_path_get_indice(gint* indices, int index) {
@@ -3872,6 +3883,204 @@ func (self *EntryCompletion) GetPopupSingleMatch() bool {
 ////////////////////////////// }}}
 
 // End Numeric/Text Data Entry }}}
+
+// Multiline Text Editor {{{
+
+// GtkTextTag {{{
+//////////////////////////////
+
+// GtkTextTag type
+type TextTag struct {
+	object *C.GtkTextTag
+}
+
+func NewTextTag(name string) *TextTag {
+	t := &TextTag{}
+	s := gobject.GString(name)
+	defer s.Free()
+	o := C.gtk_text_tag_new((*C.gchar)(s.GetPtr()))
+	t.object = C.to_GtkTextTag(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	}
+	textTagFinalizer(t)
+
+	return t
+}
+
+// Clear TextTag struct when it goes out of reach
+func textTagFinalizer(t *TextTag) {
+	runtime.SetFinalizer(t, func(t *TextTag) { gobject.Unref(t) })
+}
+
+// Conversion funcs
+func newTextTagFromNative(obj unsafe.Pointer) interface{} {
+	t := &TextTag{}
+	t.object = C.to_GtkTextTag(obj)
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	} else {
+		gobject.Ref(t)
+	}
+	textTagFinalizer(t)
+
+	return t
+}
+
+func nativeFromTextTag(t interface{}) *gobject.GValue {
+	ttt, ok := t.(*TextTag)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TEXT_TAG, ttt.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TextTag) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TextTag) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TextTag) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TextTag) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// TextTag interface
+
+func (self *TextTag) GetPriority() int {
+	return int(C.gtk_text_tag_get_priority(self.object))
+}
+
+func (self *TextTag) SetPriority(priority int) {
+	C.gtk_text_tag_set_priority(self.object, C.gint(priority))
+}
+
+//TODO: gtk_text_tag_event
+
+//////////////////////////////
+// End GtkTextTag
+////////////////////////////// }}}
+
+// GtkTextTagTable {{{
+//////////////////////////////
+
+// GtkTextTagTable type
+type TextTagTable struct {
+	object *C.GtkTextTagTable
+}
+
+func NewTextTagTable() *TextTagTable {
+	t := &TextTagTable{}
+	o := C.gtk_text_tag_table_new()
+	t.object = C.to_GtkTextTagTable(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	}
+	textTagTableFinalizer(t)
+
+	return t
+}
+
+// Clear TextTagTable struct when it goes out of reach
+func textTagTableFinalizer(t *TextTagTable) {
+	runtime.SetFinalizer(t, func(t *TextTagTable) { gobject.Unref(t) })
+}
+
+// Conversion funcs
+func newTextTagTableFromNative(obj unsafe.Pointer) interface{} {
+	t := &TextTagTable{}
+	t.object = C.to_GtkTextTagTable(obj)
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	} else {
+		gobject.Ref(t)
+	}
+	textTagTableFinalizer(t)
+
+	return t
+}
+
+func nativeFromTextTagTable(t interface{}) *gobject.GValue {
+	ttt, ok := t.(*TextTagTable)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TEXT_TAG_TABLE, ttt.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TextTagTable) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TextTagTable) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TextTagTable) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TextTagTable) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// TextTagTable interface
+
+func (self *TextTagTable) Add(tag *TextTag) {
+	C.gtk_text_tag_table_add(self.object, tag.object)
+}
+
+func (self *TextTagTable) Remove(tag *TextTag) {
+	C.gtk_text_tag_table_remove(self.object, tag.object)
+}
+
+func (self *TextTagTable) Lookup(name string) *TextTag {
+	s := gobject.GString(name)
+	defer s.Free()
+	t := C.gtk_text_tag_table_lookup(self.object, (*C.gchar)(s.GetPtr()))
+
+	if t != nil {
+		tag, err := gobject.ConvertToGo(unsafe.Pointer(t))
+		if err == nil {
+			return tag.(*TextTag)
+		}
+	}
+	return nil
+}
+
+func (self *TextTagTable) Foreach(f interface{}, data ...interface{}) {
+	c, id := gobject.CreateCustomClosure(f, data...)
+	// Add f to closures
+	_closures[id] = c
+	// Call C foreach
+	C._gtk_text_tag_table_foreach(self.object, C.gint64(id))
+
+	// Remove closure from _closures
+	delete(_closures, id)
+}
+
+func (self *TextTagTable) GetSize() int {
+	return int(C.gtk_text_tag_table_get_size(self.object))
+}
+//////////////////////////////
+// End GtkTextTagTable
+////////////////////////////// }}}
+
+// End Multiline Text Editor }}}
 
 // Tree, List and Icon Grid Widgets {{{
 
@@ -8796,6 +9005,15 @@ func _gtk_entry_completion_match_func(completion, key, iter, userData unsafe.Poi
 	return *((*C.gboolean)(b.GetPtr()))
 }
 
+//export _gtk_text_tag_table_foreach_func
+func _gtk_text_tag_table_foreach_func(tag, data unsafe.Pointer) {
+	if t, err := gobject.ConvertToGo(tag); err == nil {
+		id := int64(*((*C.gint64)(data)))
+		_closures[id]([]interface{}{t})
+	}
+
+}
+
 //export _gtk_cell_callback
 func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
 	id := *((*C.gint64)(data))
@@ -8966,6 +9184,14 @@ func init() {
 	// Register GtkScrolledWindow type
 	gobject.RegisterCType(GtkType.SCROLLED_WINDOW, newScrolledWindowFromNative)
 	gobject.RegisterGoType(GtkType.SCROLLED_WINDOW, nativeFromScrolledWindow)
+
+	// Register GtkTextTag type
+	gobject.RegisterCType(GtkType.TEXT_TAG, newTextTagFromNative)
+	gobject.RegisterGoType(GtkType.TEXT_TAG, nativeFromTextTag)
+
+	// Register GtkTextTagTable type
+	gobject.RegisterCType(GtkType.TEXT_TAG_TABLE, newTextTagTableFromNative)
+	gobject.RegisterGoType(GtkType.TEXT_TAG_TABLE, nativeFromTextTagTable)
 
 	// Register GtkTreeModel type
 	gobject.RegisterCType(GtkType.TREE_MODEL, newTreeModelFromNative)
