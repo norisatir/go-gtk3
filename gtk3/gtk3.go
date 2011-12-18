@@ -31,6 +31,7 @@ static void _gtk_init(void* argc, void* argv) {
 
 // to_Gtk*** Funcs {{{
 static inline GApplication* to_GApplication(GtkApplication* g) { return G_APPLICATION(g); }
+static inline GtkClipboard* to_GtkClipboard(void* obj) { return GTK_CLIPBOARD(obj); }
 static inline GtkWidget* to_GtkWidget(void* obj) { return GTK_WIDGET(obj); }
 static inline GtkContainer* to_GtkContainer(void *obj) { return GTK_CONTAINER(obj); }
 static inline GtkBin* to_GtkBin(void *obj) { return GTK_BIN(obj); }
@@ -61,6 +62,7 @@ static inline GtkScrolledWindow* to_GtkScrolledWindow(void* obj) { return GTK_SC
 static inline GtkTextTag* to_GtkTextTag(void* obj) { return GTK_TEXT_TAG(obj); }
 static inline GtkTextTagTable* to_GtkTextTagTable(void* obj) { return GTK_TEXT_TAG_TABLE(obj); }
 static inline GtkTextMark* to_GtkTextMark(void* obj) { return GTK_TEXT_MARK(obj); }
+static inline GtkTextBuffer* to_GtkTextBuffer(void* obj) { return GTK_TEXT_BUFFER(obj); }
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
@@ -483,6 +485,84 @@ type ComboLike interface {
 }
 //////////////////////////////
 // END Interfaces
+////////////////////////////// }}}
+
+// GTK3 Core {{{
+//////////////////////////////
+
+// GtkClipboard {{{
+//////////////////////////////
+
+// GtkClipboard type
+type Clipboard struct {
+	object *C.GtkClipboard
+}
+
+func ClipboardGet(atom gdk3.Atom) *Clipboard {
+	if atom.ToNative() == nil {
+		return nil
+	}
+	c := &Clipboard{}
+	c.object = C.gtk_clipboard_get(*((*C.GdkAtom)(atom.ToNative())))
+	gobject.Ref(c)
+	clipboardFinalizer(c)
+
+	return c
+}
+
+func ClipboardGetForDisplay(display *gdk3.Display, atom gdk3.Atom) *Clipboard {
+	if display == nil || atom.ToNative() == nil {
+		return nil
+	}
+
+	c := &Clipboard{}
+	c.object = C.gtk_clipboard_get_for_display((*C.GdkDisplay)(display.ToNative()), *((*C.GdkAtom)(atom.ToNative())))
+	gobject.Ref(c)
+	clipboardFinalizer(c)
+
+	return c
+}
+
+func newClipboardFromNative(obj unsafe.Pointer) interface{} {
+	c := &Clipboard{}
+	c.object = C.to_GtkClipboard(obj)
+
+	gobject.Ref(c)
+	clipboardFinalizer(c)
+
+	return c
+}
+
+// Clear Clipboard struct when it goes out of reach
+func clipboardFinalizer(c *Clipboard) {
+	runtime.SetFinalizer(c, func(c *Clipboard) { gobject.Unref(c) })
+}
+
+// To be object-like
+func (self Clipboard) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Clipboard) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Clipboard) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Clipboard) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// Clipboard interface
+//TODO: Clipboard methods
+//////////////////////////////
+// End GtkClipboard
+////////////////////////////// }}}
+
+//////////////////////////////
+// End GTK3 Core
 ////////////////////////////// }}}
 
 // Base Structs {{{
@@ -4342,7 +4422,7 @@ func (self *TextIter) GetToggledTags(toggledOn bool) *glib.GSList {
 func (self *TextIter) BeginsTag(tag *TextTag) bool {
 	var b C.gboolean
 	if tag != nil {
-		b = C.gtk_text_iter_begins_tag(&self.object, tag.object)	
+		b = C.gtk_text_iter_begins_tag(&self.object, tag.object)
 	} else {
 		b = C.gtk_text_iter_begins_tag(&self.object, nil)
 	}
@@ -4352,7 +4432,7 @@ func (self *TextIter) BeginsTag(tag *TextTag) bool {
 func (self *TextIter) EndsTag(tag *TextTag) bool {
 	var b C.gboolean
 	if tag != nil {
-		b = C.gtk_text_iter_ends_tag(&self.object, tag.object)	
+		b = C.gtk_text_iter_ends_tag(&self.object, tag.object)
 	} else {
 		b = C.gtk_text_iter_ends_tag(&self.object, nil)
 	}
@@ -4362,7 +4442,7 @@ func (self *TextIter) EndsTag(tag *TextTag) bool {
 func (self *TextIter) TogglesTag(tag *TextTag) bool {
 	var b C.gboolean
 	if tag != nil {
-		b = C.gtk_text_iter_toggles_tag(&self.object, tag.object)	
+		b = C.gtk_text_iter_toggles_tag(&self.object, tag.object)
 	} else {
 		b = C.gtk_text_iter_toggles_tag(&self.object, nil)
 	}
@@ -4403,7 +4483,7 @@ func (self *TextIter) Editable(defaultSetting bool) bool {
 func (self *TextIter) CanInsert(defaultEditability bool) bool {
 	b := gobject.GBool(defaultEditability)
 	defer b.Free()
-	
+
 	res := C.gtk_text_iter_can_insert(&self.object, *((*C.gboolean)(b.GetPtr())))
 	return gobject.GoBool(unsafe.Pointer(&res))
 }
@@ -4759,6 +4839,460 @@ func (self *TextIter) Order(second *TextIter) {
 }
 //////////////////////////////
 // End GtkTextIter
+////////////////////////////// }}}
+
+// GtkTextBuffer {{{
+//////////////////////////////
+
+// GtkTextBuffer type
+type TextBuffer struct {
+	object *C.GtkTextBuffer
+}
+
+func NewTextBuffer(table *TextTagTable) *TextBuffer {
+	t := &TextBuffer{}
+	t.object = C.gtk_text_buffer_new(table.object)
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	}
+	textBufferFinalizer(t)
+
+	return t
+}
+
+// Clear TextBuffer struct when it goes out of reach
+func textBufferFinalizer(t *TextBuffer) {
+	runtime.SetFinalizer(t, func(t *TextBuffer) { gobject.Unref(t) })
+}
+
+// Conversion funcs
+func newTextBufferFromNative(obj unsafe.Pointer) interface{} {
+	t := &TextBuffer{}
+	t.object = C.to_GtkTextBuffer(obj)
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	} else {
+		gobject.Ref(t)
+	}
+	textBufferFinalizer(t)
+
+	return t
+}
+
+func nativeFromTextBuffer(t interface{}) *gobject.GValue {
+	tb, ok := t.(*TextBuffer)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TEXT_TAG, tb.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TextBuffer) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TextBuffer) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TextBuffer) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TextBuffer) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// TextBuffer interface
+
+func (self *TextBuffer) GetLineCount() int {
+	return int(C.gtk_text_buffer_get_line_count(self.object))
+}
+
+func (self *TextBuffer) GetCharCount() int {
+	return int(C.gtk_text_buffer_get_char_count(self.object))
+}
+
+func (self *TextBuffer) GetTagTable() *TextTagTable {
+	t := C.gtk_text_buffer_get_tag_table(self.object)
+	if t != nil {
+		if table, err := gobject.ConvertToGo(unsafe.Pointer(t)); err == nil {
+			return table.(*TextTagTable)
+		}
+	}
+	return nil
+}
+
+func (self *TextBuffer) Insert(iter *TextIter, text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+
+	C.gtk_text_buffer_insert(self.object, &iter.object, (*C.gchar)(s.GetPtr()), C.gint(len(text)))
+}
+
+func (self *TextBuffer) InsertAtCursor(text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+
+	C.gtk_text_buffer_insert_at_cursor(self.object, (*C.gchar)(s.GetPtr()), C.gint(len(text)))
+}
+
+func (self *TextBuffer) InsertInteractive(iter *TextIter, text string, defaultEditable bool) bool {
+	s := gobject.GString(text)
+	defer s.Free()
+	b := gobject.GBool(defaultEditable)
+	defer b.Free()
+	res := C.gtk_text_buffer_insert_interactive(self.object, &iter.object, (*C.gchar)(s.GetPtr()),
+		C.gint(len(text)), *((*C.gboolean)(b.GetPtr())))
+
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextBuffer) InsertInteractiveAtCursor(text string, defaultEditable bool) bool {
+	s := gobject.GString(text)
+	defer s.Free()
+	b := gobject.GBool(defaultEditable)
+	defer b.Free()
+	res := C.gtk_text_buffer_insert_interactive_at_cursor(self.object, (*C.gchar)(s.GetPtr()),
+		C.gint(len(text)), *((*C.gboolean)(b.GetPtr())))
+
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextBuffer) InsertRange(iter, start, end *TextIter) {
+	C.gtk_text_buffer_insert_range(self.object, &iter.object, &start.object, &end.object)
+}
+
+func (self *TextBuffer) InsertRangeInteractive(iter, start, end *TextIter, defaultEditable bool) bool {
+	b := gobject.GBool(defaultEditable)
+	defer b.Free()
+	res := C.gtk_text_buffer_insert_range_interactive(self.object, &iter.object, &start.object,
+		&end.object, *((*C.gboolean)(b.GetPtr())))
+
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextBuffer) InsertWithTags(iter *TextIter, text string, tags ...*TextTag) {
+	var startIter TextIter
+
+	startOffset := iter.GetOffset()
+	self.Insert(iter, text)
+	self.GetIterAtOffset(&startIter, startOffset)
+
+	for _, tag := range tags {
+		self.ApplyTag(tag, &startIter, iter)
+	}
+}
+
+func (self *TextBuffer) InsertWithTagsByName(iter *TextIter, text string, tagNames ...string) {
+	var startIter TextIter
+
+	startOffset := iter.GetOffset()
+	self.Insert(iter, text)
+	self.GetIterAtOffset(&startIter, startOffset)
+
+	tagTable := self.GetTagTable()
+
+	for _, name := range tagNames {
+		tag := tagTable.Lookup(name)
+
+		if tag == nil {
+			return
+		}
+		self.ApplyTag(tag, &startIter, iter)
+	}
+}
+
+func (self *TextBuffer) Delete(start, end *TextIter) {
+	C.gtk_text_buffer_delete(self.object, &start.object, &end.object)
+}
+
+func (self *TextBuffer) DeleteInteractive(start, end *TextIter, defaultEditable bool) bool {
+	b := gobject.GBool(defaultEditable)
+	defer b.Free()
+	res := C.gtk_text_buffer_delete_interactive(self.object, &start.object, &end.object, *((*C.gboolean)(b.GetPtr())))
+
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextBuffer) Backspace(iter *TextIter, interactive, defaultEditable bool) bool {
+	b := gobject.GBool(defaultEditable)
+	defer b.Free()
+	i := gobject.GBool(interactive)
+	defer i.Free()
+	res := C.gtk_text_buffer_backspace(self.object, &iter.object, *((*C.gboolean)(i.GetPtr())), *((*C.gboolean)(b.GetPtr())))
+
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextBuffer) SetText(text string) {
+	s := gobject.GString(text)
+	defer s.Free()
+	C.gtk_text_buffer_set_text(self.object, (*C.gchar)(s.GetPtr()), C.gint(len(text)))
+}
+
+func (self *TextBuffer) GetText(start, end *TextIter, includeHidden bool) string {
+	b := gobject.GBool(includeHidden)
+	defer b.Free()
+
+	s := C.gtk_text_buffer_get_slice(self.object, &start.object, &end.object, *((*C.gboolean)(b.GetPtr())))
+	if s == nil {
+		return ""
+	}
+
+	return gobject.GoString(unsafe.Pointer(s))
+}
+
+func (self *TextBuffer) InsertPixbuf(iter *TextIter, pixbuf *gdkpixbuf.Pixbuf) {
+	C.gtk_text_buffer_insert_pixbuf(self.object, &iter.object, (*C.GdkPixbuf)(pixbuf.ToNative()))
+}
+
+//TODO: gtk_text_buffer_insert_child_anchor
+//TODO: gtk_text_buffer_create_child_anchor
+
+func (self *TextBuffer) CreateMark(name string, where *TextIter, leftGravity bool) *TextMark {
+	var s *C.gchar
+
+	if name == "" {
+		s = nil
+	} else {
+		gs := gobject.GString(name)
+		defer gs.Free()
+		s = (*C.gchar)(gs.GetPtr())
+	}
+
+	b := gobject.GBool(leftGravity)
+	defer b.Free()
+
+	t := C.gtk_text_buffer_create_mark(self.object, s, &where.object, *((*C.gboolean)(b.GetPtr())))
+
+	if t != nil {
+		if mark, err := gobject.ConvertToGo(unsafe.Pointer(t)); err == nil {
+			return mark.(*TextMark)
+		}
+	}
+	return nil
+}
+
+func (self *TextBuffer) MoveMark(mark *TextMark, where *TextIter) {
+	C.gtk_text_buffer_move_mark(self.object, mark.object, &where.object)
+}
+
+func (self *TextBuffer) MoveMarkByName(name string, where *TextIter) {
+	var s *C.gchar
+	if name == "" {
+		s = nil
+	} else {
+		n := gobject.GString(name)
+		defer n.Free()
+		s = (*C.gchar)(n.GetPtr())
+	}
+
+	C.gtk_text_buffer_move_mark_by_name(self.object, s, &where.object)
+}
+
+func (self *TextBuffer) AddMark(mark *TextMark, where *TextIter) {
+	C.gtk_text_buffer_add_mark(self.object, mark.object, &where.object)
+}
+
+func (self *TextBuffer) DeleteMark(mark *TextMark) {
+	C.gtk_text_buffer_delete_mark(self.object, mark.object)
+}
+
+func (self *TextBuffer) DeleteMarkByName(name string) {
+	s := gobject.GString(name)
+	defer s.Free()
+
+	C.gtk_text_buffer_delete_mark_by_name(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *TextBuffer) GetMark(name string) *TextMark {
+	s := gobject.GString(name)
+	defer s.Free()
+
+	m := C.gtk_text_buffer_get_mark(self.object, (*C.gchar)(s.GetPtr()))
+
+	if m == nil {
+		return nil
+	}
+
+	if mark, err := gobject.ConvertToGo(unsafe.Pointer(m)); err == nil {
+		return mark.(*TextMark)
+	}
+	return nil
+}
+
+func (self *TextBuffer) GetInsert() *TextMark {
+	m := C.gtk_text_buffer_get_insert(self.object)
+
+	if m == nil {
+		return nil
+	}
+	if mark, err := gobject.ConvertToGo(unsafe.Pointer(m)); err == nil {
+		return mark.(*TextMark)
+	}
+	return nil
+}
+
+func (self *TextBuffer) GetSelectionBound() *TextMark {
+	m := C.gtk_text_buffer_get_selection_bound(self.object)
+
+	if m == nil {
+		return nil
+	}
+	if mark, err := gobject.ConvertToGo(unsafe.Pointer(m)); err == nil {
+		return mark.(*TextMark)
+	}
+	return nil
+}
+
+func (self *TextBuffer) GetHasSelection() bool {
+	b := C.gtk_text_buffer_get_has_selection(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextBuffer) PlaceCursor(where *TextIter) {
+	C.gtk_text_buffer_place_cursor(self.object, &where.object)
+}
+
+func (self *TextBuffer) SelectRange(ins, bound *TextIter) {
+	C.gtk_text_buffer_select_range(self.object, &ins.object, &bound.object)
+}
+
+func (self *TextBuffer) ApplyTag(tag *TextTag, start, end *TextIter) {
+	C.gtk_text_buffer_apply_tag(self.object, tag.object, &start.object, &end.object)
+}
+
+func (self *TextBuffer) RemoveTag(tag *TextTag, start, end *TextIter) {
+	C.gtk_text_buffer_remove_tag(self.object, tag.object, &start.object, &end.object)
+}
+
+func (self *TextBuffer) ApplyTagByName(name string, start, end *TextIter) {
+	s := gobject.GString(name)
+	defer s.Free()
+	C.gtk_text_buffer_apply_tag_by_name(self.object, (*C.gchar)(s.GetPtr()), &start.object, &end.object)
+}
+
+func (self *TextBuffer) RemoveTagByName(name string, start, end *TextIter) {
+	s := gobject.GString(name)
+	defer s.Free()
+	C.gtk_text_buffer_remove_tag_by_name(self.object, (*C.gchar)(s.GetPtr()), &start.object, &end.object)
+}
+
+func (self *TextBuffer) RemoveAllTags(start, end *TextIter) {
+	C.gtk_text_buffer_remove_all_tags(self.object, &start.object, &end.object)
+}
+
+func (self *TextBuffer) CreateTag(name string, properties P) *TextTag {
+	if len(properties) == 0 {
+		return nil
+	}
+
+	tag := NewTextTag(name)
+	self.GetTagTable().Add(tag)
+
+	tag.Set(properties)
+
+	return tag
+}
+
+func (self *TextBuffer) GetIterAtLineOffset(iter *TextIter, lineNumber int, charOffset int) {
+	C.gtk_text_buffer_get_iter_at_line_offset(self.object, &iter.object, C.gint(lineNumber), C.gint(charOffset))
+}
+
+func (self *TextBuffer) GetIterAtOffset(iter *TextIter, charOffset int) {
+	C.gtk_text_buffer_get_iter_at_offset(self.object, &iter.object, C.gint(charOffset))
+}
+
+func (self *TextBuffer) GetIterAtLine(iter *TextIter, lineNumber int) {
+	C.gtk_text_buffer_get_iter_at_line(self.object, &iter.object, C.gint(lineNumber))
+}
+
+func (self *TextBuffer) GetIterAtLineIndex(iter *TextIter, lineNumber int, byteIndex int) {
+	C.gtk_text_buffer_get_iter_at_line_index(self.object, &iter.object, C.gint(lineNumber), C.gint(byteIndex))
+}
+
+func (self *TextBuffer) GetIterAtMark(iter *TextIter, mark *TextMark) {
+	C.gtk_text_buffer_get_iter_at_mark(self.object, &iter.object, mark.object)
+}
+
+//TODO: gtk_text_buffer_get_iter_at_child_anchor
+
+func (self *TextBuffer) GetStartIter(iter *TextIter) {
+	C.gtk_text_buffer_get_start_iter(self.object, &iter.object)
+}
+
+func (self *TextBuffer) GetEndIter(iter *TextIter) {
+	C.gtk_text_buffer_get_end_iter(self.object, &iter.object)
+}
+
+func (self *TextBuffer) GetBounds(start, end *TextIter) {
+	C.gtk_text_buffer_get_bounds(self.object, &start.object, &end.object)
+}
+
+func (self *TextBuffer) GetModified() bool {
+	b := C.gtk_text_buffer_get_modified(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextBuffer) SetModified(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_text_buffer_set_modified(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextBuffer) DeleteSelection(interactive, defaultEditable bool) bool {
+	arg1 := gobject.GBool(interactive)
+	defer arg1.Free()
+	arg2 := gobject.GBool(defaultEditable)
+	defer arg2.Free()
+
+	b := C.gtk_text_buffer_delete_selection(self.object, *((*C.gboolean)(arg1.GetPtr())), *((*C.gboolean)(arg2.GetPtr())))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextBuffer) PasteClipboard(clipboard *Clipboard, overrideLocation *TextIter, defaultEditable bool) {
+	b := gobject.GBool(defaultEditable)
+	defer b.Free()
+	C.gtk_text_buffer_paste_clipboard(self.object, clipboard.object, &overrideLocation.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextBuffer) CopyClipboard(clipboard *Clipboard) {
+	C.gtk_text_buffer_copy_clipboard(self.object, clipboard.object)
+}
+
+func (self *TextBuffer) CutClipboard(clipboard *Clipboard, defaultEditable bool) {
+	b := gobject.GBool(defaultEditable)
+	defer b.Free()
+	C.gtk_text_buffer_cut_clipboard(self.object, clipboard.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextBuffer) GetSelectionBounds(start, end *TextIter) bool {
+	b := C.gtk_text_buffer_get_selection_bounds(self.object, &start.object, &end.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextBuffer) BeginUserAction() {
+	C.gtk_text_buffer_begin_user_action(self.object)
+}
+
+func (self *TextBuffer) EndUserAction() {
+	C.gtk_text_buffer_end_user_action(self.object)
+}
+
+func (self *TextBuffer) AddSelectionClipboard(clipboard *Clipboard) {
+	C.gtk_text_buffer_add_selection_clipboard(self.object, clipboard.object)
+}
+
+func (self *TextBuffer) RemoveSelectionClipboard(clipboard *Clipboard) {
+	C.gtk_text_buffer_remove_selection_clipboard(self.object, clipboard.object)
+}
+//////////////////////////////
+// End GtkTextBuffer
 ////////////////////////////// }}}
 
 // End Multiline Text Editor }}}
@@ -9705,7 +10239,7 @@ func _gtk_text_char_predicate(ch C.gunichar, data unsafe.Pointer) C.gboolean {
 	}
 	b := gobject.GBool(res)
 	defer b.Free()
-	
+
 	return *((*C.gboolean)(b.GetPtr()))
 }
 
@@ -9772,6 +10306,9 @@ func _g_gtk_destroy_notify(data unsafe.Pointer) {
 func init() {
 	// Initialiize map for closures
 	_closures = make(map[int64]gobject.ClosureFunc)
+
+	// Register GtkClipboard type
+	gobject.RegisterCType(GtkType.CLIPBOARD, newClipboardFromNative)
 
 	// Register GtkWidget type
 	gobject.RegisterCType(GtkType.WIDGET, newWidgetFromNative)

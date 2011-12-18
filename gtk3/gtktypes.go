@@ -732,8 +732,8 @@ type gtkAlign struct {
 var GtkTextSearchFlags gtkTextSearchFlags
 
 type gtkTextSearchFlags struct {
-	VISIBLE_ONLY int
-	TEXT_ONLY int
+	VISIBLE_ONLY     int
+	TEXT_ONLY        int
 	CASE_INSENSITIVE int
 }
 
