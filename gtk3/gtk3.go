@@ -38,6 +38,7 @@ static inline GtkBin* to_GtkBin(void *obj) { return GTK_BIN(obj); }
 static inline GtkWindow* to_GtkWindow(void* obj) { return GTK_WINDOW(obj); }
 static inline GtkAssistant* to_GtkAssistant(void* obj) { return GTK_ASSISTANT(obj); }
 static inline GtkBox* to_GtkBox(void* obj) { return GTK_BOX(obj); }
+static inline GtkPaned* to_GtkPaned(void* obj) { return GTK_PANED(obj); }
 static inline GtkButtonBox* to_GtkButtonBox(void* obj) { return GTK_BUTTON_BOX(obj); }
 static inline GtkFrame* to_GtkFrame(void* obj) { return GTK_FRAME(obj); }
 static inline GtkGrid* to_GtkGrid(void* obj) { return GTK_GRID(obj); }
@@ -9542,6 +9543,165 @@ func (self *ButtonBox) SetChildNonHomogeneous(w WidgetLike, nonHomogeneous bool)
 // END GtkButtonBox
 ////////////////////////////// }}}
 
+// GtkPaned {{{
+//////////////////////////////
+
+// Paned type
+type Paned struct {
+	object *C.GtkPaned
+	*Container
+}
+
+func NewPaned(gtk_Orientation int) *Paned {
+	p := &Paned{}
+	o := C.gtk_paned_new(C.GtkOrientation(gtk_Orientation))
+	p.object = C.to_GtkPaned(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(p) {
+		gobject.RefSink(p)
+	}
+	p.Container = NewContainer(unsafe.Pointer(o))
+	panedFinalizer(p)
+
+	return p
+}
+
+func NewHPaned() *Paned {
+	return NewPaned(GtkOrientation.HORIZONTAL)
+}
+
+func NewVPaned() *Paned {
+	return NewPaned(GtkOrientation.VERTICAL)
+}
+
+// Clear Paned struct when it goes out of reach
+func panedFinalizer(p *Paned) {
+	runtime.SetFinalizer(p, func(p *Paned) { gobject.Unref(p) })
+}
+
+// Conversion funcs
+func newPanedFromNative(obj unsafe.Pointer) interface{} {
+	p := &Paned{}
+	p.object = C.to_GtkPaned(obj)
+
+	if gobject.IsObjectFloating(p) {
+		gobject.RefSink(p)
+	} else {
+		gobject.Ref(p)
+	}
+	p.Container = NewContainer(obj)
+	panedFinalizer(p)
+
+	return p
+}
+
+func nativeFromPaned(p interface{}) *gobject.GValue {
+	paned, ok := p.(*Paned)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.PANED, paned.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object-like
+func (self Paned) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Paned) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Paned) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Paned) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-like
+func (self Paned) C() *Container {
+	return self.Container
+}
+
+// Paned interface
+
+func (self *Paned) Add1(child WidgetLike) {
+	C.gtk_paned_add1(self.object, child.W().object)
+}
+
+func (self *Paned) Add2(child WidgetLike) {
+	C.gtk_paned_add2(self.object, child.W().object)
+}
+
+func (self *Paned) Pack1(child WidgetLike, resize, shrink bool) {
+	r := gobject.GBool(resize)
+	defer r.Free()
+	s := gobject.GBool(shrink)
+	defer s.Free()
+
+	C.gtk_paned_pack1(self.object, child.W().object, *((*C.gboolean)(r.GetPtr())), *((*C.gboolean)(s.GetPtr())))
+}
+
+func (self *Paned) Pack2(child WidgetLike, resize, shrink bool) {
+	r := gobject.GBool(resize)
+	defer r.Free()
+	s := gobject.GBool(shrink)
+	defer s.Free()
+
+	C.gtk_paned_pack2(self.object, child.W().object, *((*C.gboolean)(r.GetPtr())), *((*C.gboolean)(s.GetPtr())))
+}
+
+func (self *Paned) GetChild1() WidgetLike {
+	w := C.gtk_paned_get_child1(self.object)
+	if w == nil {
+		return nil
+	}
+
+	if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+		return wid.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *Paned) GetChild2() WidgetLike {
+	w := C.gtk_paned_get_child2(self.object)
+	if w == nil {
+		return nil
+	}
+
+	if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+		return wid.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *Paned) SetPosition(position int) {
+	C.gtk_paned_set_position(self.object, C.gint(position))
+}
+
+func (self *Paned) GetPosition() int {
+	return int(C.gtk_paned_get_position(self.object))
+}
+
+func (self *Paned) GetHandleWindow() *gdk3.Window {
+	w := C.gtk_paned_get_handle_window(self.object)
+	if w == nil {
+		return nil
+	}
+
+	if win, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+		return win.(*gdk3.Window)
+	}
+	return nil
+}
+//////////////////////////////
+// END GtkPaned
+////////////////////////////// }}}
+
 // GtkNotebook {{{
 //////////////////////////////
 
@@ -10813,6 +10973,10 @@ func init() {
 	// Register GtkBox type
 	gobject.RegisterCType(GtkType.BOX, newBoxFromNative)
 	gobject.RegisterGoType(GtkType.BOX, nativeFromBox)
+
+	// Regiseter GtkPaned type
+	gobject.RegisterCType(GtkType.PANED, newPanedFromNative)
+	gobject.RegisterGoType(GtkType.PANED, nativeFromPaned)
 
 	// Register GtkButtonBox type
 	gobject.RegisterCType(GtkType.BUTTON_BOX, newButtonBoxFromNative)
