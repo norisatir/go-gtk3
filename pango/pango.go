@@ -57,6 +57,20 @@ type pangoScale struct {
 }
 // End PangoScale }}}
 
+// PangoUnderline {{{
+
+var PangoUnderline pangoUnderline
+
+type pangoUnderline struct {
+	NONE int
+	SINGLE int
+	DOUBLE int
+	LOW int
+	ERROR int
+}
+
+// End PangoUnderline }}}
+
 // PANGO init funcs {{{
 func init() {
 
@@ -87,4 +101,11 @@ func init() {
 	PangoScale.LARGE = float64(1.2)
 	PangoScale.X_LARGE = float64(1.4399999999999)
 	PangoScale.XX_LARGE = float64(1.728)
+
+	// Initialize PangoUnderline
+	PangoUnderline.NONE = 0
+	PangoUnderline.SINGLE = 1
+	PangoUnderline.DOUBLE = 2
+	PangoUnderline.LOW = 3
+	PangoUnderline.ERROR = 4
 } // }}}
