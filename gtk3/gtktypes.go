@@ -739,6 +739,34 @@ type gtkTextSearchFlags struct {
 
 // End GtkTextSearchFlags }}}
 
+// GtkTextWindowType {{{
+
+var GtkTextWindowType gtkTextWindowType
+
+type gtkTextWindowType struct {
+	PRIVATE int
+	WIDGET  int
+	TEXT    int
+	LEFT    int
+	RIGHT   int
+	TOP     int
+	BOTTOM  int
+}
+// End GtkTextWindowType }}}
+
+// GtkWrapMode {{{
+
+var GtkWrapMode gtkWrapMode
+
+type gtkWrapMode struct {
+	NONE      int
+	CHAR      int
+	WORD      int
+	WORD_CHAR int
+}
+
+// End GtkWrapMode }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1317,4 +1345,20 @@ func init() {
 	GtkTextSearchFlags.VISIBLE_ONLY = 1 << 0
 	GtkTextSearchFlags.TEXT_ONLY = 1 << 1
 	GtkTextSearchFlags.CASE_INSENSITIVE = 1 << 2
+
+	// Initialize GtkTextWindowType
+	GtkTextWindowType.PRIVATE = 0
+	GtkTextWindowType.WIDGET = 1
+	GtkTextWindowType.TEXT = 2
+	GtkTextWindowType.LEFT = 3
+	GtkTextWindowType.RIGHT = 4
+	GtkTextWindowType.TOP = 5
+	GtkTextWindowType.BOTTOM = 6
+
+	// Initialize GtkWrapMode
+	GtkWrapMode.NONE = 0
+	GtkWrapMode.CHAR = 1
+	GtkWrapMode.WORD = 2
+	GtkWrapMode.WORD_CHAR = 3
+
 } /// }}}

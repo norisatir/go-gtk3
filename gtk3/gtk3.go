@@ -63,6 +63,7 @@ static inline GtkTextTag* to_GtkTextTag(void* obj) { return GTK_TEXT_TAG(obj); }
 static inline GtkTextTagTable* to_GtkTextTagTable(void* obj) { return GTK_TEXT_TAG_TABLE(obj); }
 static inline GtkTextMark* to_GtkTextMark(void* obj) { return GTK_TEXT_MARK(obj); }
 static inline GtkTextBuffer* to_GtkTextBuffer(void* obj) { return GTK_TEXT_BUFFER(obj); }
+static inline GtkTextView* to_GtkTextView(void* obj) { return GTK_TEXT_VIEW(obj); }
 static inline GtkTreeModel* to_GtkTreeModel(void* obj) { return GTK_TREE_MODEL(obj); }
 static inline GtkListStore* to_GtkListStore(void* obj) { return GTK_LIST_STORE(obj); }
 static inline GtkTreeStore* to_GtkTreeStore(void* obj) { return GTK_TREE_STORE(obj); }
@@ -5295,6 +5296,482 @@ func (self *TextBuffer) RemoveSelectionClipboard(clipboard *Clipboard) {
 // End GtkTextBuffer
 ////////////////////////////// }}}
 
+// GtkTextChildAnchor {{{
+//////////////////////////////
+
+// GtkTextChildAnchor type
+type TextChildAnchor struct {
+	object *C.GtkTextChildAnchor
+}
+
+func NewTextChildAnchor() *TextChildAnchor {
+	t := &TextChildAnchor{}
+	t.object = C.gtk_text_child_anchor_new()
+
+	return t
+}
+
+// Conversion funcs
+func newTextChildAnchorFromNative(obj unsafe.Pointer) interface{} {
+	return &TextChildAnchor{(*C.GtkTextChildAnchor)(obj)}
+}
+
+func nativeFromTextChildAnchor(t interface{}) *gobject.GValue {
+	tca, ok := t.(*TextChildAnchor)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TEXT_CHILD_ANCHOR, tca.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// TextChildAnchor is boxed type
+func (self TextChildAnchor) GetTypeId() gobject.GType {
+	return GtkType.TEXT_CHILD_ANCHOR
+}
+
+func (self TextChildAnchor) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+// TextChildAnchor interface
+func (self *TextChildAnchor) GetWidgets() *glib.GSList {
+	gl := C.gtk_text_child_anchor_get_widgets(self.object)
+
+	goGSList := glib.NewGSListFromNative(unsafe.Pointer(gl))
+	goGSList.GC_Free = true
+	goGSList.GC_FreeFull = false
+	glib.GSListFinalizer(goGSList)
+
+	// Create conversion func
+	goGSList.ConversionFunc = func(w unsafe.Pointer) interface{} {
+		if widget, err := gobject.ConvertToGo(w); err == nil {
+			return widget.(WidgetLike)
+		}
+		return nil
+	}
+
+	return goGSList
+}
+
+func (self *TextChildAnchor) GetDeleted() bool {
+	b := C.gtk_text_child_anchor_get_deleted(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//////////////////////////////
+// End GtkTextChildAnchor
+////////////////////////////// }}}
+
+// GtkTextView {{{
+//////////////////////////////
+
+// TextView type
+type TextView struct {
+	object *C.GtkTextView
+	*Container
+}
+
+// Create new TextView
+func NewTextView() *TextView {
+	t := &TextView{}
+	o := C.gtk_text_view_new()
+	t.object = C.to_GtkTextView(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	}
+	t.Container = NewContainer(unsafe.Pointer(o))
+	textViewFinalizer(t)
+
+	return t
+}
+
+func NewTextViewWithBuffer(buf *TextBuffer) *TextView {
+	if buf == nil {
+		return NewTextView()
+	}
+	t := &TextView{}
+	o := C.gtk_text_view_new_with_buffer(buf.object)
+	t.object = C.to_GtkTextView(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	}
+	t.Container = NewContainer(unsafe.Pointer(o))
+	textViewFinalizer(t)
+
+	return t
+}
+
+// Clear TextView struct when it goes out of reach
+func textViewFinalizer(t *TextView) {
+	runtime.SetFinalizer(t, func(t *TextView) { gobject.Unref(t) })
+}
+
+// Conversion function for gobject registration map
+func newTextViewFromNative(obj unsafe.Pointer) interface{} {
+	t := &TextView{}
+	t.object = C.to_GtkTextView(obj)
+
+	if gobject.IsObjectFloating(t) {
+		gobject.RefSink(t)
+	} else {
+		gobject.Ref(t)
+	}
+	t.Container = NewContainer(obj)
+	textViewFinalizer(t)
+
+	return t
+}
+
+func nativeFromTextView(t interface{}) *gobject.GValue {
+	text, ok := t.(*TextView)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TEXT_VIEW, text.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TextView) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TextView) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TextView) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TextView) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-like
+func (self TextView) C() *Container {
+	return self.Container
+}
+
+// TextView interface
+
+func (self *TextView) SetBuffer(buffer *TextBuffer) {
+	C.gtk_text_view_set_buffer(self.object, buffer.object)
+}
+
+func (self *TextView) GetBuffer() *TextBuffer {
+	b := C.gtk_text_view_get_buffer(self.object)
+
+	if buf, err := gobject.ConvertToGo(unsafe.Pointer(b)); err == nil {
+		return buf.(*TextBuffer)
+	}
+	return nil
+}
+
+func (self *TextView) ScrollToMark(mar *TextMark, withinMargin float64, useAlign bool, xalign float64, yalign float64) {
+	b := gobject.GBool(useAlign)
+	defer b.Free()
+	C.gtk_text_view_scroll_to_mark(self.object, mar.object, C.gdouble(withinMargin), *((*C.gboolean)(b.GetPtr())), C.gdouble(xalign),
+		C.gdouble(yalign))
+}
+
+func (self *TextView) ScrollToIter(iter *TextIter, withinMargin float64, useAlign bool, xalign, yalign float64) bool {
+	b := gobject.GBool(useAlign)
+	defer b.Free()
+	res := C.gtk_text_view_scroll_to_iter(self.object, &iter.object, C.gdouble(withinMargin), *((*C.gboolean)(b.GetPtr())), C.gdouble(xalign),
+		C.gdouble(yalign))
+	return gobject.GoBool(unsafe.Pointer(&res))
+}
+
+func (self *TextView) ScrollMarkOnscreen(mark *TextMark) {
+	C.gtk_text_view_scroll_mark_onscreen(self.object, mark.object)
+}
+
+func (self *TextView) MoveMarkOnscreen(mark *TextMark) {
+	C.gtk_text_view_move_mark_onscreen(self.object, mark.object)
+}
+
+func (self *TextView) PlaceCursorOnscreen() bool {
+	b := C.gtk_text_view_place_cursor_onscreen(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) GetVisibleRect() gdk3.Rectangle {
+	var r C.GdkRectangle
+	C.gtk_text_view_get_visible_rect(self.object, &r)
+
+	if rec, err := gobject.ConvertToGo(unsafe.Pointer(&r), gdk3.GdkType.RECTANGLE); err == nil {
+		return rec.(gdk3.Rectangle)
+	}
+	return gdk3.Rectangle{}
+}
+
+func (self *TextView) GetIterLocation(iter *TextIter) gdk3.Rectangle {
+	var r C.GdkRectangle
+	C.gtk_text_view_get_iter_location(self.object, &iter.object, &r)
+
+	if rec, err := gobject.ConvertToGo(unsafe.Pointer(&r), gdk3.GdkType.RECTANGLE); err == nil {
+		return rec.(gdk3.Rectangle)
+	}
+	return gdk3.Rectangle{}
+}
+
+func (self *TextView) GetCursorLocations(iter *TextIter) (strong, weak gdk3.Rectangle) {
+	r1, r2 := new(C.GdkRectangle), new(C.GdkRectangle)
+	C.gtk_text_view_get_cursor_locations(self.object, &iter.object, r1, r2)
+
+	var rec1, rec2 gdk3.Rectangle
+	if r1 != nil {
+		if goRec1, err := gobject.ConvertToGo(unsafe.Pointer(r1), gdk3.GdkType.RECTANGLE); err == nil {
+			rec1 = goRec1.(gdk3.Rectangle)
+		}
+	}
+
+	if r2 != nil {
+		if goRec2, err := gobject.ConvertToGo(unsafe.Pointer(r2), gdk3.GdkType.RECTANGLE); err == nil {
+			rec2 = goRec2.(gdk3.Rectangle)
+		}
+	}
+	return rec1, rec2
+}
+
+func (self *TextView) GetLineAtY(targetIter *TextIter, y int) (lineTop int) {
+	var res C.gint
+	C.gtk_text_view_get_line_at_y(self.object, &targetIter.object, C.gint(y), &res)
+	lineTop = int(res)
+	return
+}
+
+func (self *TextView) GetLineYrange(iter *TextIter) (y, height int) {
+	var res, res1 C.gint
+	C.gtk_text_view_get_line_yrange(self.object, &iter.object, &res, &res1)
+	y = int(res)
+	height = int(res1)
+	return
+}
+
+func (self *TextView) GetIterAtLocation(iter *TextIter, x, y int) {
+	C.gtk_text_view_get_iter_at_location(self.object, &iter.object, C.gint(x), C.gint(y))
+}
+
+func (self *TextView) GetIterAtPosition(iter *TextIter, x, y int) (trailing int) {
+	var res C.gint
+	C.gtk_text_view_get_iter_at_position(self.object, &iter.object, &res, C.gint(x), C.gint(y))
+	return int(res)
+}
+
+func (self *TextView) BufferToWindowCoords(gtk_TextWindowType int, bufferX, bufferY int) (windowX, windowY int) {
+	var res1, res2 C.gint
+	C.gtk_text_view_buffer_to_window_coords(self.object, C.GtkTextWindowType(gtk_TextWindowType),
+		C.gint(bufferX), C.gint(bufferY), &res1, &res2)
+
+	windowX = int(res1)
+	windowY = int(res2)
+	return
+}
+
+func (self *TextView) WindowToBufferCoords(gtk_TextWindowType int, windowX, windowY int) (bufferX, bufferY int) {
+	var res1, res2 C.gint
+	C.gtk_text_view_window_to_buffer_coords(self.object, C.GtkTextWindowType(gtk_TextWindowType),
+		C.gint(windowX), C.gint(windowY), &res1, &res2)
+
+	bufferX = int(res1)
+	bufferY = int(res2)
+	return
+}
+
+func (self *TextView) GetWindow(gtk_TextWindowType int) *gdk3.Window {
+	w := C.gtk_text_view_get_window(self.object, C.GtkTextWindowType(gtk_TextWindowType))
+
+	if w == nil {
+		return nil
+	}
+
+	if win, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+		return win.(*gdk3.Window)
+	}
+	return nil
+}
+
+func (self *TextView) GetWindowType(win *gdk3.Window) int {
+	return int(C.gtk_text_view_get_window_type(self.object, (*C.GdkWindow)(win.ToNative())))
+}
+
+func (self *TextView) SetBorderWindowSize(gtk_TextWindowType, size int) {
+	C.gtk_text_view_set_border_window_size(self.object, C.GtkTextWindowType(gtk_TextWindowType), C.gint(size))
+}
+
+func (self *TextView) GetBorderWindowSize(gtk_TextWindowType int) int {
+	return int(C.gtk_text_view_get_border_window_size(self.object, C.GtkTextWindowType(gtk_TextWindowType)))
+}
+
+func (self *TextView) ForwardDisplayLine(iter *TextIter) bool {
+	b := C.gtk_text_view_forward_display_line(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) BackwardDisplayLine(iter *TextIter) bool {
+	b := C.gtk_text_view_backward_display_line(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) ForwardDisplayLineEnd(iter *TextIter) bool {
+	b := C.gtk_text_view_forward_display_line_end(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) BackwardDisplayLineStart(iter *TextIter) bool {
+	b := C.gtk_text_view_backward_display_line_start(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) StartsDisplayLine(iter *TextIter) bool {
+	b := C.gtk_text_view_starts_display_line(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) MoveVisually(iter *TextIter, count int) bool {
+	b := C.gtk_text_view_move_visually(self.object, &iter.object, C.gint(count))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) AddChildAtAnchor(child WidgetLike, anchor *TextChildAnchor) {
+	C.gtk_text_view_add_child_at_anchor(self.object, child.W().object, anchor.object)
+}
+
+func (self *TextView) AddChildInWindow(child WidgetLike, gtk_TextWindowType, xpos, ypos int) {
+	C.gtk_text_view_add_child_in_window(self.object, child.W().object, C.GtkTextWindowType(gtk_TextWindowType),
+		C.gint(xpos), C.gint(ypos))
+}
+
+func (self *TextView) MoveChild(child WidgetLike, xpos, ypos int) {
+	C.gtk_text_view_move_child(self.object, child.W().object, C.gint(xpos), C.gint(ypos))
+}
+
+func (self *TextView) SetWrapMode(gtk_WrapMode int) {
+	C.gtk_text_view_set_wrap_mode(self.object, C.GtkWrapMode(gtk_WrapMode))
+}
+
+func (self *TextView) GetWrapMode() int {
+	return int(C.gtk_text_view_get_wrap_mode(self.object))
+}
+
+func (self *TextView) SetEditable(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_text_view_set_editable(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextView) GetEditable() bool {
+	b := C.gtk_text_view_get_editable(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) SetCursorVisible(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_text_view_set_cursor_visible(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextView) GetCursorVisible() bool {
+	b := C.gtk_text_view_get_cursor_visible(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) SetOverwrite(overwrite bool) {
+	b := gobject.GBool(overwrite)
+	defer b.Free()
+	C.gtk_text_view_set_overwrite(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextView) GetOverwrite() bool {
+	b := C.gtk_text_view_get_overwrite(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TextView) SetPixelsAboveLines(pixelAbove int) {
+	C.gtk_text_view_set_pixels_above_lines(self.object, C.gint(pixelAbove))
+}
+
+func (self *TextView) GetPixelsAboveLines() int {
+	return int(C.gtk_text_view_get_pixels_above_lines(self.object))
+}
+
+func (self *TextView) SetPixelsBelowLines(pixelBelow int) {
+	C.gtk_text_view_set_pixels_below_lines(self.object, C.gint(pixelBelow))
+}
+
+func (self *TextView) GetPixelsBelowLines() int {
+	return int(C.gtk_text_view_get_pixels_below_lines(self.object))
+}
+
+func (self *TextView) SetPixelsInsideWrap(pixelInside int) {
+	C.gtk_text_view_set_pixels_inside_wrap(self.object, C.gint(pixelInside))
+}
+
+func (self *TextView) GetPixelsInsideWrap() int {
+	return int(C.gtk_text_view_get_pixels_inside_wrap(self.object))
+}
+
+func (self *TextView) SetJustification(gtk_Justification int) {
+	C.gtk_text_view_set_justification(self.object, C.GtkJustification(gtk_Justification))
+}
+
+func (self *TextView) GetJustification() int {
+	return int(C.gtk_text_view_get_justification(self.object))
+}
+
+func (self *TextView) SetLeftMargin(margin int) {
+	C.gtk_text_view_set_left_margin(self.object, C.gint(margin))
+}
+
+func (self *TextView) GetLeftMargin() int {
+	return int(C.gtk_text_view_get_left_margin(self.object))
+}
+
+func (self *TextView) SetRightMargin(margin int) {
+	C.gtk_text_view_set_right_margin(self.object, C.gint(margin))
+}
+
+func (self *TextView) GetRightMargin() int {
+	return int(C.gtk_text_view_get_right_margin(self.object))
+}
+
+func (self *TextView) SetIndent(indent int) {
+	C.gtk_text_view_set_indent(self.object, C.gint(indent))
+}
+
+func (self *TextView) GetIndent() int {
+	return int(C.gtk_text_view_get_indent(self.object))
+}
+
+//TODO: gtk_text_view_set_tabs
+//TODO: gtk_text_view_get_tabs
+
+func (self *TextView) SetAcceptsTab(acceptsTab bool) {
+	b := gobject.GBool(acceptsTab)
+	defer b.Free()
+	C.gtk_text_view_set_accepts_tab(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TextView) GetAcceptsTab() bool {
+	b := C.gtk_text_view_get_accepts_tab(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//TODO: gtk_text_view_get_default_attributes
+//TODO: gtk_text_view_im_context_filter_keypress
+
+func (self *TextView) ResetIMContext() {
+	C.gtk_text_view_reset_im_context(self.object)
+}
+//////////////////////////////
+// End GtkTextView
+////////////////////////////// }}}
+
 // End Multiline Text Editor }}}
 
 // Tree, List and Icon Grid Widgets {{{
@@ -10428,6 +10905,14 @@ func init() {
 	// Register GtkTextIter type
 	gobject.RegisterCType(GtkType.TEXT_ITER, newTextIterFromNative)
 	gobject.RegisterGoType(GtkType.TEXT_ITER, nativeFromTextIter)
+
+	// Register GtkTextBuffer type
+	gobject.RegisterCType(GtkType.TEXT_BUFFER, newTextBufferFromNative)
+	gobject.RegisterGoType(GtkType.TEXT_BUFFER, nativeFromTextBuffer)
+
+	// Register GtkTextView type
+	gobject.RegisterCType(GtkType.TEXT_VIEW, newTextViewFromNative)
+	gobject.RegisterGoType(GtkType.TEXT_VIEW, nativeFromTextView)
 
 	// Register GtkTreeModel type
 	gobject.RegisterCType(GtkType.TREE_MODEL, newTreeModelFromNative)
