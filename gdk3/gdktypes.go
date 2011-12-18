@@ -194,6 +194,53 @@ func (self Color) ToNative() unsafe.Pointer {
 }
 // End Color type }}}
 
+// GdkAtom {{{
+
+type Atom struct {
+	object *C.GdkAtom
+}
+
+func (self Atom) ToNative() unsafe.Pointer {
+	if self.object == nil {
+		return nil
+	}
+	return unsafe.Pointer(self.object)
+}
+
+func (self Atom) Name() string {
+	if self.object == nil {
+		return ""
+	}
+
+	s := C.gdk_atom_name(*self.object)
+	return g.GoString(unsafe.Pointer(s))
+}
+
+func NewAtomFromNative(obj unsafe.Pointer) Atom {
+	a := Atom{}
+	a.object = new(C.GdkAtom)
+	*a.object = *((*C.GdkAtom)(obj))
+
+	return a
+}
+
+func AtomIntern(atomName string, onlyIfExists bool) Atom {
+	s := g.GString(atomName)
+	defer s.Free()
+	b := g.GBool(onlyIfExists)
+	defer b.Free()
+
+	o := C.gdk_atom_intern((*C.gchar)(s.GetPtr()), *((*C.gboolean)(b.GetPtr())))
+
+	a := Atom{}
+	a.object = new(C.GdkAtom)
+	*a.object = o
+
+	return a
+}
+
+// End GdkAtom }}}
+
 // GDK3 INIT FUNC {{{
 func init() {
 	C.gdk_init(nil, nil)
