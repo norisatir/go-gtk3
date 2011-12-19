@@ -22,16 +22,62 @@ extern void _g_gtk_destroy_notify(gpointer data);
 extern gboolean _gtk_tree_view_row_separator_func(GtkTreeModel* model,
 									GtkTreeIter* iter,
 									gpointer data);
+extern void _gtk_closure_destroy_id(gpointer data, GClosure* closure);
+extern void _gtk_marshal(GClosure *closure,
+							  GValue* returnValue,
+							  guint n_param_values,
+							  const GValue *paramValues,
+							  gpointer invocationHint,
+							  gpointer marshalData);
 // End Exported funcs }}}
 
 static void _gtk_init(void* argc, void* argv) {
 	gtk_init((int*)argc, (char***)argv);
 }
 
+// Utility funcs {{{
+// Dummy callback function
+static gboolean _gtk_func_handler(void* id, ...) {
+	return TRUE;
+}
+
+// GClosure generator func
+static inline GClosure* _go_new_closure(gint64 id) {
+	gint64 *pgint64 = (gint64*)malloc(sizeof(gint64));
+	*pgint64 = id;
+	GClosure* c = g_cclosure_new_swap(G_CALLBACK(_gtk_func_handler),
+									(gpointer)pgint64,
+									_gtk_closure_destroy_id);
+
+	g_closure_set_marshal(c, _gtk_marshal);
+
+	return c;
+}
+
+static inline GArray* g_array_from_GValues(void* val, guint num_elements) {
+	GValue* values = (GValue*)val;
+	GArray* na = g_array_new(TRUE, TRUE, sizeof(GValue));
+	guint i;
+	for(i = 0; i < num_elements; i++) {
+		g_array_append_val(na, *(values + i));
+	}
+	return na;
+}
+
+static inline GValue get_index(GArray* ar, guint i) {
+	return g_array_index(ar, GValue, i);
+}
+
+static inline void free_array(GArray* ar) {
+	g_array_free(ar, TRUE);
+}
+// End Utility funcs }}}
+
 
 // to_Gtk*** Funcs {{{
 static inline GApplication* to_GApplication(GtkApplication* g) { return G_APPLICATION(g); }
 static inline GtkClipboard* to_GtkClipboard(void* obj) { return GTK_CLIPBOARD(obj); }
+static inline GtkAccelGroup* to_GtkAccelGroup(void* obj) { return GTK_ACCEL_GROUP(obj); }
 static inline GtkWidget* to_GtkWidget(void* obj) { return GTK_WIDGET(obj); }
 static inline GtkContainer* to_GtkContainer(void *obj) { return GTK_CONTAINER(obj); }
 static inline GtkBin* to_GtkBin(void *obj) { return GTK_BIN(obj); }
@@ -88,6 +134,10 @@ static inline GtkComboBoxText* to_GtkComboBoxText(void* obj) { return GTK_COMBO_
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
+
+// GtkAccelGroup funcs {{{
+
+// End GtkAccelGroup funcs }}}
 
 // GtkContainer funcs {{{
 static void _gtk_container_foreach(GtkContainer* container, gint64* id) {
@@ -491,6 +541,89 @@ type ComboLike interface {
 
 // GTK3 Core {{{
 //////////////////////////////
+
+// GtkAccelGroup {{{
+//////////////////////////////
+
+// GtkAccelGroup type
+type AccelGroup struct {
+	object *C.GtkAccelGroup
+}
+
+func NewAccelGroup() *AccelGroup {
+	ag := &AccelGroup{}
+	ag.object = C.gtk_accel_group_new()
+
+	if gobject.IsObjectFloating(ag) {
+		gobject.RefSink(ag)
+	} else {
+		gobject.Ref(ag)
+	}
+	accelGroupFinalizer(ag)
+
+	return ag
+}
+
+// Clear AccelGroup struct when it goes out of reach
+func accelGroupFinalizer(ag *AccelGroup) {
+	runtime.SetFinalizer(ag, func(ag *AccelGroup) { gobject.Unref(ag) })
+}
+
+// Conversion funcs
+func newAccelGroupFromNative(obj unsafe.Pointer) interface{} {
+	ag := &AccelGroup{}
+	ag.object = C.to_GtkAccelGroup(obj)
+
+	if gobject.IsObjectFloating(ag) {
+		gobject.RefSink(ag)
+	} else {
+		gobject.Ref(ag)
+	}
+	accelGroupFinalizer(ag)
+
+	return ag
+}
+
+func nativeFromAccelGroup(ag interface{}) *gobject.GValue {
+	accel, ok := ag.(*AccelGroup)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.ACCEL_GROUP, accel.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self AccelGroup) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self AccelGroup) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self AccelGroup) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self AccelGroup) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// AccelGroup interface
+func (self *AccelGroup) ConnectAccel(accelKey uint, gtk_Modifier, gtk_AccelFlags int, f interface{}, data ...interface{}) {
+	call, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = call
+
+	gClosure := C._go_new_closure(C.gint64(id))
+
+	C.gtk_accel_group_connect(self.object, C.guint(accelKey), C.GdkModifierType(gtk_Modifier),
+		C.GtkAccelFlags(gtk_AccelFlags), gClosure)
+}
+
+//////////////////////////////
+// End GtkAccelGroup
+////////////////////////////// }}}
 
 // GtkClipboard {{{
 //////////////////////////////
@@ -1389,6 +1522,14 @@ func (self Window) CBin() *Bin {
 }
 
 // Window interface
+
+func (self *Window) AddAccelGroup(accelGroup *AccelGroup) {
+	C.gtk_window_add_accel_group(self.object, accelGroup.object)
+}
+
+func (self *Window) RemoveAccelGroup(accelGroup *AccelGroup) {
+	C.gtk_window_remove_accel_group(self.object, accelGroup.object)
+}
 
 func (self *Window) SetTitle(title string) {
 	gobject.SetProperty(self, "title", title)
@@ -2789,7 +2930,7 @@ func NewImageFromFile(filename string) WidgetLike {
 	fn := gobject.GString(filename)
 	defer fn.Free()
 
-    o := C.gtk_image_new_from_file((*C.gchar)(fn.GetPtr()))
+	o := C.gtk_image_new_from_file((*C.gchar)(fn.GetPtr()))
 	im.object = C.to_GtkImage(unsafe.Pointer(o))
 
 	if gobject.IsObjectFloating(im) {
@@ -11000,6 +11141,49 @@ func _g_gtk_destroy_notify(data unsafe.Pointer) {
 	if _, ok := _closures[int64(id)]; ok {
 		delete(_closures, int64(id))
 	}
+	C.free(data)
+}
+
+//export _gtk_marshal
+func _gtk_marshal(closure unsafe.Pointer,
+	returnValue unsafe.Pointer,
+	n_param_values C.guint,
+	paramValues unsafe.Pointer,
+	invocationHint unsafe.Pointer,
+	marshalData unsafe.Pointer) {
+
+	c := (*C.GClosure)(closure)
+	id := int64(*((*C.gint64)(c.data)))
+
+	argslice := make([]interface{}, int(n_param_values))
+	array := C.g_array_from_GValues(paramValues, n_param_values)
+	for i := 0; i < int(n_param_values); i++ {
+		v := C.get_index(array, C.guint(i))
+		gv := gobject.NewGValueFromNative(unsafe.Pointer(&v))
+		gv.ReInitializeType()
+		fmt.Println(gv.GetTypeName())
+		t, e := gobject.ConvertToGo(gv.GetPtr(), gv.GetTypeID())
+		if e == nil {
+			argslice[i] = t
+		} else {
+			argslice[i] = nil
+		}
+	}
+
+	if h, ok := _closures[id]; ok {
+		h(argslice)
+	}
+
+	C.free_array(array)
+}
+
+//export _gtk_closure_destroy_id
+func _gtk_closure_destroy_id(data unsafe.Pointer, closure unsafe.Pointer) {
+	id := int64(*((*C.gint64)(data)))
+	if _, ok := _closures[id]; ok {
+		delete(_closures, id)
+	}
+
 	C.free(data)
 }
 

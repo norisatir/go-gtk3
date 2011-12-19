@@ -778,6 +778,17 @@ type gtkTextDirection struct {
 }
 // End GtkTextDirection }}}
 
+// GtkAccelFlags {{{
+
+var GtkAccelFlags gtkAccelFlags
+
+type gtkAccelFlags struct {
+	VISIBLE int
+	LOCKED int
+	MASK int
+}
+// End GtkAccelFlags }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1376,4 +1387,9 @@ func init() {
 	GtkTextDirection.NONE = 0
 	GtkTextDirection.LTR = 1
 	GtkTextDirection.RTL = 2
+
+	// Initialize GtkAccelFlags
+	GtkAccelFlags.VISIBLE = 1 << 0
+	GtkAccelFlags.LOCKED = 1 << 1
+	GtkAccelFlags.MASK = 0x07
 } /// }}}
