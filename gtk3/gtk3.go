@@ -5087,8 +5087,24 @@ func (self *TextBuffer) InsertPixbuf(iter *TextIter, pixbuf *gdkpixbuf.Pixbuf) {
 	C.gtk_text_buffer_insert_pixbuf(self.object, &iter.object, (*C.GdkPixbuf)(pixbuf.ToNative()))
 }
 
-//TODO: gtk_text_buffer_insert_child_anchor
-//TODO: gtk_text_buffer_create_child_anchor
+func (self *TextBuffer) InsertChildAnchor(iter *TextIter, anchor *TextChildAnchor) {
+	if anchor == nil {
+		return
+	}
+	C.gtk_text_buffer_insert_child_anchor(self.object, &iter.object, anchor.object)
+}
+
+func (self *TextBuffer) CreateChildAnchor(iter *TextIter) *TextChildAnchor {
+	o := C.gtk_text_buffer_create_child_anchor(self.object, &iter.object)
+
+	if o == nil {
+		return nil
+	}
+	if tca, err := gobject.ConvertToGo(unsafe.Pointer(o)); err == nil {
+		return tca.(*TextChildAnchor)
+	}
+	return nil
+}
 
 func (self *TextBuffer) CreateMark(name string, where *TextIter, leftGravity bool) *TextMark {
 	var s *C.gchar
