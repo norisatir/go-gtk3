@@ -2784,6 +2784,23 @@ func NewImageFromStock(stockId string, iconSize int) *Image {
 	return im
 }
 
+func NewImageFromFile(filename string) WidgetLike {
+	im := &Image{}
+	fn := gobject.GString(filename)
+	defer fn.Free()
+
+    o := C.gtk_image_new_from_file((*C.gchar)(fn.GetPtr()))
+	im.object = C.to_GtkImage(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(im) {
+		gobject.RefSink(im)
+	}
+	im.Widget = NewWidget(unsafe.Pointer(o))
+	imageFinalizer(im)
+
+	return im
+}
+
 // Clear Image struct when it goes out of reach
 func imageFinalizer(im *Image) {
 	runtime.SetFinalizer(im, func(im *Image) { gobject.Unref(im) })
