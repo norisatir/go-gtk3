@@ -21,10 +21,10 @@ var G_TYPE_PIXBUF gobject.GType
 var GdkInterp gdkInterp
 
 type gdkInterp struct {
-	NEAREST int
-	TILES int
+	NEAREST  int
+	TILES    int
 	BILINEAR int
-	HYPER int
+	HYPER    int
 }
 // End GdkInterp }}}
 
@@ -109,7 +109,6 @@ func ScaleSimple(src *Pixbuf, destWidth, destHeight, gdk_Interp int) *Pixbuf {
 	}
 	return nil
 }
-
 
 // GDK_PIXBUF init funcs {{{
 func init() {
