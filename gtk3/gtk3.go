@@ -5100,6 +5100,7 @@ func (self *TextBuffer) CreateChildAnchor(iter *TextIter) *TextChildAnchor {
 	if o == nil {
 		return nil
 	}
+	//	if tca, err := gobject.ConvertToGo(unsafe.Pointer(o), GtkType.TEXT_CHILD_ANCHOR); err == nil {
 	if tca, err := gobject.ConvertToGo(unsafe.Pointer(o)); err == nil {
 		return tca.(*TextChildAnchor)
 	}
@@ -11123,6 +11124,10 @@ func init() {
 	// Register GtkTextBuffer type
 	gobject.RegisterCType(GtkType.TEXT_BUFFER, newTextBufferFromNative)
 	gobject.RegisterGoType(GtkType.TEXT_BUFFER, nativeFromTextBuffer)
+
+	// Register GtkTextChildAnchor
+	gobject.RegisterCType(GtkType.TEXT_CHILD_ANCHOR, newTextChildAnchorFromNative)
+	gobject.RegisterGoType(GtkType.TEXT_CHILD_ANCHOR, nativeFromTextChildAnchor)
 
 	// Register GtkTextView type
 	gobject.RegisterCType(GtkType.TEXT_VIEW, newTextViewFromNative)

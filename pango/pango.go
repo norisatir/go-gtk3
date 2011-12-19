@@ -62,11 +62,11 @@ type pangoScale struct {
 var PangoUnderline pangoUnderline
 
 type pangoUnderline struct {
-	NONE int
+	NONE   int
 	SINGLE int
 	DOUBLE int
-	LOW int
-	ERROR int
+	LOW    int
+	ERROR  int
 }
 
 // End PangoUnderline }}}
