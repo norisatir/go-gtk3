@@ -767,6 +767,17 @@ type gtkWrapMode struct {
 
 // End GtkWrapMode }}}
 
+// GtkTextDirection {{{
+
+var GtkTextDirection gtkTextDirection
+
+type gtkTextDirection struct {
+	NONE int
+	LTR  int
+	RTL  int
+}
+// End GtkTextDirection }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1361,4 +1372,8 @@ func init() {
 	GtkWrapMode.WORD = 2
 	GtkWrapMode.WORD_CHAR = 3
 
+	// Initialize GtkTextDirection
+	GtkTextDirection.NONE = 0
+	GtkTextDirection.LTR = 1
+	GtkTextDirection.RTL = 2
 } /// }}}
