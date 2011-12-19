@@ -11,9 +11,22 @@ static inline GdkPixbuf* to_GdkPixbuf(void* obj) { return GDK_PIXBUF(obj); }
 import "C"
 import "unsafe"
 import "runtime"
+import "errors"
 import "github.com/norisatir/go-gtk3/gobject"
 
 var G_TYPE_PIXBUF gobject.GType
+
+// GdkInterp type {{{
+
+var GdkInterp gdkInterp
+
+type gdkInterp struct {
+	NEAREST int
+	TILES int
+	BILINEAR int
+	HYPER int
+}
+// End GdkInterp }}}
 
 // GdkPixbuf {{{
 
@@ -69,6 +82,35 @@ func (self Pixbuf) Get(properties []string) map[string]interface{} {
 // END GdkPixbuf
 ////////////////////////////// }}}
 
+// Funcs
+
+func NewFromFile(filename string) (*Pixbuf, error) {
+	fn := gobject.GString(filename)
+	defer fn.Free()
+
+	pb := C.gdk_pixbuf_new_from_file((*C.char)(fn.GetPtr()), nil)
+
+	if pb == nil {
+		return nil, errors.New("Error occured")
+	}
+
+	return newPixbufFromNative(unsafe.Pointer(pb)).(*Pixbuf), nil
+}
+
+func ScaleSimple(src *Pixbuf, destWidth, destHeight, gdk_Interp int) *Pixbuf {
+	pScaled := C.gdk_pixbuf_scale_simple(src.object, C.int(destWidth), C.int(destHeight), C.GdkInterpType(gdk_Interp))
+
+	if pScaled == nil {
+		return nil
+	}
+
+	if pix, err := gobject.ConvertToGo(unsafe.Pointer(pScaled)); err == nil {
+		return pix.(*Pixbuf)
+	}
+	return nil
+}
+
+
 // GDK_PIXBUF init funcs {{{
 func init() {
 	// Initialize G_TYPE_PIXBUF
@@ -77,4 +119,10 @@ func init() {
 	// Register Pixbuf type
 	gobject.RegisterCType(G_TYPE_PIXBUF, newPixbufFromNative)
 	gobject.RegisterGoType(G_TYPE_PIXBUF, nativeFromPixbuf)
+
+	// Initialize GdkInterp
+	GdkInterp.NEAREST = 0
+	GdkInterp.TILES = 1
+	GdkInterp.BILINEAR = 2
+	GdkInterp.HYPER = 3
 } // }}}
