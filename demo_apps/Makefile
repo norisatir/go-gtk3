@@ -8,6 +8,7 @@ all:
 	cd entry_completion && gomake
 	cd assistant && gomake
 	cd combobox && gomake
+	cd textview && gomake
 
 clean:
 	cd gtkapplication && gomake clean
@@ -19,3 +20,4 @@ clean:
 	cd entry_completion && gomake clean
 	cd assistant && gomake clean
 	cd combobox && gomake clean
+	cd textview && gomake clean
