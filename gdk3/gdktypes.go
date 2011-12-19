@@ -14,18 +14,21 @@ import "C"
 import "unsafe"
 import g "github.com/norisatir/go-gtk3/gobject"
 
+// GdkType {{{
 var GdkType gdkTypes
 
 type gdkTypes struct {
-	DEVICE    g.GType
-	RECTANGLE g.GType
-	RGBA      g.GType
-	COLOR     g.GType
-	EVENT     g.GType
-	DISPLAY   g.GType
-	SCREEN    g.GType
-	WINDOW    g.GType
+	DEVICE        g.GType
+	RECTANGLE     g.GType
+	RGBA          g.GType
+	COLOR         g.GType
+	EVENT         g.GType
+	DISPLAY       g.GType
+	SCREEN        g.GType
+	WINDOW        g.GType
+	MODIFIER_TYPE g.GType
 }
+// End GdkType }}}
 
 // Basic Types
 
@@ -241,6 +244,37 @@ func AtomIntern(atomName string, onlyIfExists bool) Atom {
 
 // End GdkAtom }}}
 
+// GdkModifier {{{
+
+var GdkModifier gdkModifier
+
+type gdkModifier struct {
+	SHIFT_MASK    int
+	LOCK_MASK     int
+	CONTROL_MASK  int
+	MOD1_MASK     int
+	MOD2_MASK     int
+	MOD3_MASK     int
+	MOD4_MASK     int
+	MOD5_MASK     int
+	BUTTON1_MASK  int
+	BUTTON2_MASK  int
+	BUTTON3_MASK  int
+	BUTTON4_MASK  int
+	BUTTON5_MASK  int
+	SUPER_MASK    int
+	HYPER_MASK    int
+	META_MASK     int
+	RELEASE_MASK  int
+	MODIFIER_MASK int
+}
+
+// Conversion func
+func gdkModifierFromNative(m unsafe.Pointer) interface{} {
+	return int(*((*C.gint)(m)))
+}
+// End GdkModifier }}}
+
 // GDK3 INIT FUNC {{{
 func init() {
 	C.gdk_init(nil, nil)
@@ -252,6 +286,7 @@ func init() {
 	GdkType.DISPLAY = g.GType(C.gdk_display_get_type())
 	GdkType.SCREEN = g.GType(C.gdk_screen_get_type())
 	GdkType.WINDOW = g.GType(C.gdk_window_get_type())
+	GdkType.MODIFIER_TYPE = g.GType(C.gdk_modifier_type_get_type())
 
 	// Register Rectangle
 	g.RegisterCType(GdkType.RECTANGLE, newRectangleFromNative)
@@ -260,5 +295,28 @@ func init() {
 	// Register RGBA type
 	g.RegisterCType(GdkType.RGBA, newRGBAFromNative)
 	g.RegisterGoType(GdkType.RGBA, nativeFromRGBA)
+
+	// Register GdkModifier
+	g.RegisterCType(GdkType.MODIFIER_TYPE, gdkModifierFromNative)
+
+	// Initialize GdkModifier
+	GdkModifier.SHIFT_MASK = 1 << 0
+	GdkModifier.LOCK_MASK = 1 << 1
+	GdkModifier.CONTROL_MASK = 1 << 2
+	GdkModifier.MOD1_MASK = 1 << 3
+	GdkModifier.MOD2_MASK = 1 << 4
+	GdkModifier.MOD3_MASK = 1 << 5
+	GdkModifier.MOD4_MASK = 1 << 6
+	GdkModifier.MOD5_MASK = 1 << 7
+	GdkModifier.BUTTON1_MASK = 1 << 8
+	GdkModifier.BUTTON2_MASK = 1 << 9
+	GdkModifier.BUTTON3_MASK = 1 << 10
+	GdkModifier.BUTTON4_MASK = 1 << 11
+	GdkModifier.BUTTON5_MASK = 1 << 12
+	GdkModifier.SUPER_MASK = 1 << 26
+	GdkModifier.HYPER_MASK = 1 << 27
+	GdkModifier.META_MASK = 1 << 28
+	GdkModifier.RELEASE_MASK = 1 << 30
+	GdkModifier.MODIFIER_MASK = 0x5c001fff
 }
 // End GDK3 INIT FUNC }}}
