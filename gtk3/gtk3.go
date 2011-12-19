@@ -4442,7 +4442,18 @@ func (self *TextIter) GetToggledTags(toggledOn bool) *glib.GSList {
 	return goList
 }
 
-//TODO: gtk_text_iter_get_child_anchor
+func (self *TextIter) GetChildAnchor() *TextChildAnchor {
+	o := C.gtk_text_iter_get_child_anchor(&self.object)
+
+	if o == nil {
+		return nil
+	}
+
+	if tca, err := gobject.ConvertToGo(unsafe.Pointer(o)); err == nil {
+		return tca.(*TextChildAnchor)
+	}
+	return nil
+}
 
 func (self *TextIter) BeginsTag(tag *TextTag) bool {
 	var b C.gboolean
