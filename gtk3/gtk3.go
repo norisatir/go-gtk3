@@ -4333,7 +4333,19 @@ func (self TextIter) GetBoxedType() gobject.GType {
 }
 
 // TextIter interface
-//TODO: gtk_text_iter_get_buffer
+
+func (self *TextIter) GetBuffer() *TextBuffer {
+	b := C.gtk_text_iter_get_buffer(&self.object)
+
+	if b == nil {
+		return nil
+	}
+
+	if buf, err := gobject.ConvertToGo(unsafe.Pointer(b)); err == nil {
+		return buf.(*TextBuffer)
+	}
+	return nil
+}
 
 func (self *TextIter) Assign(iter *TextIter) {
 	iter.object = self.object
