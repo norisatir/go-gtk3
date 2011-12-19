@@ -23,6 +23,14 @@ static inline gboolean is_type_object(GType t) {
 	return G_TYPE_IS_OBJECT(t);
 }
 
+static inline gboolean _is_type_enum(GType t) {
+	return G_TYPE_IS_ENUM(t);
+}
+
+static inline gboolean _is_type_flags(GType t) {
+	return G_TYPE_IS_FLAGS(t);
+}
+
 static inline gboolean is_type_boxed(GType t) {
 	return G_TYPE_IS_BOXED(t);
 }
@@ -37,6 +45,18 @@ static inline gboolean pointer_in_gvalue(GValue* v) {
 
 static inline gboolean object_in_gvalue(GValue* v) {
 	return G_VALUE_HOLDS_OBJECT(v);
+}
+
+static inline gboolean _enum_in_gvalue(GValue* v) {
+	return G_VALUE_HOLDS_ENUM(v);
+}
+
+static inline gboolean _flags_in_gvalue(GValue* v) {
+	return G_VALUE_HOLDS_FLAGS(v);
+}
+
+static inline gboolean _pointer_in_gvalue(GValue* v) {
+	return G_VALUE_HOLDS_POINTER(v);
 }
 
 */
@@ -68,6 +88,16 @@ var gtypes map[GType]FuncToGo
 // IsObjectType returns true if given type is derived from GObject
 func IsObjectType(t GType) bool {
 	b := C.is_type_object(C.GType(t))
+	return GoBool(unsafe.Pointer(&b))
+}
+// IsEnumType returns true if given type is derived from GEnum
+func IsEnumType(t GType) bool {
+	b := C._is_type_enum(C.GType(t))
+	return GoBool(unsafe.Pointer(&b))
+}
+// IsFlagsType returns true if given type is derived from GFlags
+func IsFlagsType(t GType) bool {
+	b := C._is_type_flags(C.GType(t))
 	return GoBool(unsafe.Pointer(&b))
 }
 // IsBoxedType returns true if given type is derived from GBoxed
@@ -152,73 +182,58 @@ func (self GValue) GetTypeID() GType {
 }
 
 func (self GValue) GetPtr() unsafe.Pointer {
-	switch self.gtype {
-	case G_TYPE_STRING:
+	t := self.gtype
+	switch {
+	case IsObjectType(t):
+		return unsafe.Pointer(C.g_value_get_object(self.value))
+	case IsEnumType(t):
+		e := C.g_value_get_enum(self.value)
+		return unsafe.Pointer(&e)
+	case IsFlagsType(t):
+		f := C.g_value_get_flags(self.value)
+		return unsafe.Pointer(&f)
+	case IsBoxedType(t):
+		b := C.g_value_get_boxed(self.value)
+		return unsafe.Pointer(&b)
+	case t == G_TYPE_STRING:
 		return unsafe.Pointer(C.g_value_get_string(self.value))
-	case G_TYPE_BOOLEAN:
+	case t == G_TYPE_BOOLEAN:
 		b := C.g_value_get_boolean(self.value)
 		return unsafe.Pointer(&b)
-	case G_TYPE_CHAR:
+	case t == G_TYPE_CHAR:
 		c := C.g_value_get_char(self.value)
 		return unsafe.Pointer(&c)
-	case G_TYPE_INT:
+	case t == G_TYPE_INT:
 		i := C.g_value_get_int(self.value)
 		return unsafe.Pointer(&i)
-	case G_TYPE_LONG:
+	case t == G_TYPE_LONG:
 		l := C.g_value_get_long(self.value)
 		return unsafe.Pointer(&l)
-	case G_TYPE_INT64:
+	case t == G_TYPE_INT64:
 		i := C.g_value_get_int64(self.value)
 		return unsafe.Pointer(&i)
-	case G_TYPE_UCHAR:
+	case t == G_TYPE_UCHAR:
 		c := C.g_value_get_uchar(self.value)
 		return unsafe.Pointer(&c)
-	case G_TYPE_UINT:
+	case t == G_TYPE_UINT:
 		i := C.g_value_get_uint(self.value)
 		return unsafe.Pointer(&i)
-	case G_TYPE_ULONG:
+	case t == G_TYPE_ULONG:
 		l := C.g_value_get_ulong(self.value)
 		return unsafe.Pointer(&l)
-	case G_TYPE_UINT64:
+	case t == G_TYPE_UINT64:
 		i := C.g_value_get_uint64(self.value)
 		return unsafe.Pointer(&i)
-	case G_TYPE_FLOAT:
+	case t == G_TYPE_FLOAT:
 		f := C.g_value_get_float(self.value)
 		return unsafe.Pointer(&f)
-	case G_TYPE_DOUBLE:
+	case t == G_TYPE_DOUBLE:
 		d := C.g_value_get_double(self.value)
 		return unsafe.Pointer(&d)
 	}
 
-	// Now things get tricky
-	// We know the type, but how is it stored?
-
-	// Is it object?
-	isIt := C.object_in_gvalue(self.value)
-	if GoBool(unsafe.Pointer(&isIt)) {
-		o := C.g_value_get_object(self.value)
-		return unsafe.Pointer(o)
-	}
-
-	// Is it boxed?
-	if IsBoxedType(self.gtype) {
-		val := C.g_value_get_boxed(self.value)
-		return unsafe.Pointer(val)
-	}
-
-	// Is it pointer?
-	isIt = C.pointer_in_gvalue(self.value)
-	if GoBool(unsafe.Pointer(&isIt)) {
-		val := C.g_value_get_pointer(self.value)
-		return unsafe.Pointer(val)
-	}
-
-	//Hmmm....
-	ptr := C.g_value_peek_pointer(self.value)
-	if ptr != nil {
-		return unsafe.Pointer(ptr)
-	}
-	return nil
+	p := C.g_value_get_pointer(self.value)
+	return unsafe.Pointer(p)
 }
 
 func (self GValue) Free() {
@@ -241,6 +256,10 @@ func CreateCGValue(tn GType, object ...unsafe.Pointer) *GValue {
 	switch {
 	case IsObjectType(tn):
 		C.g_value_set_object(&cv, C.gpointer(obj))
+	case IsEnumType(tn):
+		C.g_value_set_enum(&cv, *((*C.gint)(obj)))
+	case IsFlagsType(tn):
+		C.g_value_set_flags(&cv, *((*C.guint)(obj)))
 	case IsBoxedType(tn):
 		C.g_value_take_boxed(&cv, C.gconstpointer(obj))
 	case tn == G_TYPE_STRING:
