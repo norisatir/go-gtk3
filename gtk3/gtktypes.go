@@ -784,8 +784,8 @@ var GtkAccelFlags gtkAccelFlags
 
 type gtkAccelFlags struct {
 	VISIBLE int
-	LOCKED int
-	MASK int
+	LOCKED  int
+	MASK    int
 }
 // End GtkAccelFlags }}}
 

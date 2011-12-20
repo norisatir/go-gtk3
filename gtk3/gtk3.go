@@ -11161,7 +11161,6 @@ func _gtk_marshal(closure unsafe.Pointer,
 		v := C.get_index(array, C.guint(i))
 		gv := gobject.NewGValueFromNative(unsafe.Pointer(&v))
 		gv.ReInitializeType()
-		fmt.Println(gv.GetTypeName())
 		t, e := gobject.ConvertToGo(gv.GetPtr(), gv.GetTypeID())
 		if e == nil {
 			argslice[i] = t
@@ -11195,6 +11194,10 @@ func _gtk_closure_destroy_id(data unsafe.Pointer, closure unsafe.Pointer) {
 func init() {
 	// Initialiize map for closures
 	_closures = make(map[int64]gobject.ClosureFunc)
+
+	// Register GtkAccelGroup
+	gobject.RegisterCType(GtkType.ACCEL_GROUP, newAccelGroupFromNative)
+	gobject.RegisterGoType(GtkType.ACCEL_GROUP, nativeFromAccelGroup)
 
 	// Register GtkClipboard type
 	gobject.RegisterCType(GtkType.CLIPBOARD, newClipboardFromNative)
