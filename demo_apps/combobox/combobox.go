@@ -7,7 +7,6 @@ import gp "github.com/norisatir/go-gtk3/gdkpixbuf"
 import "strings"
 import "regexp"
 
-
 const (
 	PixbufCol = iota
 	TextCol
@@ -25,7 +24,7 @@ func CreateStockIconStore() gtk3.TreeModelLike {
 	for _, s := range stockId {
 		if s != "" {
 			pixbuf := cellView.RenderIconPixbuf(s, gtk3.GtkIconSize.BUTTON)
-			_,stockItem := gtk3.StockLookup(s)
+			_, stockItem := gtk3.StockLookup(s)
 
 			label := strings.Map(func(in rune) rune {
 				if in == rune('_') {
@@ -35,10 +34,10 @@ func CreateStockIconStore() gtk3.TreeModelLike {
 			}, stockItem.Label)
 
 			store.Append(&iter)
-			store.SetValues(&iter, gtk3.V{PixbufCol:pixbuf, TextCol:label})
+			store.SetValues(&iter, gtk3.V{PixbufCol: pixbuf, TextCol: label})
 		} else {
 			store.Append(&iter)
-			store.SetValues(&iter, gtk3.V{PixbufCol:nil, TextCol:"seperator"})
+			store.SetValues(&iter, gtk3.V{PixbufCol: nil, TextCol: "seperator"})
 		}
 	}
 	return store
@@ -53,7 +52,7 @@ func setSensitive(data ...interface{}) {
 	indices := path.GetIndices()
 	sensitive := indices[0] != 1
 
-	cell.CRenderer().Set(gtk3.P{"sensitive":sensitive})
+	cell.CRenderer().Set(gtk3.P{"sensitive": sensitive})
 }
 
 func isSeparator(model gtk3.TreeModelLike, iter *gtk3.TreeIter, data ...interface{}) bool {
@@ -63,81 +62,81 @@ func isSeparator(model gtk3.TreeModelLike, iter *gtk3.TreeIter, data ...interfac
 
 func CreateCapitalStore() gtk3.TreeModelLike {
 	type Capital struct {
-		Group string
+		Group   string
 		Capital string
 	}
 
 	capitals := []Capital{
-		{ "A - B", "" },
-		{ "", "Albany" },
-		{ "", "Annapolis" },
-		{ "", "Atlanta" },
-		{ "", "Augusta" },
-		{ "", "Austin" },
-		{ "", "Baton Rouge" },
-		{ "", "Bismarck" },
-		{ "", "Boise" },
-		{ "", "Boston" },
-		{ "C - D", "" },
-		{ "", "Carson City" },
-		{ "", "Charleston" },
-		{ "", "Cheyenne" },
-		{ "", "Columbia" },
-		{ "", "Columbus" },
-		{ "", "Concord" },
-		{ "", "Denver" },
-		{ "", "Des Moines" },
-		{ "", "Dover" },
-		{ "E - J", "" },
-		{ "", "Frankfort" },
-		{ "", "Harrisburg" },
-		{ "", "Hartford" },
-		{ "", "Helena" },
-		{ "", "Honolulu" },
-		{ "", "Indianapolis" },
-		{ "", "Jackson" },
-		{ "", "Jefferson City" },
-		{ "", "Juneau" },
-		{ "K - O", "" },
-		{ "", "Lansing" },
-		{ "", "Lincoln" },
-		{ "", "Little Rock" },
-		{ "", "Ljubljana" },
-		{ "", "Madison" },
-		{ "", "Montgomery" },
-		{ "", "Montpelier" },
-		{ "", "Nashville" },
-		{ "", "Oklahoma City" },
-		{ "", "Olympia" },
-		{ "P - S", "" },
-		{ "", "Phoenix" },
-		{ "", "Pierre" },
-		{ "", "Providence" },
-		{ "", "Raleigh" },
-		{ "", "Richmond" },
-		{ "", "Sacramento" },
-		{ "", "Salem" },
-		{ "", "Salt Lake City" },
-		{ "", "Santa Fe" },
-		{ "", "Springfield" },
-		{ "", "St. Paul" },
-		{ "T - Z", "" },
-		{ "", "Tallahassee" },
-		{ "", "Topeka" },
-		{ "", "Trenton" },
-		{ "", "" }}
+		{"A - B", ""},
+		{"", "Albany"},
+		{"", "Annapolis"},
+		{"", "Atlanta"},
+		{"", "Augusta"},
+		{"", "Austin"},
+		{"", "Baton Rouge"},
+		{"", "Bismarck"},
+		{"", "Boise"},
+		{"", "Boston"},
+		{"C - D", ""},
+		{"", "Carson City"},
+		{"", "Charleston"},
+		{"", "Cheyenne"},
+		{"", "Columbia"},
+		{"", "Columbus"},
+		{"", "Concord"},
+		{"", "Denver"},
+		{"", "Des Moines"},
+		{"", "Dover"},
+		{"E - J", ""},
+		{"", "Frankfort"},
+		{"", "Harrisburg"},
+		{"", "Hartford"},
+		{"", "Helena"},
+		{"", "Honolulu"},
+		{"", "Indianapolis"},
+		{"", "Jackson"},
+		{"", "Jefferson City"},
+		{"", "Juneau"},
+		{"K - O", ""},
+		{"", "Lansing"},
+		{"", "Lincoln"},
+		{"", "Little Rock"},
+		{"", "Ljubljana"},
+		{"", "Madison"},
+		{"", "Montgomery"},
+		{"", "Montpelier"},
+		{"", "Nashville"},
+		{"", "Oklahoma City"},
+		{"", "Olympia"},
+		{"P - S", ""},
+		{"", "Phoenix"},
+		{"", "Pierre"},
+		{"", "Providence"},
+		{"", "Raleigh"},
+		{"", "Richmond"},
+		{"", "Sacramento"},
+		{"", "Salem"},
+		{"", "Salt Lake City"},
+		{"", "Santa Fe"},
+		{"", "Springfield"},
+		{"", "St. Paul"},
+		{"T - Z", ""},
+		{"", "Tallahassee"},
+		{"", "Topeka"},
+		{"", "Trenton"},
+		{"", ""}}
 
 	var iter, iter2 gtk3.TreeIter
 	store := gtk3.NewTreeStore([]gobject.GType{gobject.G_TYPE_STRING})
 
-	for _,c := range capitals {
+	for _, c := range capitals {
 		switch {
 		case c.Group != "":
 			store.Append(&iter, nil)
-			store.SetValues(&iter, gtk3.V{0:c.Group})
+			store.SetValues(&iter, gtk3.V{0: c.Group})
 		case c.Capital != "":
 			store.Append(&iter2, &iter)
-			store.SetValues(&iter2, gtk3.V{0:c.Capital})
+			store.SetValues(&iter2, gtk3.V{0: c.Capital})
 		}
 	}
 	return store
@@ -148,22 +147,21 @@ func isCapitalSensitive(data ...interface{}) {
 	model := data[2].(gtk3.TreeModelLike)
 	iter := data[3].(*gtk3.TreeIter)
 	sensitive := !model.ITreeModel().IterHasChild(iter)
-	
-	cell.CRenderer().Set(gtk3.P{"sensitive":sensitive})
+
+	cell.CRenderer().Set(gtk3.P{"sensitive": sensitive})
 }
 
-func setBackground(entry* gtk3.Entry, mask string) {
+func setBackground(entry *gtk3.Entry, mask string) {
 	errorColor := gdk3.RGBA{1.0, 0.9, 0.9, 1.0}
-    if mask != "" {
-		m,_ := regexp.Compile(mask)
+	if mask != "" {
+		m, _ := regexp.Compile(mask)
 		if m.FindStringIndex(entry.GetText()) == nil {
-		   entry.OverrideColor(0, &errorColor) 
-		   return
+			entry.OverrideColor(0, &errorColor)
+			return
 		}
 	}
 	entry.OverrideColor(0, nil)
 }
-
 
 func main() {
 	gtk3.Init()

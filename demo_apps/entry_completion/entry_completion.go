@@ -30,7 +30,7 @@ func main() {
 	window.Connect("response", func() { window.Destroy() })
 
 	contentArea := window.GetContentArea().(*gtk3.Box)
-	
+
 	vbox := gtk3.NewVBox(5)
 	contentArea.PackStart(vbox, true, true, 0)
 	vbox.SetBorderWidth(5)

@@ -2,12 +2,11 @@ package main
 
 import "github.com/norisatir/go-gtk3/gtk3"
 
-
 func CreateBBox(orientation int, title string, spacing int, layout int) *gtk3.Frame {
 
 	frame := gtk3.NewFrame(title)
 
-	bbox := gtk3.NewButtonBox(orientation)	
+	bbox := gtk3.NewButtonBox(orientation)
 	bbox.SetLayout(layout)
 
 	button := gtk3.NewButtonFromStock(gtk3.GtkStock.OK)
@@ -23,7 +22,6 @@ func CreateBBox(orientation int, title string, spacing int, layout int) *gtk3.Fr
 
 	return frame
 }
-
 
 func DoButtonBox() *gtk3.Window {
 	window := gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL)
@@ -44,14 +42,11 @@ func DoButtonBox() *gtk3.Window {
 	vbox.PackStart(CreateBBox(gtk3.GtkOrientation.HORIZONTAL, "Start", 40, gtk3.GtkButtonBoxStyle.START), true, true, 5)
 	vbox.PackStart(CreateBBox(gtk3.GtkOrientation.HORIZONTAL, "End", 40, gtk3.GtkButtonBoxStyle.END), true, true, 5)
 
-
 	frame_vert := gtk3.NewFrame("Vertical Button Boxes")
 	main_vbox.PackStart(frame_vert, true, true, 10)
 
-
 	hbox := gtk3.NewHBox(0)
 	frame_vert.Add(hbox)
-
 
 	hbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Spread", 30, gtk3.GtkButtonBoxStyle.SPREAD), true, true, 0)
 	hbox.PackStart(CreateBBox(gtk3.GtkOrientation.VERTICAL, "Edge", 30, gtk3.GtkButtonBoxStyle.EDGE), true, true, 5)

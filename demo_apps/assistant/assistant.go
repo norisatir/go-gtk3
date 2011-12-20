@@ -18,9 +18,9 @@ func main() {
 	progress.SetText(nil)
 
 	assistant.Connect("destroy", gtk3.MainQuit)
-	assistant.Connect("cancel", func() { assistant.Destroy()})
-	assistant.Connect("close", func() { assistant.Destroy()})
-	assistant.Connect("apply", OnAssistantApply, progress, assistant) 
+	assistant.Connect("cancel", func() { assistant.Destroy() })
+	assistant.Connect("close", func() { assistant.Destroy() })
+	assistant.Connect("apply", OnAssistantApply, progress, assistant)
 	assistant.Connect("prepare", OnAssistantPrepare)
 
 	assistant.Show()
@@ -48,13 +48,13 @@ func OnAssistantPrepare(data ...interface{}) {
 	nPages := assistant.GetNPages()
 	assistant.SetTitle(fmt.Sprintf("Sample assistant (%d of %d)", currentPage+1, nPages))
 
-  // The fourth page (counting from zero) is the progress page.  The
-  // user clicked Apply to get here so we tell the assistant to commit,
-  // which means the changes up to this point are permanent and cannot
-  // be cancelled or revisited.
-  if currentPage == 3 {
-	  assistant.Commit()
-  }
+	// The fourth page (counting from zero) is the progress page.  The
+	// user clicked Apply to get here so we tell the assistant to commit,
+	// which means the changes up to this point are permanent and cannot
+	// be cancelled or revisited.
+	if currentPage == 3 {
+		assistant.Commit()
+	}
 }
 
 func OnEntryChanged(assistant *gtk3.Assistant, data ...interface{}) {
