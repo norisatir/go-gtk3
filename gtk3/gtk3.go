@@ -132,6 +132,7 @@ static inline GtkTreeViewColumn* to_GtkTreeViewColumn(void* obj) { return GTK_TR
 static inline GtkTreeView* to_GtkTreeView(void* obj) { return GTK_TREE_VIEW(obj); }
 static inline GtkComboBox* to_GtkComboBox(void* obj) { return GTK_COMBO_BOX(obj); }
 static inline GtkComboBoxText* to_GtkComboBoxText(void* obj) { return GTK_COMBO_BOX_TEXT(obj); }
+static inline GtkMenuShell* to_GtkMenuShell(void* obj) { return GTK_MENU_SHELL(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -9402,6 +9403,156 @@ func (self *ComboBoxText) GetActiveText() string {
 // End GtkComboBoxText
 ////////////////////////////// }}}
 
+// GtkMenuShell {{{
+//////////////////////////////
+
+// GtkMenuShell Type
+type MenuShell struct {
+	object *C.GtkMenuShell
+	*Container
+}
+
+// Clear MenuShell struct when it goes out of reach
+func menuShellFinalizer(m *MenuShell) {
+	runtime.SetFinalizer(m, func(m *MenuShell) { gobject.Unref(m) })
+}
+
+// Conversion function for gobject registration map
+func newMenuShellFromNative(obj unsafe.Pointer) interface{} {
+	m := &MenuShell{}
+	m.object = C.to_GtkMenuShell(obj)
+
+	if gobject.IsObjectFloating(m) {
+		gobject.RefSink(m)
+	} else {
+		gobject.Ref(m)
+	}
+	m.Container = NewContainer(obj)
+	menuShellFinalizer(m)
+
+	return m
+}
+
+func nativeFromMenuShell(m interface{}) *gobject.GValue {
+	ms, ok := m.(*MenuShell)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.MENU_SHELL, ms.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// Conversion for GtkMenuDirection
+func newGtkMenuDirectionFromNative(obj unsafe.Pointer) interface{} {
+	return int(*((*C.gint)(obj)))
+}
+
+// To be Object-like
+func (self MenuShell) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self MenuShell) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self MenuShell) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self MenuShell) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be container-like
+func (self MenuShell) C() *Container {
+	return self.Container
+}
+
+// MenuShell interface
+
+func (self *MenuShell) Append(child WidgetLike) {
+	C.gtk_menu_shell_append(self.object, child.W().object)
+}
+
+func (self *MenuShell) Prepend(child WidgetLike) {
+	C.gtk_menu_shell_prepend(self.object, child.W().object)
+}
+
+func (self *MenuShell) Insert(child WidgetLike, position int) {
+	C.gtk_menu_shell_insert(self.object, child.W().object, C.gint(position))
+}
+
+func (self *MenuShell) Deactivate() {
+	C.gtk_menu_shell_deactivate(self.object)
+}
+
+func (self *MenuShell) SelectItem(menuItem WidgetLike) {
+	C.gtk_menu_shell_select_item(self.object, menuItem.W().object)
+}
+
+func (self *MenuShell) SelectFirst(searchSensitive bool) {
+	b := gobject.GBool(searchSensitive)
+	defer b.Free()
+
+	C.gtk_menu_shell_select_first(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *MenuShell) Deselect() {
+	C.gtk_menu_shell_deselect(self.object)
+}
+
+func (self *MenuShell) ActivateItem(menuItem WidgetLike, forceDeactivate bool) {
+	b := gobject.GBool(forceDeactivate)
+	defer b.Free()
+	C.gtk_menu_shell_activate_item(self.object, menuItem.W().object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *MenuShell) Cancel() {
+	C.gtk_menu_shell_cancel(self.object)
+}
+
+func (self *MenuShell) SetTakeFocus(takeFocus bool) {
+	b := gobject.GBool(takeFocus)
+	defer b.Free()
+	C.gtk_menu_shell_set_take_focus(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *MenuShell) GetTakeFocus() bool {
+	b := C.gtk_menu_shell_get_take_focus(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *MenuShell) GetSelectedItem() WidgetLike {
+	w := C.gtk_menu_shell_get_selected_item(self.object)
+
+	if w == nil {
+		return nil
+	}
+
+	if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+		return wid.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *MenuShell) GetParentShell() WidgetLike {
+	w := C.gtk_menu_shell_get_parent_shell(self.object)
+
+	if w == nil {
+		return nil
+	}
+
+	if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+		return wid.(WidgetLike)
+	}
+	return nil
+}
+
+//////////////////////////////
+// END GtkMenuShell
+////////////////////////////// }}}
+
 // End Menus, Combo Box, Toolbar }}}
 
 // Layout Containers {{{
@@ -11468,19 +11619,26 @@ func init() {
 	gobject.RegisterCType(GtkType.TREE_SELECTION, newTreeSelectionFromNative)
 	gobject.RegisterGoType(GtkType.TREE_SELECTION, nativeFromTreeSelection)
 
-	// Register GtkTreeView
+	// Register GtkTreeView type
 	gobject.RegisterCType(GtkType.TREE_VIEW, newTreeViewFromNative)
 	gobject.RegisterGoType(GtkType.TREE_VIEW, nativeFromTreeView)
 
-	// Register GtkComboBox
+	// Register GtkComboBox type
 	gobject.RegisterCType(GtkType.COMBO_BOX, newComboBoxFromNative)
 	gobject.RegisterGoType(GtkType.COMBO_BOX, nativeFromComboBox)
 
-	// Register GtkComboBoxText
+	// Register GtkComboBoxText type
 	gobject.RegisterCType(GtkType.COMBO_BOX_TEXT, newComboBoxTextFromNative)
 	gobject.RegisterGoType(GtkType.COMBO_BOX_TEXT, nativeFromComboBoxText)
 
-	// Register GtkNotebook
+	// Register GtkMenuShell type
+	gobject.RegisterCType(GtkType.MENU_SHELL, newMenuShellFromNative)
+	gobject.RegisterGoType(GtkType.MENU_SHELL, nativeFromMenuShell)
+
+	// Register GtkMenuDirection type
+	gobject.RegisterCType(GtkType.MENU_DIRECTION_TYPE, newMenuShellFromNative)
+
+	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
 	gobject.RegisterGoType(GtkType.NOTEBOOK, nativeFromNotebook)
 }

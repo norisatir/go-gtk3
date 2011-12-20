@@ -789,6 +789,18 @@ type gtkAccelFlags struct {
 }
 // End GtkAccelFlags }}}
 
+// GtkMenuDirection {{{
+
+var GtkMenuDirection gtkMenuDirection
+
+type gtkMenuDirection struct {
+	PARENT int
+	CHILD  int
+	NEXT   int
+	PREV   int
+}
+// End GtkMenuDirection }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1392,4 +1404,10 @@ func init() {
 	GtkAccelFlags.VISIBLE = 1 << 0
 	GtkAccelFlags.LOCKED = 1 << 1
 	GtkAccelFlags.MASK = 0x07
+
+	// Initialize GtkMenuDirection
+	GtkMenuDirection.PARENT = 0
+	GtkMenuDirection.CHILD = 1
+	GtkMenuDirection.NEXT = 2
+	GtkMenuDirection.PREV = 3
 } /// }}}
