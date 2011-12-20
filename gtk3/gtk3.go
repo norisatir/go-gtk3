@@ -75,6 +75,7 @@ static inline void free_array(GArray* ar) {
 
 
 // to_Gtk*** Funcs {{{
+static inline GObject* to_GObject(void* o) { return G_OBJECT(o); }
 static inline GApplication* to_GApplication(GtkApplication* g) { return G_APPLICATION(g); }
 static inline GtkClipboard* to_GtkClipboard(void* obj) { return GTK_CLIPBOARD(obj); }
 static inline GtkAccelGroup* to_GtkAccelGroup(void* obj) { return GTK_ACCEL_GROUP(obj); }
@@ -564,6 +565,26 @@ func NewAccelGroup() *AccelGroup {
 	return ag
 }
 
+func AccelGroupsActivate(obj gobject.ObjectLike, accelKey uint, gdk_modifier int) bool {
+	o := C.to_GObject(obj.ToNative())
+	b := C.gtk_accel_groups_activate(o, C.guint(accelKey), C.GdkModifierType(gdk_modifier))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func AccelGroupsFromObject(obj gobject.ObjectLike) *glib.GSList {
+	o := C.to_GObject(obj.ToNative())
+	clist := C.gtk_accel_groups_from_object(o)
+
+	if clist == nil {
+		return nil
+	}
+
+	goList := glib.NewGSListFromNative(unsafe.Pointer(clist))
+	goList.ConversionFunc = newAccelGroupFromNative
+
+	return goList
+}
+
 // Clear AccelGroup struct when it goes out of reach
 func accelGroupFinalizer(ag *AccelGroup) {
 	runtime.SetFinalizer(ag, func(ag *AccelGroup) { gobject.Unref(ag) })
@@ -611,6 +632,7 @@ func (self AccelGroup) Get(properties []string) map[string]interface{} {
 }
 
 // AccelGroup interface
+
 func (self *AccelGroup) ConnectAccel(accelKey uint, gtk_Modifier, gtk_AccelFlags int, f interface{}, data ...interface{}) {
 	call, id := gobject.CreateCustomClosure(f, data...)
 	_closures[id] = call
@@ -619,6 +641,43 @@ func (self *AccelGroup) ConnectAccel(accelKey uint, gtk_Modifier, gtk_AccelFlags
 
 	C.gtk_accel_group_connect(self.object, C.guint(accelKey), C.GdkModifierType(gtk_Modifier),
 		C.GtkAccelFlags(gtk_AccelFlags), gClosure)
+}
+
+func (self *AccelGroup) ConnectByPath(accelPath string, f interface{}, data ...interface{}) {
+	call, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = call
+
+	gClosure := C._go_new_closure(C.gint64(id))
+
+	path := gobject.GString(accelPath)
+	defer path.Free()
+
+	C.gtk_accel_group_connect_by_path(self.object, (*C.gchar)(path.GetPtr()), gClosure)
+}
+
+func (self *AccelGroup) DisconectKey(accelKey uint, gdk_modifier int) bool {
+	b := C.gtk_accel_group_disconnect_key(self.object, C.guint(accelKey), C.GdkModifierType(gdk_modifier))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//TODO: gtk_accel_group_query
+//TODO: gtk_accel_group_activate
+
+func (self *AccelGroup) Lock() {
+	C.gtk_accel_group_lock(self.object)
+}
+
+func (self *AccelGroup) UnLock() {
+	C.gtk_accel_group_unlock(self.object)
+}
+
+func (self *AccelGroup) GetIsLocked() bool {
+	b := C.gtk_accel_group_get_is_locked(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *AccelGroup) GetModifierMask() int {
+	return int(C.gtk_accel_group_get_modifier_mask(self.object))
 }
 
 //////////////////////////////
