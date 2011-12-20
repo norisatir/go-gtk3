@@ -29,6 +29,8 @@ extern void _gtk_marshal(GClosure *closure,
 							  const GValue *paramValues,
 							  gpointer invocationHint,
 							  gpointer marshalData);
+extern void _gtk_menu_position_func(GtkMenu* menu, gint* x, gint* y, gboolean* push_in, gpointer user_data);
+extern void _gtk_menu_detach_func(GtkWidget* attach_widget, GtkMenu* menu);
 // End Exported funcs }}}
 
 static void _gtk_init(void* argc, void* argv) {
@@ -133,6 +135,7 @@ static inline GtkTreeView* to_GtkTreeView(void* obj) { return GTK_TREE_VIEW(obj)
 static inline GtkComboBox* to_GtkComboBox(void* obj) { return GTK_COMBO_BOX(obj); }
 static inline GtkComboBoxText* to_GtkComboBoxText(void* obj) { return GTK_COMBO_BOX_TEXT(obj); }
 static inline GtkMenuShell* to_GtkMenuShell(void* obj) { return GTK_MENU_SHELL(obj); }
+static inline GtkMenu* to_GtkMenu(void* obj) { return GTK_MENU(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -321,6 +324,36 @@ static void _gtk_combo_box_set_row_separator_func(GtkComboBox* combo_box, gint64
 }
 
 //End GtkComboBox funcs }}}
+
+// GtkMenu funcs {{{
+static void _gtk_menu_popup_for_device(GtkMenu* menu, GdkDevice* device, GtkWidget* pms, GtkWidget* pmi, guint button, guint32 ai, gint64 id) {
+	if (id == 0) {
+		gtk_menu_popup_for_device(menu, device, pms, pmi, NULL, NULL, NULL, button, ai);
+		return;
+	}
+
+	gint64* uid = (gint64*)malloc(sizeof(gint64));
+	*uid = id;
+	gtk_menu_popup_for_device(menu, device, pms, pmi, _gtk_menu_position_func, (gpointer)uid, _g_gtk_destroy_notify, button, ai);
+}
+
+static void _gtk_menu_popup(GtkMenu* menu, GtkWidget* pms, GtkWidget* pmi, guint button, guint32 ai, gint64 id) {
+	if (id == 0) {
+		gtk_menu_popup(menu, pms, pmi, NULL, NULL, button, ai);
+		return;
+	}
+
+	gtk_menu_popup(menu, pms, pmi, _gtk_menu_position_func, (gpointer)(&id), button, ai);
+}
+
+static void _gtk_menu_attach_to_widget(GtkMenu* menu, GtkWidget* attachWidget, gint64 id) {
+	gint64* uid = (gint64*)malloc(sizeof(gint64));
+	*uid = id;
+	g_object_set_data_full(G_OBJECT(menu), "detachFunc", (gpointer)uid, _g_gtk_destroy_notify);
+
+    gtk_menu_attach_to_widget(menu, attachWidget, _gtk_menu_detach_func);
+}
+//End GtkMenu funcs }}}
 
 // Gtk*Store funcs {{{
 static inline GType* gtype_array_new(int n) {
@@ -536,6 +569,11 @@ type CellLayoutLike interface {
 // ComboLike interface must have method Combo
 type ComboLike interface {
 	Combo() *ComboBox
+}
+
+// MenuShellLike interface must have method MShell
+type MenuShellLike interface {
+	MShell() *MenuShell
 }
 //////////////////////////////
 // END Interfaces
@@ -9553,6 +9591,284 @@ func (self *MenuShell) GetParentShell() WidgetLike {
 // END GtkMenuShell
 ////////////////////////////// }}}
 
+// GtkMenu {{{
+//////////////////////////////
+
+// GtkMenu Type
+type Menu struct {
+	object *C.GtkMenu
+	*MenuShell
+}
+
+func NewMenu() *Menu {
+	m := &Menu{}
+	o := C.gtk_menu_new()
+	m.object = C.to_GtkMenu(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(m) {
+		gobject.RefSink(m)
+	}
+	m.MenuShell = newMenuShellFromNative(unsafe.Pointer(o)).(*MenuShell)
+	menuFinalizer(m)
+
+	return m
+}
+
+// Clear Menu struct when it goes out of reach
+func menuFinalizer(m *Menu) {
+	runtime.SetFinalizer(m, func(m *Menu) { gobject.Unref(m) })
+}
+
+// Conversion function for gobject registration map
+func newMenuFromNative(obj unsafe.Pointer) interface{} {
+	m := &Menu{}
+	m.object = C.to_GtkMenu(obj)
+
+	if gobject.IsObjectFloating(m) {
+		gobject.RefSink(m)
+	} else {
+		gobject.Ref(m)
+	}
+	m.MenuShell = newMenuShellFromNative(obj).(*MenuShell)
+	menuFinalizer(m)
+
+	return m
+}
+
+func nativeFromMenu(menu interface{}) *gobject.GValue {
+	m, ok := menu.(*Menu)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.MENU_SHELL, m.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be Object-like
+func (self Menu) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Menu) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Menu) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Menu) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be MenuShell-like
+func (self Menu) MShell() *MenuShell {
+	return self.MenuShell
+}
+
+// Menu interface
+
+func (self *Menu) SetScreen(screen *gdk3.Screen) {
+	if screen == nil {
+		C.gtk_menu_set_screen(self.object, nil)
+	}
+	C.gtk_menu_set_screen(self.object, (*C.GdkScreen)(screen.ToNative()))
+}
+
+func (self *Menu) ReorderChild(child WidgetLike, position int) {
+	C.gtk_menu_reorder_child(self.object, child.W().object, C.gint(position))
+}
+
+func (self *Menu) Attach(child WidgetLike, left, right, top, bottom uint) {
+	C.gtk_menu_attach(self.object, child.W().object, C.guint(left),
+		C.guint(right), C.guint(top), C.guint(bottom))
+}
+
+func (self *Menu) PopupForDevice(device *gdk3.Device, parentMenuShell WidgetLike, parentMenuItem WidgetLike,
+									button uint, activateTime uint32, f interface{}, data ...interface{}) {
+
+	var call gobject.ClosureFunc
+	var id int64 = 0
+	if f != nil {
+		call, id = gobject.CreateCustomClosure(f, data...)	
+		_closures[id] = call
+	}
+    var pms, pmi *C.GtkWidget = nil, nil
+
+	if parentMenuShell != nil {
+		pms = parentMenuShell.W().object
+	}
+
+	if parentMenuItem != nil {
+		pmi = parentMenuItem.W().object
+	}
+
+	C._gtk_menu_popup_for_device(self.object, (*C.GdkDevice)(device.ToNative()), pms,
+		pmi, C.guint(button), C.guint32(activateTime), C.gint64(id))
+}
+
+func (self *Menu) Popup(parentMenuShell WidgetLike, parentMenuItem WidgetLike,
+									button uint, activateTime uint32, f interface{}, data ...interface{}) {
+
+	var call gobject.ClosureFunc
+	var id int64 = 0
+	if f != nil {
+		call, id = gobject.CreateCustomClosure(f, data...)	
+		_closures[id] = call
+	}
+    var pms, pmi *C.GtkWidget = nil, nil
+
+	if parentMenuShell != nil {
+		pms = parentMenuShell.W().object
+	}
+
+	if parentMenuItem != nil {
+		pmi = parentMenuItem.W().object
+	}
+
+	C._gtk_menu_popup(self.object, pms, pmi, C.guint(button), C.guint32(activateTime), C.gint64(id))
+
+	if id != 0 {
+		delete(_closures, id)
+	}
+}
+
+func (self *Menu) SetAccelGroup(accelGroup *AccelGroup) {
+	C.gtk_menu_set_accel_group(self.object, accelGroup.object)
+}
+
+func (self *Menu) GetAccelGroup() *AccelGroup {
+	a := C.gtk_menu_get_accel_group(self.object)
+
+	if a == nil {
+		return nil
+	}
+
+	if acc, err := gobject.ConvertToGo(unsafe.Pointer(a)); err == nil {
+		return acc.(*AccelGroup)
+	}
+	return nil
+}
+
+func (self *Menu) SetAccelPath(accelPath string) {
+	s := gobject.GString(accelPath)
+	defer s.Free()
+	C.gtk_menu_set_accel_path(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Menu) GetAccelPath() string {
+	s := C.gtk_menu_get_accel_path(self.object)
+	return gobject.GoString(unsafe.Pointer(&s))
+}
+
+func (self *Menu) SetTitle(title interface{}) {
+	if title == nil {
+		C.gtk_menu_set_title(self.object, nil)
+	}
+	if t, ok := title.(string); ok {
+		s := gobject.GString(t)
+		defer s.Free()
+		C.gtk_menu_set_title(self.object, (*C.gchar)(s.GetPtr()))
+	}
+}
+
+func (self *Menu) GetTitle() string {
+	s := C.gtk_menu_get_title(self.object)
+	if s == nil {
+		return ""
+	}
+	return gobject.GoString(unsafe.Pointer(C.g_strdup(s)))
+}
+
+func (self *Menu) SetMonitor(monitorNum int) {
+	C.gtk_menu_set_monitor(self.object, C.gint(monitorNum))
+}
+
+func (self *Menu) GetMonitor() int {
+	return int(C.gtk_menu_get_monitor(self.object))
+}
+
+func (self *Menu) GetTearoffState() bool {
+	b := C.gtk_menu_get_tearoff_state(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Menu) SetReserverToggleSize(reserveToggleSize bool) {
+	b := gobject.GBool(reserveToggleSize)
+	defer b.Free()
+	C.gtk_menu_set_reserve_toggle_size(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Menu) GetReserveToggleSize() bool {
+	b := C.gtk_menu_get_reserve_toggle_size(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Menu) Popdown() {
+	C.gtk_menu_popdown(self.object)
+}
+
+func (self *Menu) Reposition() {
+	C.gtk_menu_reposition(self.object)
+}
+
+func (self *Menu) GetActive() WidgetLike {
+	w := C.gtk_menu_get_active(self.object)
+	if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+		return wid.(WidgetLike)
+	}
+	return nil
+}
+
+func (self *Menu) SetActive(index uint) {
+	C.gtk_menu_set_active(self.object, C.guint(index))
+}
+
+func (self *Menu) SetTearoffState(tornOff bool) {
+	b := gobject.GBool(tornOff)
+	defer b.Free()
+	C.gtk_menu_set_tearoff_state(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Menu) AttachToWidget(attachWidget WidgetLike, f interface{}, data ...interface{}) {
+	call, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = call
+
+	C._gtk_menu_attach_to_widget(self.object, attachWidget.W().object, C.gint64(id))
+}
+
+func (self *Menu) Detach() {
+	C.gtk_menu_detach(self.object)
+}
+
+func (self *Menu) GetAttachWidget() WidgetLike {
+	w := C.gtk_menu_get_attach_widget(self.object)
+	
+	if w != nil {
+		if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+			return wid.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *Menu) GetForAttachWidget(w WidgetLike) *glib.GList {
+	clist := C.gtk_menu_get_for_attach_widget(w.W().object)
+
+	goList := glib.NewGListFromNative(unsafe.Pointer(clist))
+	goList.ConversionFunc = func(obj unsafe.Pointer) interface{} {
+		if w, err := gobject.ConvertToGo(obj); err == nil {
+			return w.(WidgetLike)
+		}
+		return nil
+	}
+
+	return goList
+}
+//////////////////////////////
+// END GtkMenu
+////////////////////////////// }}}
+
 // End Menus, Combo Box, Toolbar }}}
 
 // Layout Containers {{{
@@ -11396,6 +11712,44 @@ func _gtk_closure_destroy_id(data unsafe.Pointer, closure unsafe.Pointer) {
 	C.free(data)
 }
 
+//export _gtk_menu_position_func
+func _gtk_menu_position_func(menu, x, y, pushIn, userData unsafe.Pointer) {
+	id := int64(*((*C.gint64)(userData)))
+
+	goMenu := newMenuFromNative(menu).(*Menu)
+
+	var retX, retY int
+	var retPush bool
+
+	if c, ok := _closures[id]; ok {
+		c([]interface{}{goMenu, &retX, &retY, &retPush})
+
+		*((*C.gint)(x)) = C.gint(retX)
+		*((*C.gint)(y)) = C.gint(retY)
+
+		b := gobject.GBool(retPush)
+		defer b.Free()
+		*((*C.gboolean)(pushIn)) = *((*C.gboolean)(b.GetPtr()))
+	}
+}
+
+//export _gtk_menu_detach_func
+func _gtk_menu_detach_func(attachWidget, menu unsafe.Pointer) {
+	// Get id
+	s := gobject.GString("detachFunc")
+	defer s.Free()
+	o := C.to_GObject(menu)
+	pId := C.g_object_get_data(o, (*C.gchar)(s.GetPtr()))
+	id := int64(*((*C.gint64)(pId)))
+
+	w,_ := gobject.ConvertToGo(attachWidget)
+	m,_ := gobject.ConvertToGo(menu)
+
+	if c, ok := _closures[id]; ok {
+		c([]interface{}{w, m})
+	}
+}
+
 //////////////////////////////
 // END Exported functions
 ////////////////////////////// }}}
@@ -11637,6 +11991,10 @@ func init() {
 
 	// Register GtkMenuDirection type
 	gobject.RegisterCType(GtkType.MENU_DIRECTION_TYPE, newMenuShellFromNative)
+
+	// Regisetr GtkMenu type
+	gobject.RegisterCType(GtkType.MENU, newMenuFromNative)
+	gobject.RegisterGoType(GtkType.MENU, nativeFromMenu)
 
 	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
