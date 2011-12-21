@@ -52,7 +52,7 @@ type GSList struct {
 // GC_Free and GC_FreeFull will hold default bool values.
 func NewGSList() *GSList {
 	gl := &GSList{}
-	gl.object = C.g_slist_alloc()
+	gl.object = nil
 	gl.ConversionFunc = nil
 	gl.DestroyFunc = nil
 
@@ -82,6 +82,10 @@ func GSListFinalizer(gsl *GSList) {
 	})
 }
 
+func (self *GSList) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
 func (self *GSList) Free() {
 	C.g_slist_free(self.object)
 }
@@ -96,6 +100,7 @@ func (self *GSList) FreeFull() {
 		el := C.g_slist_nth_data(self.object, C.guint(i))
 		self.DestroyFunc(unsafe.Pointer(el))
 	}
+	self.Free()
 }
 
 func (self *GSList) NthData(n uint) interface{} {
@@ -152,7 +157,7 @@ type GList struct {
 // GC_Free and GC_FreeFull will hold default bool values.
 func NewGList() *GList {
 	gl := &GList{}
-	gl.object = C.g_list_alloc()
+	gl.object = nil
 	gl.ConversionFunc = nil
 	gl.DestroyFunc = nil
 
@@ -182,6 +187,10 @@ func GListFinalizer(gl *GList) {
 	})
 }
 
+func (self *GList) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
 func (self *GList) Free() {
 	C.g_list_free(self.object)
 }
@@ -196,7 +205,7 @@ func (self *GList) FreeFull() {
 		el := C.g_list_nth_data(self.object, C.guint(i))
 		self.DestroyFunc(unsafe.Pointer(el))
 	}
-	C.g_list_free(self.object)
+	self.Free()
 }
 
 func (self *GList) NthData(n uint) interface{} {
