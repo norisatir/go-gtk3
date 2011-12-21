@@ -139,6 +139,7 @@ static inline GtkMenu* to_GtkMenu(void* obj) { return GTK_MENU(obj); }
 static inline GtkMenuBar* to_GtkMenuBar(void* obj) { return GTK_MENU_BAR(obj); }
 static inline GtkMenuItem* to_GtkMenuItem(void* obj) { return GTK_MENU_ITEM(obj); }
 static inline GtkCheckMenuItem* to_GtkCheckMenuItem(void* obj) { return GTK_CHECK_MENU_ITEM(obj); }
+static inline GtkImageMenuItem* to_GtkImageMenuItem(void* obj) { return GTK_IMAGE_MENU_ITEM(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -10283,7 +10284,7 @@ func (self CheckMenuItem) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
 
-// To be bin-like
+// To be MenuItem-like
 func (self CheckMenuItem) MItem() *MenuItem {
 	return self.MenuItem
 }
@@ -10328,6 +10329,183 @@ func (self *CheckMenuItem) GetDrawAsRadio() bool {
 }
 //////////////////////////////
 // END GtkCheckMenuItem
+////////////////////////////// }}}
+
+// GtkImageMenuItem {{{
+//////////////////////////////
+
+// ImageMenuItem type
+type ImageMenuItem struct {
+	object *C.GtkImageMenuItem
+	*MenuItem
+}
+
+func NewImageMenuItem() *ImageMenuItem {
+	mi := &ImageMenuItem{}
+	o := C.gtk_image_menu_item_new()
+	mi.object = C.to_GtkImageMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	}
+	mi.MenuItem = newMenuItemFromNative(unsafe.Pointer(o)).(*MenuItem)
+	imageMenuItemFinalizer(mi)
+
+	return mi
+}
+
+func NewImageMenuItemFromStock(stockId string, accelGroup *AccelGroup) *ImageMenuItem {
+	mi := &ImageMenuItem{}
+	s := gobject.GString(stockId)
+	defer s.Free()
+
+	var cal *C.GtkAccelGroup = nil
+	if accelGroup != nil {
+		cal = accelGroup.object
+	}
+	o := C.gtk_image_menu_item_new_from_stock((*C.gchar)(s.GetPtr()), cal)
+	mi.object = C.to_GtkImageMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	}
+	mi.MenuItem = newMenuItemFromNative(unsafe.Pointer(o)).(*MenuItem)
+	imageMenuItemFinalizer(mi)
+
+	return mi
+}
+
+func NewImageMenuItemWithLabel(label string) *ImageMenuItem {
+	mi := &ImageMenuItem{}
+	s := gobject.GString(label)
+	defer s.Free()
+	o := C.gtk_image_menu_item_new_with_label((*C.gchar)(s.GetPtr()))
+	mi.object = C.to_GtkImageMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	}
+	mi.MenuItem = newMenuItemFromNative(unsafe.Pointer(o)).(*MenuItem)
+	imageMenuItemFinalizer(mi)
+
+	return mi
+}
+
+func NewImageMenuItemWithMnemonic(label string) *ImageMenuItem {
+	mi := &ImageMenuItem{}
+	s := gobject.GString(label)
+	defer s.Free()
+	o := C.gtk_image_menu_item_new_with_mnemonic((*C.gchar)(s.GetPtr()))
+	mi.object = C.to_GtkImageMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	}
+	mi.MenuItem = newMenuItemFromNative(unsafe.Pointer(o)).(*MenuItem)
+	imageMenuItemFinalizer(mi)
+
+	return mi
+}
+
+// Clear ImageMenuItem struct when it goes out of reach
+func imageMenuItemFinalizer(m *ImageMenuItem) {
+	runtime.SetFinalizer(m, func(m *ImageMenuItem) { gobject.Unref(m) })
+}
+
+// Conversion function for gobject registration map
+func newImageMenuItemFromNative(obj unsafe.Pointer) interface{} {
+	m := &ImageMenuItem{}
+	m.object = C.to_GtkImageMenuItem(obj)
+
+	if gobject.IsObjectFloating(m) {
+		gobject.RefSink(m)
+	} else {
+		gobject.Ref(m)
+	}
+	m.MenuItem = newMenuItemFromNative(obj).(*MenuItem)
+	imageMenuItemFinalizer(m)
+
+	return m
+}
+
+func nativeFromImageMenuItem(m interface{}) *gobject.GValue {
+	im, ok := m.(*CheckMenuItem)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.IMAGE_MENU_ITEM, im.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self ImageMenuItem) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ImageMenuItem) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ImageMenuItem) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self ImageMenuItem) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be MenuItem-like
+func (self ImageMenuItem) MItem() *MenuItem {
+	return self.MenuItem
+}
+
+// ImageMenuItem interface
+
+func (self *ImageMenuItem) SetImage(image WidgetLike) {
+	if image == nil {
+		return
+	}
+	C.gtk_image_menu_item_set_image(self.object, image.W().object)
+}
+
+func (self *ImageMenuItem) GetImage() WidgetLike {
+	i := C.gtk_image_menu_item_get_image(self.object)
+
+	if i != nil {
+		if im, err := gobject.ConvertToGo(unsafe.Pointer(i)); err == nil {
+			return im.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *ImageMenuItem) GetUseStock() bool {
+	b := C.gtk_image_menu_item_get_use_stock(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ImageMenuItem) SetUseStock(useStock bool) {
+	b := gobject.GBool(useStock)
+	defer b.Free()
+	C.gtk_image_menu_item_set_use_stock(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ImageMenuItem) GetAlwaysShowImage() bool {
+	b := C.gtk_image_menu_item_get_always_show_image(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ImageMenuItem) SetAlwaysShowImage(alwaysShow bool) {
+	b := gobject.GBool(alwaysShow)
+	defer b.Free()
+	C.gtk_image_menu_item_set_always_show_image(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ImageMenuItem) SetAccelGroup(accelGroup *AccelGroup) {
+	C.gtk_image_menu_item_set_accel_group(self.object, accelGroup.object)
+}
+//////////////////////////////
+// END GtkImageMenuItem
 ////////////////////////////// }}}
 
 // End Menus, Combo Box, Toolbar }}}
@@ -12468,6 +12646,10 @@ func init() {
 	// Register GtkCheckMenuItem type
 	gobject.RegisterCType(GtkType.CHECK_MENU_ITEM, newCheckMenuItemFromNative)
 	gobject.RegisterGoType(GtkType.CHECK_MENU_ITEM, nativeFromCheckMenuItem)
+
+	// Register GtkImageMenuItem type
+	gobject.RegisterCType(GtkType.IMAGE_MENU_ITEM, newImageMenuItemFromNative)
+	gobject.RegisterGoType(GtkType.IMAGE_MENU_ITEM, nativeFromImageMenuItem)
 
 	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
