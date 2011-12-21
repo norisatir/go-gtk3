@@ -10116,6 +10116,7 @@ func (self *MenuItem) SetUseUnderline(setting bool) {
 func (self *MenuItem) SetSubmenu(submenu WidgetLike) {
 	if submenu == nil {
 		C.gtk_menu_item_set_submenu(self.object, nil)
+		return
 	}
 	C.gtk_menu_item_set_submenu(self.object, submenu.W().object)
 }
