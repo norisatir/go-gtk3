@@ -137,6 +137,7 @@ static inline GtkComboBoxText* to_GtkComboBoxText(void* obj) { return GTK_COMBO_
 static inline GtkMenuShell* to_GtkMenuShell(void* obj) { return GTK_MENU_SHELL(obj); }
 static inline GtkMenu* to_GtkMenu(void* obj) { return GTK_MENU(obj); }
 static inline GtkMenuBar* to_GtkMenuBar(void* obj) { return GTK_MENU_BAR(obj); }
+static inline GtkMenuItem* to_GtkMenuItem(void* obj) { return GTK_MENU_ITEM(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -9686,15 +9687,15 @@ func (self *Menu) Attach(child WidgetLike, left, right, top, bottom uint) {
 }
 
 func (self *Menu) PopupForDevice(device *gdk3.Device, parentMenuShell WidgetLike, parentMenuItem WidgetLike,
-									button uint, activateTime uint32, f interface{}, data ...interface{}) {
+	button uint, activateTime uint32, f interface{}, data ...interface{}) {
 
 	var call gobject.ClosureFunc
 	var id int64 = 0
 	if f != nil {
-		call, id = gobject.CreateCustomClosure(f, data...)	
+		call, id = gobject.CreateCustomClosure(f, data...)
 		_closures[id] = call
 	}
-    var pms, pmi *C.GtkWidget = nil, nil
+	var pms, pmi *C.GtkWidget = nil, nil
 
 	if parentMenuShell != nil {
 		pms = parentMenuShell.W().object
@@ -9709,15 +9710,15 @@ func (self *Menu) PopupForDevice(device *gdk3.Device, parentMenuShell WidgetLike
 }
 
 func (self *Menu) Popup(parentMenuShell WidgetLike, parentMenuItem WidgetLike,
-									button uint, activateTime uint32, f interface{}, data ...interface{}) {
+	button uint, activateTime uint32, f interface{}, data ...interface{}) {
 
 	var call gobject.ClosureFunc
 	var id int64 = 0
 	if f != nil {
-		call, id = gobject.CreateCustomClosure(f, data...)	
+		call, id = gobject.CreateCustomClosure(f, data...)
 		_closures[id] = call
 	}
-    var pms, pmi *C.GtkWidget = nil, nil
+	var pms, pmi *C.GtkWidget = nil, nil
 
 	if parentMenuShell != nil {
 		pms = parentMenuShell.W().object
@@ -9844,7 +9845,7 @@ func (self *Menu) Detach() {
 
 func (self *Menu) GetAttachWidget() WidgetLike {
 	w := C.gtk_menu_get_attach_widget(self.object)
-	
+
 	if w != nil {
 		if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
 			return wid.(WidgetLike)
@@ -9965,6 +9966,213 @@ func (self *MenuBar) GetChildPackDirection() int {
 
 //////////////////////////////
 // END GtkMenuBar
+////////////////////////////// }}}
+
+// GtkMenuItem {{{
+//////////////////////////////
+
+// MenuItem type
+type MenuItem struct {
+	object *C.GtkMenuItem
+	*Bin
+}
+
+func NewMenuItem() *MenuItem {
+	mi := &MenuItem{}
+	o := C.gtk_menu_item_new()
+	mi.object = C.to_GtkMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	}
+	mi.Bin = NewBin(unsafe.Pointer(o))
+	menuItemFinalizer(mi)
+
+	return mi
+}
+
+func NewMenuItemWithLabel(label string) *MenuItem {
+	mi := &MenuItem{}
+	s := gobject.GString(label)
+	defer s.Free()
+	o := C.gtk_menu_item_new_with_label((*C.gchar)(s.GetPtr()))
+	mi.object = C.to_GtkMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	}
+	mi.Bin = NewBin(unsafe.Pointer(o))
+	menuItemFinalizer(mi)
+
+	return mi
+}
+
+func NewMenuItemWithMnemonic(label string) *MenuItem {
+	mi := &MenuItem{}
+	s := gobject.GString(label)
+	defer s.Free()
+	o := C.gtk_menu_item_new_with_mnemonic((*C.gchar)(s.GetPtr()))
+	mi.object = C.to_GtkMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	}
+	mi.Bin = NewBin(unsafe.Pointer(o))
+	menuItemFinalizer(mi)
+
+	return mi
+}
+
+// Clear MenuItem struct when it goes out of reach
+func menuItemFinalizer(m *MenuItem) {
+	runtime.SetFinalizer(m, func(m *MenuItem) { gobject.Unref(m) })
+}
+
+// Conversion function for gobject registration map
+func newMenuItemFromNative(obj unsafe.Pointer) interface{} {
+	mi := &MenuItem{}
+	mi.object = C.to_GtkMenuItem(obj)
+
+	if gobject.IsObjectFloating(mi) {
+		gobject.RefSink(mi)
+	} else {
+		gobject.Ref(mi)
+	}
+	mi.Bin = NewBin(obj)
+	menuItemFinalizer(mi)
+
+	return mi
+}
+
+func nativeFromMenuItem(m interface{}) *gobject.GValue {
+	mi, ok := m.(*MenuItem)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.MENU_ITEM, mi.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self MenuItem) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self MenuItem) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self MenuItem) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self MenuItem) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be bin-like
+func (self MenuItem) CBin() *Bin {
+	return self.Bin
+}
+
+// MenuItem interface
+
+func (self *MenuItem) GetLabel() string {
+	s := C.gtk_menu_item_get_label(self.object)
+
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+
+	return ""
+}
+
+func (self *MenuItem) SetLabel(label string) {
+	s := gobject.GString(label)
+	defer s.Free()
+	C.gtk_menu_item_set_label(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *MenuItem) GetUseUnderline() bool {
+	b := C.gtk_menu_item_get_use_underline(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *MenuItem) SetUseUnderline(setting bool) {
+	b := gobject.GBool(setting)
+	defer b.Free()
+	C.gtk_menu_item_set_use_underline(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *MenuItem) SetSubmenu(submenu WidgetLike) {
+	if submenu == nil {
+		C.gtk_menu_item_set_submenu(self.object, nil)
+	}
+	C.gtk_menu_item_set_submenu(self.object, submenu.W().object)
+}
+
+func (self *MenuItem) GetSubmenu() WidgetLike {
+	w := C.gtk_menu_item_get_submenu(self.object)
+
+	if w != nil {
+		if sub, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+			return sub.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *MenuItem) SetAccelPath(accelPath string) {
+	s := gobject.GString(accelPath)
+	defer s.Free()
+	C.gtk_menu_item_set_accel_path(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *MenuItem) GetAccelPath() string {
+	s := C.gtk_menu_item_get_accel_path(self.object)
+
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+func (self *MenuItem) Select() {
+	C.gtk_menu_item_select(self.object)
+}
+
+func (self *MenuItem) Deselect() {
+	C.gtk_menu_item_deselect(self.object)
+}
+
+func (self *MenuItem) Activate() {
+	C.gtk_menu_item_activate(self.object)
+}
+
+func (self *MenuItem) ToggleSizeRequest(requisition int) {
+	var r C.gint
+	r = C.gint(requisition)
+	C.gtk_menu_item_toggle_size_request(self.object, &r)
+}
+
+func (self *MenuItem) ToggleSizeAllocate(allocation int) {
+	var a C.gint
+	a = C.gint(allocation)
+	C.gtk_menu_item_toggle_size_request(self.object, &a)
+}
+
+func (self *MenuItem) GetReserveIndicator() bool {
+	b := C.gtk_menu_item_get_reserve_indicator(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *MenuItem) SetReserveIndicator(reserve bool) {
+	b := gobject.GBool(reserve)
+	defer b.Free()
+	C.gtk_menu_item_set_reserve_indicator(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+//////////////////////////////
+// END GtkMenuItem
 ////////////////////////////// }}}
 
 // End Menus, Combo Box, Toolbar }}}
@@ -11840,8 +12048,8 @@ func _gtk_menu_detach_func(attachWidget, menu unsafe.Pointer) {
 	pId := C.g_object_get_data(o, (*C.gchar)(s.GetPtr()))
 	id := int64(*((*C.gint64)(pId)))
 
-	w,_ := gobject.ConvertToGo(attachWidget)
-	m,_ := gobject.ConvertToGo(menu)
+	w, _ := gobject.ConvertToGo(attachWidget)
+	m, _ := gobject.ConvertToGo(menu)
 
 	if c, ok := _closures[id]; ok {
 		c([]interface{}{w, m})
@@ -12097,6 +12305,10 @@ func init() {
 	// Register GtkMenuBar type
 	gobject.RegisterCType(GtkType.MENU_BAR, newMenuBarFromNative)
 	gobject.RegisterGoType(GtkType.MENU_BAR, nativeFromMenuBar)
+
+	// Register GtkMenuItem type
+	gobject.RegisterCType(GtkType.MENU_ITEM, newMenuItemFromNative)
+	gobject.RegisterGoType(GtkType.MENU_ITEM, nativeFromMenuItem)
 
 	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
