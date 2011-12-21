@@ -141,6 +141,7 @@ static inline GtkMenuItem* to_GtkMenuItem(void* obj) { return GTK_MENU_ITEM(obj)
 static inline GtkCheckMenuItem* to_GtkCheckMenuItem(void* obj) { return GTK_CHECK_MENU_ITEM(obj); }
 static inline GtkImageMenuItem* to_GtkImageMenuItem(void* obj) { return GTK_IMAGE_MENU_ITEM(obj); }
 static inline GtkSeparatorMenuItem* to_GtkSeparatorMenuItem(void* obj) { return GTK_SEPARATOR_MENU_ITEM(obj); }
+static inline GtkRadioMenuItem* to_GtkRadioMenuItem(void* obj) { return GTK_RADIO_MENU_ITEM(obj); }
 static inline GtkTearoffMenuItem* to_GtkTearoffMenuItem(void* obj) { return GTK_TEAROFF_MENU_ITEM(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
@@ -10334,6 +10335,138 @@ func (self *CheckMenuItem) GetDrawAsRadio() bool {
 // END GtkCheckMenuItem
 ////////////////////////////// }}}
 
+// GtkRadioMenuItem {{{
+//////////////////////////////
+
+// RadioMenuItem type
+type RadioMenuItem struct {
+	object *C.GtkRadioMenuItem
+	*CheckMenuItem
+}
+
+func NewRadioMenuItem(group *glib.GSList) *RadioMenuItem {
+	mr := &RadioMenuItem{}
+	var list *C.GSList = nil
+	if group != nil {
+		list = (*C.GSList)(group.ToNative())
+	}
+	o := C.gtk_radio_menu_item_new(list)
+	mr.object = C.to_GtkRadioMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mr) {
+		gobject.RefSink(mr)
+	}
+	mr.CheckMenuItem = newCheckMenuItemFromNative(unsafe.Pointer(o)).(*CheckMenuItem)
+	radioMenuItemFinalizer(mr)
+
+	return mr
+}
+
+func NewRadioMenuItemWithLabel(group *glib.GSList, label string) *RadioMenuItem {
+	mr := &RadioMenuItem{}
+	var list *C.GSList = nil
+	if group != nil {
+		list = (*C.GSList)(group.ToNative())
+	}
+	s := gobject.GString(label)
+	defer s.Free()
+	o := C.gtk_radio_menu_item_new_with_label(list, (*C.gchar)(s.GetPtr()))
+	mr.object = C.to_GtkRadioMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mr) {
+		gobject.RefSink(mr)
+	}
+	mr.CheckMenuItem = newCheckMenuItemFromNative(unsafe.Pointer(o)).(*CheckMenuItem)
+	radioMenuItemFinalizer(mr)
+
+	return mr
+}
+
+func NewRadioMenuItemWithMnemonic(group *glib.GSList, label string) *RadioMenuItem {
+	mr := &RadioMenuItem{}
+	var list *C.GSList = nil
+	if group != nil {
+		list = (*C.GSList)(group.ToNative())
+	}
+	s := gobject.GString(label)
+	defer s.Free()
+	o := C.gtk_radio_menu_item_new_with_label(list, (*C.gchar)(s.GetPtr()))
+	mr.object = C.to_GtkRadioMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mr) {
+		gobject.RefSink(mr)
+	}
+	mr.CheckMenuItem = newCheckMenuItemFromNative(unsafe.Pointer(o)).(*CheckMenuItem)
+	radioMenuItemFinalizer(mr)
+
+	return mr
+}
+
+// Clear RadioMenuItem struct when it goes out of reach
+func radioMenuItemFinalizer(m *RadioMenuItem) {
+	runtime.SetFinalizer(m, func(m *RadioMenuItem) { gobject.Unref(m) })
+}
+
+// Conversion funcs
+func newRadioMenuItemFromNative(obj unsafe.Pointer) interface{} {
+	mr := &RadioMenuItem{}
+	mr.object = C.to_GtkRadioMenuItem(obj)
+
+	if gobject.IsObjectFloating(mr) {
+		gobject.RefSink(mr)
+	} else {
+		gobject.Ref(mr)
+	}
+	mr.CheckMenuItem = newCheckMenuItemFromNative(obj).(*CheckMenuItem)
+	radioMenuItemFinalizer(mr)
+
+	return mr
+}
+
+func nativeFromRadioMenuItem(m interface{}) *gobject.GValue {
+	mr, ok := m.(*RadioMenuItem)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.RADIO_MENU_ITEM, mr.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self RadioMenuItem) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self RadioMenuItem) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self RadioMenuItem) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self RadioMenuItem) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// RadioMenuItem interface
+
+func (self *RadioMenuItem) GetGroup() *glib.GSList {
+	l := C.gtk_radio_menu_item_get_group(self.object)
+
+	if l != nil {
+		goList := glib.NewGSListFromNative(unsafe.Pointer(l))
+		goList.GC_Free = false
+		goList.GC_FreeFull = false
+		goList.ConversionFunc = newRadioMenuItemFromNative
+		return goList
+	}
+	return nil
+}
+//////////////////////////////
+// END GtkRadioMenuItem
+////////////////////////////// }}}
+
 // GtkImageMenuItem {{{
 //////////////////////////////
 
@@ -12805,6 +12938,10 @@ func init() {
 	// Register GtkCheckMenuItem type
 	gobject.RegisterCType(GtkType.CHECK_MENU_ITEM, newCheckMenuItemFromNative)
 	gobject.RegisterGoType(GtkType.CHECK_MENU_ITEM, nativeFromCheckMenuItem)
+
+	// Register GtkRadioMenuItem type
+	gobject.RegisterCType(GtkType.RADIO_MENU_ITEM, newRadioMenuItemFromNative)
+	gobject.RegisterGoType(GtkType.RADIO_MENU_ITEM, nativeFromRadioMenuItem)
 
 	// Register GtkImageMenuItem type
 	gobject.RegisterCType(GtkType.IMAGE_MENU_ITEM, newImageMenuItemFromNative)
