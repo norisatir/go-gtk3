@@ -141,6 +141,7 @@ static inline GtkMenuItem* to_GtkMenuItem(void* obj) { return GTK_MENU_ITEM(obj)
 static inline GtkCheckMenuItem* to_GtkCheckMenuItem(void* obj) { return GTK_CHECK_MENU_ITEM(obj); }
 static inline GtkImageMenuItem* to_GtkImageMenuItem(void* obj) { return GTK_IMAGE_MENU_ITEM(obj); }
 static inline GtkSeparatorMenuItem* to_GtkSeparatorMenuItem(void* obj) { return GTK_SEPARATOR_MENU_ITEM(obj); }
+static inline GtkTearoffMenuItem* to_GtkTearoffMenuItem(void* obj) { return GTK_TEAROFF_MENU_ITEM(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -10587,6 +10588,84 @@ func (self SeparatorMenuItem) MItem() *MenuItem {
 // END GtkSeparatorMenuItem
 ////////////////////////////// }}}
 
+// GtkTearoffMenuItem {{{
+//////////////////////////////
+
+// TearoffMenuItem type
+type TearoffMenuItem struct {
+	object *C.GtkTearoffMenuItem
+	*MenuItem
+}
+
+func NewTearoffMenuItem() *TearoffMenuItem {
+	mt := &TearoffMenuItem{}
+	o := C.gtk_tearoff_menu_item_new()
+	mt.object = C.to_GtkTearoffMenuItem(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(mt) {
+		gobject.RefSink(mt)
+	}
+	mt.MenuItem = newMenuItemFromNative(unsafe.Pointer(o)).(*MenuItem)
+	tearoffMenuItemFinalizer(mt)
+
+	return mt
+}
+
+// Clear TearoffMenuItem struct when it goes out of reach
+func tearoffMenuItemFinalizer(m *TearoffMenuItem) {
+	runtime.SetFinalizer(m, func(m *TearoffMenuItem) { gobject.Unref(m) })
+}
+
+// Conversion function for gobject registration map
+func newTearoffMenuItemFromNative(obj unsafe.Pointer) interface{} {
+	mt := &TearoffMenuItem{}
+	mt.object = C.to_GtkTearoffMenuItem(obj)
+
+	if gobject.IsObjectFloating(mt) {
+		gobject.RefSink(mt)
+	} else {
+		gobject.Ref(mt)
+	}
+	mt.MenuItem = newMenuItemFromNative(obj).(*MenuItem)
+	tearoffMenuItemFinalizer(mt)
+
+	return mt
+}
+
+func nativeFromTearoffMenuItem(m interface{}) *gobject.GValue {
+	mt, ok := m.(*TearoffMenuItem)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.TEAROFF_MENU_ITEM, mt.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self TearoffMenuItem) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self TearoffMenuItem) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self TearoffMenuItem) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self TearoffMenuItem) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be MenuItem-like
+func (self TearoffMenuItem) MItem() *MenuItem {
+	return self.MenuItem
+}
+//////////////////////////////
+// END GtkTearoffMenuItem
+////////////////////////////// }}}
+
 // End Menus, Combo Box, Toolbar }}}
 
 // Layout Containers {{{
@@ -12733,6 +12812,10 @@ func init() {
 	// Register GtkSeparatorMenuItem type
 	gobject.RegisterCType(GtkType.SEPARATOR_MENU_ITEM, newSeparatorMenuItemFromNative)
 	gobject.RegisterGoType(GtkType.SEPARATOR_MENU_ITEM, nativeFromSeparatorMenuItem)
+
+	// Register GtkTearoffMenuitem type
+	gobject.RegisterCType(GtkType.TEAROFF_MENU_ITEM, newTearoffMenuItemFromNative)
+	gobject.RegisterGoType(GtkType.TEAROFF_MENU_ITEM, nativeFromTearoffMenuItem)
 
 	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
