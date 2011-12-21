@@ -1083,6 +1083,17 @@ func (self *Widget) SetValign(gtk_align int) {
 	C.gtk_widget_set_valign(self.object, C.GtkAlign(gtk_align))
 }
 
+func (self *Widget) GetCanDefault() bool {
+	b := C.gtk_widget_get_can_default(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Widget) SetCanDefault(canDefault bool) {
+	b := gobject.GBool(canDefault)
+	defer b.Free()
+	C.gtk_widget_set_can_default(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
 func (self *Widget) GetPreferredSize() (minimumSize, naturalSize Requisition) {
 	var min, nat C.GtkRequisition
 	C.gtk_widget_get_preferred_size(self.object, &min, &nat)
@@ -12931,8 +12942,7 @@ func init() {
 	gobject.RegisterCType(GtkType.MENU_BAR, newMenuBarFromNative)
 	gobject.RegisterGoType(GtkType.MENU_BAR, nativeFromMenuBar)
 
-	// Register GtkMenuItem type
-	gobject.RegisterCType(GtkType.MENU_ITEM, newMenuItemFromNative)
+	go gobject.RegisterCType(GtkType.MENU_ITEM, newMenuItemFromNative)
 	gobject.RegisterGoType(GtkType.MENU_ITEM, nativeFromMenuItem)
 
 	// Register GtkCheckMenuItem type
