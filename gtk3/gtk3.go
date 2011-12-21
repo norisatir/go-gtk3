@@ -136,6 +136,7 @@ static inline GtkComboBox* to_GtkComboBox(void* obj) { return GTK_COMBO_BOX(obj)
 static inline GtkComboBoxText* to_GtkComboBoxText(void* obj) { return GTK_COMBO_BOX_TEXT(obj); }
 static inline GtkMenuShell* to_GtkMenuShell(void* obj) { return GTK_MENU_SHELL(obj); }
 static inline GtkMenu* to_GtkMenu(void* obj) { return GTK_MENU(obj); }
+static inline GtkMenuBar* to_GtkMenuBar(void* obj) { return GTK_MENU_BAR(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 // End }}}
@@ -9869,6 +9870,103 @@ func (self *Menu) GetForAttachWidget(w WidgetLike) *glib.GList {
 // END GtkMenu
 ////////////////////////////// }}}
 
+// GtkMenuBar {{{
+//////////////////////////////
+
+// GtkMenuBar Type
+type MenuBar struct {
+	object *C.GtkMenuBar
+	*MenuShell
+}
+
+func NewMenuBar() *MenuBar {
+	m := &MenuBar{}
+	o := C.gtk_menu_bar_new()
+	m.object = C.to_GtkMenuBar(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(m) {
+		gobject.RefSink(m)
+	}
+	m.MenuShell = newMenuShellFromNative(unsafe.Pointer(o)).(*MenuShell)
+	menuBarFinalizer(m)
+
+	return m
+}
+
+// Clear MenuBar struct when it goes out of reach
+func menuBarFinalizer(m *MenuBar) {
+	runtime.SetFinalizer(m, func(m *MenuBar) { gobject.Unref(m) })
+}
+
+// Conversion function for gobject registration map
+func newMenuBarFromNative(obj unsafe.Pointer) interface{} {
+	m := &MenuBar{}
+	m.object = C.to_GtkMenuBar(obj)
+
+	if gobject.IsObjectFloating(m) {
+		gobject.RefSink(m)
+	} else {
+		gobject.Ref(m)
+	}
+	m.MenuShell = newMenuShellFromNative(obj).(*MenuShell)
+	menuBarFinalizer(m)
+
+	return m
+}
+
+func nativeFromMenuBar(menu interface{}) *gobject.GValue {
+	m, ok := menu.(*MenuBar)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.MENU_BAR, m.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be Object-like
+func (self MenuBar) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self MenuBar) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self MenuBar) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self MenuBar) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be MenuShell-like
+func (self MenuBar) MShell() *MenuShell {
+	return self.MenuShell
+}
+
+// MenuBar interface
+
+func (self *MenuBar) SetPackDirection(gtk_PackDirection int) {
+	C.gtk_menu_bar_set_pack_direction(self.object, C.GtkPackDirection(gtk_PackDirection))
+}
+
+func (self *MenuBar) GetPackDirection() int {
+	return int(C.gtk_menu_bar_get_pack_direction(self.object))
+}
+
+func (self *MenuBar) SetChildPackDirection(gtk_PackDirection int) {
+	C.gtk_menu_bar_set_child_pack_direction(self.object, C.GtkPackDirection(gtk_PackDirection))
+}
+
+func (self *MenuBar) GetChildPackDirection() int {
+	return int(C.gtk_menu_bar_get_child_pack_direction(self.object))
+}
+
+//////////////////////////////
+// END GtkMenuBar
+////////////////////////////// }}}
+
 // End Menus, Combo Box, Toolbar }}}
 
 // Layout Containers {{{
@@ -11992,9 +12090,13 @@ func init() {
 	// Register GtkMenuDirection type
 	gobject.RegisterCType(GtkType.MENU_DIRECTION_TYPE, newMenuShellFromNative)
 
-	// Regisetr GtkMenu type
+	// Register GtkMenu type
 	gobject.RegisterCType(GtkType.MENU, newMenuFromNative)
 	gobject.RegisterGoType(GtkType.MENU, nativeFromMenu)
+
+	// Register GtkMenuBar type
+	gobject.RegisterCType(GtkType.MENU_BAR, newMenuBarFromNative)
+	gobject.RegisterGoType(GtkType.MENU_BAR, nativeFromMenuBar)
 
 	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)

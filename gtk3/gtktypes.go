@@ -801,6 +801,18 @@ type gtkMenuDirection struct {
 }
 // End GtkMenuDirection }}}
 
+// GtkPackDirection {{{
+
+var GtkPackDirection gtkPackDirection
+
+type gtkPackDirection struct {
+	LTR int
+	RTL int
+	TTB int
+	BTT int
+}
+// End GtkPackDirection }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1410,4 +1422,10 @@ func init() {
 	GtkMenuDirection.CHILD = 1
 	GtkMenuDirection.NEXT = 2
 	GtkMenuDirection.PREV = 3
+
+	// Initialize GtkPackDirection
+	GtkPackDirection.LTR = 0
+	GtkPackDirection.RTL = 1
+	GtkPackDirection.TTB = 2
+	GtkPackDirection.BTT = 3
 } /// }}}
