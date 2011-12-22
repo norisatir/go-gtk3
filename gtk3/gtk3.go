@@ -31,6 +31,8 @@ extern void _gtk_marshal(GClosure *closure,
 							  gpointer marshalData);
 extern void _gtk_menu_position_func(GtkMenu* menu, gint* x, gint* y, gboolean* push_in, gpointer user_data);
 extern void _gtk_menu_detach_func(GtkWidget* attach_widget, GtkMenu* menu);
+extern gboolean _gtk_tree_selection_func(GtkTreeSelection*, GtkTreeModel*, GtkTreePath*,
+	gboolean, gpointer);
 // End Exported funcs }}}
 
 static void _gtk_init(void* argc, void* argv) {
@@ -322,6 +324,18 @@ static void _gtk_cell_layout_set_cell_data_func(GtkCellLayout* layout, GtkCellRe
 }
 
 //End GtkCellLayout funcs }}}
+
+// GtkTreeSelection funcs {{{
+static void _gtk_tree_select_set_select_function(GtkTreeSelection* selection, gint64 id) {
+	if (id == 0) {
+		gtk_tree_selection_set_select_function(selection, NULL, NULL, NULL);
+		return;
+	}
+	gint64* uid = (gint64*)malloc(sizeof(gint64));
+	*uid = id;
+    gtk_tree_selection_set_select_function(selection, _gtk_tree_selection_func, (gpointer)uid, _g_gtk_destroy_notify);
+}
+//End GtkTreeSelection funcs }}}
 
 // GtkComboBox funcs {{{
 static void _gtk_combo_box_set_row_separator_func(GtkComboBox* combo_box, gint64 id) {
@@ -6143,14 +6157,20 @@ func NewTreePathFirst() *TreePath {
 	return tp
 }
 
-//TODO: NewTreePathFromIndices
-
 // Clear TreePath struct when it goes out of scope
 func treePathFinalizer(tp *TreePath) {
 	runtime.SetFinalizer(tp, func(tp *TreePath) { tp.free() })
 }
 
+func newTreePathFromNative(obj unsafe.Pointer) interface{} {
+	path := &TreePath{(*C.GtkTreePath)(obj)}
+	return path
+}
+
 // TreePath Interface
+
+//TODO: NewTreePathFromIndices
+
 func (self *TreePath) free() {
 	C.gtk_tree_path_free(self.object)
 }
@@ -8673,6 +8693,105 @@ func (self TreeSelection) Set(properties map[string]interface{}) {
 
 func (self TreeSelection) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
+}
+
+// TreeSelection interface
+
+func (self *TreeSelection) SetMode(gtk_SelectionMode int) {
+	C.gtk_tree_selection_set_mode(self.object, C.GtkSelectionMode(gtk_SelectionMode))
+}
+
+func (self *TreeSelection) GetMode() int {
+	return int(C.gtk_tree_selection_get_mode(self.object))
+}
+
+func (self *TreeSelection) SetSelectFunction(f interface{}, data ...interface{}) {
+	if f == nil {
+		C._gtk_tree_select_set_select_function(self.object, 0)
+		return
+	}
+
+	call, id := gobject.CreateCustomClosure(f, data...)
+	_closures[id] = call
+	C._gtk_tree_select_set_select_function(self.object, C.gint64(id))
+}
+
+func (self *TreeSelection) GetTreeView() *TreeView {
+	w := C.gtk_tree_selection_get_tree_view(self.object)
+	if w != nil {
+		if view, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+			return view.(*TreeView)
+		}
+	}
+	return nil
+}
+
+func (self *TreeSelection) GetSelected(iter *TreeIter) {
+	var cIter *C.GtkTreeIter
+	if iter != nil {
+		cIter = &iter.object
+	}
+	C.gtk_tree_selection_get_selected(self.object, nil, cIter)
+}
+
+//TODO: gtk_tree_selection_selected_foreach
+
+func (self *TreeSelection) GetSelectedRows() *glib.GList {
+	list := C.gtk_tree_selection_get_selected_rows(self.object, nil)
+
+	goList := glib.NewGListFromNative(unsafe.Pointer(list))
+	goList.GC_FreeFull = true
+	goList.DestroyFunc = func(obj unsafe.Pointer) { path := (*C.GtkTreePath)(obj); C.gtk_tree_path_free(path) }
+	goList.ConversionFunc = newTreePathFromNative
+	glib.GListFinalizer(goList)
+
+	return goList
+}
+
+func (self *TreeSelection) CountSelectedRows() int {
+	return int(C.gtk_tree_selection_count_selected_rows(self.object))
+}
+
+func (self *TreeSelection) SelectPath(path *TreePath) {
+	C.gtk_tree_selection_select_path(self.object, path.object)
+}
+
+func (self *TreeSelection) UnselectSelectPath(path *TreePath) {
+	C.gtk_tree_selection_unselect_path(self.object, path.object)
+}
+
+func (self *TreeSelection) PathIsSelected(path *TreePath) bool {
+	b := C.gtk_tree_selection_path_is_selected(self.object, path.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeSelection) SelectIter(iter *TreeIter) {
+	C.gtk_tree_selection_select_iter(self.object, &iter.object)
+}
+
+func (self *TreeSelection) UnselectIter(iter *TreeIter) {
+	C.gtk_tree_selection_unselect_iter(self.object, &iter.object)
+}
+
+func (self *TreeSelection) IterIsSelected(iter *TreeIter) bool {
+	b := C.gtk_tree_selection_iter_is_selected(self.object, &iter.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeSelection) SelectAll() {
+	C.gtk_tree_selection_select_all(self.object)
+}
+
+func (self *TreeSelection) UnselectAll() {
+	C.gtk_tree_selection_unselect_all(self.object)
+}
+
+func (self *TreeSelection) SelectRange(startPath, endPath *TreePath) {
+	C.gtk_tree_selection_select_range(self.object, startPath.object, endPath.object)
+}
+
+func (self *TreeSelection) UnselectRange(startPath, endPath *TreePath) {
+	C.gtk_tree_selection_unselect_range(self.object, startPath.object, endPath.object)
 }
 //////////////////////////////
 // End GtkTreeSelection
@@ -12692,6 +12811,27 @@ func _gtk_menu_detach_func(attachWidget, menu unsafe.Pointer) {
 	}
 }
 
+//export _gtk_tree_selection_func
+func _gtk_tree_selection_func(selection, model, path unsafe.Pointer,
+	pathCurrSelected C.gboolean, data unsafe.Pointer) C.gboolean {
+
+	id := int64(*((*C.gint64)(data)))
+
+	goSelection := newTreeSelectionFromNative(selection).(*TreeSelection)
+	goModel := newTreeModelFromNative(model).(TreeModelLike)
+	goPath := newTreePathFromNative(path).(*TreePath)
+	goCurrSel := gobject.GoBool(unsafe.Pointer(&pathCurrSelected))
+
+	var res bool = true
+	if c, ok := _closures[id]; ok {
+		res = c([]interface{}{goSelection, goModel, goPath, goCurrSel})
+	}
+
+	cret := gobject.GBool(res)
+	defer cret.Free()
+
+	return *((*C.gboolean)(cret.GetPtr()))
+}
 //////////////////////////////
 // END Exported functions
 ////////////////////////////// }}}
