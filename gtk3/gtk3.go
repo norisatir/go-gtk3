@@ -602,6 +602,11 @@ type MenuShellLike interface {
 type MenuItemLike interface {
 	MItem() *MenuItem
 }
+
+// OrientableLike interface must have method IOrientable
+type OrientableLike interface {
+	IOrientable() *Orientable
+}
 //////////////////////////////
 // END Interfaces
 ////////////////////////////// }}}
@@ -2895,6 +2900,7 @@ func (self *Label) GetTrackVisitedLinks() bool {
 type ProgressBar struct {
 	object *C.GtkProgressBar
 	*Widget
+	*Orientable
 }
 
 func NewProgressBar() *ProgressBar {
@@ -2906,6 +2912,7 @@ func NewProgressBar() *ProgressBar {
 		gobject.RefSink(pb)
 	}
 	pb.Widget = NewWidget(unsafe.Pointer(o))
+	pb.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	progressBarFinalizer(pb)
 
 	return pb
@@ -2927,6 +2934,7 @@ func newProgressBarFromNative(obj unsafe.Pointer) interface{} {
 		gobject.Ref(pb)
 	}
 	pb.Widget = NewWidget(obj)
+	pb.Orientable = newOrientableFromNative(obj).(*Orientable)
 	progressBarFinalizer(pb)
 
 	return pb
@@ -2962,6 +2970,11 @@ func (self ProgressBar) Get(properties []string) map[string]interface{} {
 // To be widget-like
 func (self ProgressBar) W() *Widget {
 	return self.Widget
+}
+
+// To be orientable-like
+func (self ProgressBar) IOrientable() *Orientable {
+	return self.Orientable
 }
 
 // ProgressBar interface
@@ -7231,6 +7244,7 @@ func (self *CellLayout) SetCellDataFunc(renderer CellRendererLike, f interface{}
 type CellView struct {
 	object *C.GtkCellView
 	*Widget
+	*Orientable
 }
 
 func NewCellView() *CellView {
@@ -7242,6 +7256,7 @@ func NewCellView() *CellView {
 		gobject.RefSink(cv)
 	}
 	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cv.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	cellViewFinalizer(cv)
 
 	return cv
@@ -7256,6 +7271,7 @@ func NewCellViewWithContext(area CellAreaLike, context *CellAreaContext) *CellVi
 		gobject.RefSink(cv)
 	}
 	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cv.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	cellViewFinalizer(cv)
 
 	return cv
@@ -7273,6 +7289,7 @@ func NewCellViewWithText(text string) *CellView {
 		gobject.RefSink(cv)
 	}
 	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cv.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	cellViewFinalizer(cv)
 
 	return cv
@@ -7290,6 +7307,7 @@ func NewCellViewWithMarkup(markup string) *CellView {
 		gobject.RefSink(cv)
 	}
 	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cv.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	cellViewFinalizer(cv)
 
 	return cv
@@ -7304,6 +7322,7 @@ func NewCellViewWithPixbuf(pixbuf *gdkpixbuf.Pixbuf) *CellView {
 		gobject.RefSink(cv)
 	}
 	cv.Widget = NewWidget(unsafe.Pointer(o))
+	cv.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	cellViewFinalizer(cv)
 
 	return cv
@@ -7325,6 +7344,7 @@ func newCellViewFromNative(obj unsafe.Pointer) interface{} {
 		gobject.Ref(cv)
 	}
 	cv.Widget = NewWidget(obj)
+	cv.Orientable = newOrientableFromNative(obj).(*Orientable)
 	cellViewFinalizer(cv)
 
 	return cv
@@ -7359,6 +7379,11 @@ func (self CellView) Get(properties []string) map[string]interface{} {
 // To be widget-like
 func (self CellView) W() *Widget {
 	return self.Widget
+}
+
+// To be Orientable-like
+func (self CellView) IOrientable() *Orientable {
+	return self.Orientable
 }
 
 // CellView interface
@@ -7726,6 +7751,7 @@ func (self *CellRendererText) SetFixedHeigthFromFont(numberOfRows int) {
 type CellRendererProgress struct {
 	object *C.GtkCellRendererProgress
 	*CellRenderer
+	*Orientable
 }
 
 func NewCellRendererProgress() *CellRendererProgress {
@@ -7737,6 +7763,7 @@ func NewCellRendererProgress() *CellRendererProgress {
 		gobject.RefSink(cl)
 	}
 	cl.CellRenderer = newCellRendererFromNative(unsafe.Pointer(o)).(*CellRenderer)
+	cl.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	cellRendererProgressFinalizer(cl)
 
 	return cl
@@ -7758,6 +7785,7 @@ func newCellRendererProgressFromNative(obj unsafe.Pointer) interface{} {
 		gobject.Ref(cl)
 	}
 	cl.CellRenderer = newCellRendererFromNative(obj).(*CellRenderer)
+	cl.Orientable = newOrientableFromNative(obj).(*Orientable)
 	cellRendererProgressFinalizer(cl)
 
 	return cl
@@ -7792,6 +7820,11 @@ func (self CellRendererProgress) Get(properties []string) map[string]interface{}
 // To be CellRendererLike
 func (self CellRendererProgress) CRenderer() *CellRenderer {
 	return self.CellRenderer
+}
+
+// To be Orientable-like
+func (self CellRendererProgress) IOrientable() *Orientable {
+	return self.Orientable
 }
 //////////////////////////////
 // END GtkCellRendererProgress
@@ -10940,17 +10973,19 @@ func (self TearoffMenuItem) MItem() *MenuItem {
 type Grid struct {
 	object *C.GtkGrid
 	*Container
+	*Orientable
 }
 
 func NewGrid() *Grid {
 	grid := &Grid{}
 	o := C.gtk_grid_new()
 	grid.object = C.to_GtkGrid(unsafe.Pointer(o))
-	grid.Container = NewContainer(unsafe.Pointer(o))
 
 	if gobject.IsObjectFloating(grid) {
 		gobject.RefSink(grid)
 	}
+	grid.Container = NewContainer(unsafe.Pointer(o))
+	grid.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	gridFinalizer(grid)
 
 	return grid
@@ -10972,6 +11007,7 @@ func newGridFromNative(obj unsafe.Pointer) interface{} {
 		gobject.Ref(grid)
 	}
 	grid.Container = NewContainer(obj)
+	grid.Orientable = newOrientableFromNative(obj).(*Orientable)
 	gridFinalizer(grid)
 
 	return grid
@@ -11006,6 +11042,11 @@ func (self Grid) Get(properties []string) map[string]interface{} {
 // To be container-like
 func (self Grid) C() *Container {
 	return self.Container
+}
+
+// To be Orientable-like
+func (self Grid) IOrientable() *Orientable {
+	return self.Orientable
 }
 
 // Grid interface
@@ -11093,6 +11134,7 @@ func (self *Grid) GetColumnSpacing() uint {
 type Box struct {
 	object *C.GtkBox
 	*Container
+	*Orientable
 }
 
 func NewBox(orientation int, spacing int) *Box {
@@ -11104,6 +11146,7 @@ func NewBox(orientation int, spacing int) *Box {
 		gobject.RefSink(box)
 	}
 	box.Container = NewContainer(unsafe.Pointer(o))
+	box.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	boxFinalizer(box)
 
 	return box
@@ -11132,6 +11175,7 @@ func newBoxFromNative(obj unsafe.Pointer) interface{} {
 		gobject.Ref(box)
 	}
 	box.Container = NewContainer(obj)
+	box.Orientable = newOrientableFromNative(obj).(*Orientable)
 	boxFinalizer(box)
 
 	return box
@@ -11167,6 +11211,11 @@ func (self Box) Get(properties []string) map[string]interface{} {
 // To be container-like
 func (self Box) C() *Container {
 	return self.Container
+}
+
+// To be orientable-like
+func (self Box) IOrientable() *Orientable {
+	return self.Orientable
 }
 
 // Box interface
@@ -11237,6 +11286,7 @@ func (self *Box) SetChildPacking(w WidgetLike, expand bool, fill bool, padding i
 type ButtonBox struct {
 	object *C.GtkButtonBox
 	*Box
+	*Orientable
 }
 
 func NewButtonBox(orientation int) *ButtonBox {
@@ -11248,6 +11298,7 @@ func NewButtonBox(orientation int) *ButtonBox {
 		gobject.RefSink(bb)
 	}
 	bb.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
+	bb.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	buttonBoxFinalizer(bb)
 
 	return bb
@@ -11267,6 +11318,7 @@ func newButtonBoxFromNative(obj unsafe.Pointer) interface{} {
 		gobject.RefSink(bb)
 	}
 	bb.Box = newBoxFromNative(obj).(*Box)
+	bb.Orientable = newOrientableFromNative(obj).(*Orientable)
 	buttonBoxFinalizer(bb)
 
 	return bb
@@ -11301,6 +11353,11 @@ func (self ButtonBox) Get(properties []string) map[string]interface{} {
 // To be Box-like
 func (self ButtonBox) CBox() *Box {
 	return self.Box
+}
+
+// To be Orientable-lik
+func (self ButtonBox) IOrientable() *Orientable {
+	return self.Orientable
 }
 
 // ButtonBox Interface
@@ -11345,6 +11402,7 @@ func (self *ButtonBox) SetChildNonHomogeneous(w WidgetLike, nonHomogeneous bool)
 type Paned struct {
 	object *C.GtkPaned
 	*Container
+	*Orientable
 }
 
 func NewPaned(gtk_Orientation int) *Paned {
@@ -11356,6 +11414,7 @@ func NewPaned(gtk_Orientation int) *Paned {
 		gobject.RefSink(p)
 	}
 	p.Container = NewContainer(unsafe.Pointer(o))
+	p.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	panedFinalizer(p)
 
 	return p
@@ -11385,6 +11444,7 @@ func newPanedFromNative(obj unsafe.Pointer) interface{} {
 		gobject.Ref(p)
 	}
 	p.Container = NewContainer(obj)
+	p.Orientable = newOrientableFromNative(obj).(*Orientable)
 	panedFinalizer(p)
 
 	return p
@@ -11420,6 +11480,11 @@ func (self Paned) Get(properties []string) map[string]interface{} {
 // To be container-like
 func (self Paned) C() *Container {
 	return self.Container
+}
+
+// To be orientable-like
+func (self Paned) IOrientable() *Orientable {
+	return self.Orientable
 }
 
 // Paned interface
@@ -12074,6 +12139,7 @@ func (self *Frame) GetShadowType() int {
 type Separator struct {
 	object *C.GtkSeparator
 	*Widget
+	*Orientable
 }
 
 func NewSeparator(orientation int) *Separator {
@@ -12085,6 +12151,7 @@ func NewSeparator(orientation int) *Separator {
 		gobject.RefSink(sep)
 	}
 	sep.Widget = NewWidget(unsafe.Pointer(o))
+	sep.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	separatorFinalizer(sep)
 
 	return sep
@@ -12114,6 +12181,7 @@ func newSeparatorFromNative(obj unsafe.Pointer) interface{} {
 		gobject.Ref(sep)
 	}
 	sep.Widget = NewWidget(obj)
+	sep.Orientable = newOrientableFromNative(obj).(*Orientable)
 	separatorFinalizer(sep)
 
 	return sep
@@ -12146,9 +12214,15 @@ func (self Separator) Set(properties map[string]interface{}) {
 func (self Separator) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 // To be widget-like
 func (self Separator) W() *Widget {
 	return self.Widget
+}
+
+// To be Orientable-like
+func (self Separator) IOrientable() *Orientable {
+	return self.Orientable
 }
 //////////////////////////////
 // END GtkSeparator
@@ -12165,6 +12239,7 @@ func (self Separator) W() *Widget {
 type Scrollbar struct {
 	object *C.GtkScrollbar
 	*Range
+	*Orientable
 }
 
 func NewScrollbar(gtk_orientation int, adjustment *Adjustment) *Scrollbar {
@@ -12176,6 +12251,7 @@ func NewScrollbar(gtk_orientation int, adjustment *Adjustment) *Scrollbar {
 		gobject.RefSink(sb)
 	}
 	sb.Range = newRangeFromNative(unsafe.Pointer(o)).(*Range)
+	sb.Orientable = newOrientableFromNative(unsafe.Pointer(o)).(*Orientable)
 	scrollbarFinalizer(sb)
 
 	return sb
@@ -12205,6 +12281,7 @@ func newScrollbarFromNative(sb unsafe.Pointer) interface{} {
 		gobject.Ref(scrollbar)
 	}
 	scrollbar.Range = newRangeFromNative(sb).(*Range)
+	scrollbar.Orientable = newOrientableFromNative(sb).(*Orientable)
 	scrollbarFinalizer(scrollbar)
 
 	return scrollbar
@@ -12239,6 +12316,11 @@ func (self Scrollbar) Get(properties []string) map[string]interface{} {
 // To be Range-like
 func (self Scrollbar) R() *Range {
 	return self.Range
+}
+
+// To be Orientable-like
+func (self Scrollbar) IOrientable() *Orientable {
+	return self.Orientable
 }
 //////////////////////////////
 // END GtkScrollbar
