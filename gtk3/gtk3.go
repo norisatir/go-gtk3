@@ -1073,6 +1073,16 @@ func (self *Widget) GetPointer() (x, y int) {
 	return int(cx), int(cy)
 }
 
+func (self *Widget) GetParent() WidgetLike {
+	w := C.gtk_widget_get_parent(self.object)
+	if w != nil {
+		if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+			return wid.(WidgetLike)
+		}
+	}
+	return nil
+}
+
 func (self *Widget) IsAncestor(ancestor WidgetLike) bool {
 	b := C.gtk_widget_is_ancestor(self.object, ancestor.W().object)
 	return gobject.GoBool(unsafe.Pointer(&b))
