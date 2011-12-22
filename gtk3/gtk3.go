@@ -148,6 +148,7 @@ static inline GtkTearoffMenuItem* to_GtkTearoffMenuItem(void* obj) { return GTK_
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 static inline GtkOrientable* to_GtkOrientable(void* obj) { return GTK_ORIENTABLE(obj); }
+static inline GtkAction* to_GtkAction(void* obj) { return GTK_ACTION(obj); }
 // End }}}
 
 // GtkAccelGroup funcs {{{
@@ -10974,6 +10975,369 @@ func (self TearoffMenuItem) MItem() *MenuItem {
 
 // End Menus, Combo Box, Toolbar }}}
 
+// Action-based menus and toolbars {{{
+
+// GtkAction {{{
+//////////////////////////////
+
+// GtkAction type
+type Action struct {
+	object *C.GtkAction
+}
+
+func NewAction(name string, label, tooltip, stockId interface{}) *Action {
+	var cLabel, cTooltip, cStockId *C.gchar = nil, nil, nil
+
+	if label != nil {
+		if l, ok := label.(string); ok {
+			lab := gobject.GString(l)
+			defer lab.Free()
+			cLabel = (*C.gchar)(lab.GetPtr())
+		}
+	}
+
+	if tooltip != nil {
+		if t, ok := tooltip.(string); ok {
+			tt := gobject.GString(t)
+			defer tt.Free()
+			cTooltip = (*C.gchar)(tt.GetPtr())
+		}
+	}
+
+	if stockId != nil {
+		if s, ok := stockId.(string); ok {
+			sid := gobject.GString(s)
+			defer sid.Free()
+			cStockId = (*C.gchar)(sid.GetPtr())
+		}
+	}
+
+	cName := gobject.GString(name)
+	defer cName.Free()
+
+	a := &Action{}
+	a.object = C.gtk_action_new((*C.gchar)(cName.GetPtr()), cLabel, cTooltip, cStockId)
+
+	if gobject.IsObjectFloating(a) {
+		gobject.RefSink(a)
+	}
+	actionFinalizer(a)
+
+	return a
+}
+
+// Clear Action object when it goes of of reach
+func actionFinalizer(a *Action) {
+	runtime.SetFinalizer(a, func(a *Action) { gobject.Unref(a) })
+}
+
+// Conversion funcs
+func newActionFromNative(obj unsafe.Pointer) interface{} {
+	a := &Action{}
+	a.object = C.to_GtkAction(obj)
+
+	if gobject.IsObjectFloating(a) {
+		gobject.RefSink(a)
+	} else {
+		gobject.Ref(a)
+	}
+	actionFinalizer(a)
+
+	return a
+}
+
+func nativeFromAction(a interface{}) *gobject.GValue {
+	ac, ok := a.(*Action)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.ACTION, ac.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be Object-like
+func (self Action) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Action) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Action) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Action) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// Action interface
+
+func (self *Action) GetName() string {
+	s := C.gtk_action_get_name(self.object)
+	if s == nil {
+		return ""
+	}
+	return gobject.GoString(unsafe.Pointer(C.g_strdup(s)))
+}
+
+func (self *Action) IsSensitive() bool {
+	b := C.gtk_action_is_sensitive(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Action) GetSensitive() bool {
+	b := C.gtk_action_get_sensitive(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Action) SetSensitive(sensitive bool) {
+	b := gobject.GBool(sensitive)
+	defer b.Free()
+	C.gtk_action_set_sensitive(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Action) IsVisible() bool {
+	b := C.gtk_action_is_visible(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Action) GetVisible() bool {
+	b := C.gtk_action_get_visible(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Action) SetVisible(visible bool) {
+	b := gobject.GBool(visible)
+	defer b.Free()
+	C.gtk_action_set_visible(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Action) Activate() {
+	C.gtk_action_activate(self.object)
+}
+
+func (self *Action) CreateIcon(gtk_IconSize int) WidgetLike {
+	icon := C.gtk_action_create_icon(self.object, C.GtkIconSize(gtk_IconSize))
+
+	if icon != nil {
+		if i, err := gobject.ConvertToGo(unsafe.Pointer(icon)); err == nil {
+			return i.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *Action) CreateMenuItem() WidgetLike {
+	mi := C.gtk_action_create_menu_item(self.object)
+
+	if mi != nil {
+		if m, err := gobject.ConvertToGo(unsafe.Pointer(mi)); err == nil {
+			return m.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *Action) CreateToolItem() WidgetLike {
+	ti := C.gtk_action_create_tool_item(self.object)
+
+	if ti != nil {
+		if t, err := gobject.ConvertToGo(unsafe.Pointer(ti)); err == nil {
+			return t.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *Action) CreateMenu() WidgetLike {
+	m := C.gtk_action_create_menu(self.object)
+
+	if m != nil {
+		if menu, err := gobject.ConvertToGo(unsafe.Pointer(m)); err == nil {
+			return menu.(WidgetLike)
+		}
+	}
+	return nil
+}
+
+func (self *Action) GetProxies() *glib.GSList {
+	l := C.gtk_action_get_proxies(self.object)
+
+	if l != nil {
+		goList := glib.NewGSListFromNative(unsafe.Pointer(l))
+		goList.GC_Free = false
+		goList.GC_FreeFull = false
+		goList.ConversionFunc = func(obj unsafe.Pointer) interface{} {
+			if w, err := gobject.ConvertToGo(obj); err == nil {
+				return w
+			}
+			return nil
+		}
+		return goList
+	}
+	return nil
+}
+
+func (self *Action) ConnectAccelerator() {
+	C.gtk_action_connect_accelerator(self.object)
+}
+
+func (self *Action) DisconnectAccelerator() {
+	C.gtk_action_disconnect_accelerator(self.object)
+}
+
+func (self *Action) BlockActivate() {
+	C.gtk_action_block_activate(self.object)
+}
+
+func (self *Action) UnblockActivate() {
+	C.gtk_action_unblock_activate(self.object)
+}
+
+func (self *Action) GetAlwaysShowImage() bool {
+	b := C.gtk_action_get_always_show_image(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Action) SetAlwaysShowImage(alwaysShow bool) {
+	b := gobject.GBool(alwaysShow)
+	defer b.Free()
+	C.gtk_action_set_always_show_image(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Action) GetAccelPath() string {
+	s := C.gtk_action_get_accel_path(self.object)
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(C.g_strdup(s)))
+	}
+	return ""
+}
+
+func (self *Action) SetAccelPath(accelPath string) {
+	s := gobject.GString(accelPath)
+	defer s.Free()
+	C.gtk_action_set_accel_path(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Action) SetAccelGroup(accelGroup *AccelGroup) {
+	if accelGroup == nil {
+		C.gtk_action_set_accel_group(self.object, nil)
+		return
+	}
+
+	C.gtk_action_set_accel_group(self.object, accelGroup.object)
+}
+
+func (self *Action) SetLabel(label string) {
+	s := gobject.GString(label)
+	defer s.Free()
+	C.gtk_action_set_label(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Action) GetLabel() string {
+	l := C.gtk_action_get_label(self.object)
+	if l != nil {
+		return gobject.GoString(unsafe.Pointer(l))
+	}
+	return ""
+}
+
+func (self *Action) SetShortLabel(shortLabel string) {
+	s := gobject.GString(shortLabel)
+	defer s.Free()
+	C.gtk_action_set_short_label(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Action) GetShortLabel() string {
+	l := C.gtk_action_get_short_label(self.object)
+	if l != nil {
+		return gobject.GoString(unsafe.Pointer(l))
+	}
+	return ""
+}
+
+func (self *Action) SetTooltip(tooltip string) {
+	s := gobject.GString(tooltip)
+	defer s.Free()
+	C.gtk_action_set_tooltip(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Action) GetTooltip() string {
+	t := C.gtk_action_get_tooltip(self.object)
+	if t != nil {
+		return gobject.GoString(unsafe.Pointer(t))
+	}
+	return ""
+}
+
+func (self *Action) SetStockId(stockId string) {
+	s := gobject.GString(stockId)
+	defer s.Free()
+	C.gtk_action_set_stock_id(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Action) GetStockId() string {
+	s := C.gtk_action_get_stock_id(self.object)
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+func (self *Action) SetIconName(iconName string) {
+	s := gobject.GString(iconName)
+	defer s.Free()
+	C.gtk_action_set_icon_name(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *Action) GetIconName() string {
+	s := C.gtk_action_get_icon_name(self.object)
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+func (self *Action) SetVisibleHorizontal(visibleHorizontal bool) {
+	b := gobject.GBool(visibleHorizontal)
+	defer b.Free()
+	C.gtk_action_set_visible_horizontal(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Action) GetVisibleHorizontal() bool {
+	b := C.gtk_action_get_visible_horizontal(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Action) SetVisibleVertical(visibleVertical bool) {
+	b := gobject.GBool(visibleVertical)
+	defer b.Free()
+	C.gtk_action_set_visible_vertical(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Action) GetVisibleVertical() bool {
+	b := C.gtk_action_get_visible_vertical(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Action) SetIsImportant(isImportant bool) {
+	b := gobject.GBool(isImportant)
+	defer b.Free()
+	C.gtk_action_set_is_important(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Action) GetIsImportant() bool {
+	b := C.gtk_action_get_is_important(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+//////////////////////////////
+// End GtkAction
+////////////////////////////// }}}
+
+// End Action-based menus and toolbars }}}
+
 // Layout Containers {{{
 
 // GtkGrid {{{
@@ -13240,7 +13604,7 @@ func init() {
 	gobject.RegisterCType(GtkType.MENU_BAR, newMenuBarFromNative)
 	gobject.RegisterGoType(GtkType.MENU_BAR, nativeFromMenuBar)
 
-	go gobject.RegisterCType(GtkType.MENU_ITEM, newMenuItemFromNative)
+	gobject.RegisterCType(GtkType.MENU_ITEM, newMenuItemFromNative)
 	gobject.RegisterGoType(GtkType.MENU_ITEM, nativeFromMenuItem)
 
 	// Register GtkCheckMenuItem type
@@ -13270,5 +13634,9 @@ func init() {
 	// Register GtkOrientable interface type
 	gobject.RegisterCType(GtkType.ORIENTABLE, newOrientableFromNative)
 	gobject.RegisterGoType(GtkType.ORIENTABLE, nativeFromOrientable)
+
+	// Register GtkAction type
+	gobject.RegisterCType(GtkType.ACTION, newActionFromNative)
+	gobject.RegisterGoType(GtkType.ACTION, nativeFromAction)
 }
 // End init function }}}
