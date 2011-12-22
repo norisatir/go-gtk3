@@ -147,6 +147,7 @@ static inline GtkRadioMenuItem* to_GtkRadioMenuItem(void* obj) { return GTK_RADI
 static inline GtkTearoffMenuItem* to_GtkTearoffMenuItem(void* obj) { return GTK_TEAROFF_MENU_ITEM(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
+static inline GtkOrientable* to_GtkOrientable(void* obj) { return GTK_ORIENTABLE(obj); }
 // End }}}
 
 // GtkAccelGroup funcs {{{
@@ -7122,17 +7123,15 @@ func (self CellLayout) ToNative() unsafe.Pointer {
 }
 
 func (self CellLayout) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
-	return nil, nil
-	//return gobject.Connect(self, name, f, data...)
+	return gobject.Connect(self, name, f, data...)
 }
 
 func (self CellLayout) Set(properties map[string]interface{}) {
-	//gobject.Set(self, properties)
+	gobject.Set(self, properties)
 }
 
 func (self CellLayout) Get(properties []string) map[string]interface{} {
-	return nil
-	//return gobject.Get(self, properties)
+	return gobject.Get(self, properties)
 }
 
 // CellLayout interface
@@ -11870,6 +11869,73 @@ func (self *Notebook) GetActionWidget(gtk_Pack int) WidgetLike {
 // End GtkNotebook
 ////////////////////////////// }}}
 
+// GtkOrientable interface {{{
+//////////////////////////////
+
+// GtkOrientable type
+type Orientable struct {
+	object *C.GtkOrientable
+}
+
+// Clear Orientable when it goes out of reach
+func orientableFinalizer(o *Orientable) {
+	runtime.SetFinalizer(o, func(o *Orientable) { gobject.Unref(o) })
+}
+
+// Conversion funcs
+func newOrientableFromNative(obj unsafe.Pointer) interface{} {
+	o := &Orientable{}
+	o.object = C.to_GtkOrientable(obj)
+
+	if gobject.IsObjectFloating(o) {
+		gobject.RefSink(o)
+	} else {
+		gobject.Ref(o)
+	}
+	orientableFinalizer(o)
+
+	return o
+}
+
+func nativeFromOrientable(o interface{}) *gobject.GValue {
+	ori, ok := o.(*Orientable)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.ORIENTABLE, ori.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// Simulate object-like
+func (self Orientable) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Orientable) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Orientable) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Orientable) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// Orientable interface
+
+func (self *Orientable) GetOrientation() int {
+	return int(C.gtk_orientable_get_orientation(self.object))
+}
+
+func (self *Orientable) SetOrientation(gtk_Orientation int) {
+	C.gtk_orientable_set_orientation(self.object, C.GtkOrientation(gtk_Orientation))
+}
+//////////////////////////////
+// End GtkOrientable interface
+////////////////////////////// }}}
+
 // End Layout Containers }}}
 
 // Ornaments {{{
@@ -13108,5 +13174,9 @@ func init() {
 	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
 	gobject.RegisterGoType(GtkType.NOTEBOOK, nativeFromNotebook)
+
+	// Register GtkOrientable interface type
+	gobject.RegisterCType(GtkType.ORIENTABLE, newOrientableFromNative)
+	gobject.RegisterGoType(GtkType.ORIENTABLE, nativeFromOrientable)
 }
 // End init function }}}
