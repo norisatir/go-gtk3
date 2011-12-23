@@ -73,6 +73,7 @@ IMPLEMENTATION LIST:
 - Entry
 - EntryBuffer
 - EntryCompletion
+- Scale
 
 #### MULTILINE TEXT EDITOR:
 - TextTag

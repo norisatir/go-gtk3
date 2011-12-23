@@ -105,6 +105,7 @@ static inline GtkRadioButton* to_GtkRadioButton(void* obj) { return GTK_RADIO_BU
 static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BUFFER(obj); }
 static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
 static inline GtkEntryCompletion* to_GtkEntryCompletion(void* obj) { return GTK_ENTRY_COMPLETION(obj); }
+static inline GtkScale* to_GtkScale(void* obj) { return GTK_SCALE(obj); }
 static inline GtkDialog* to_GtkDialog(void* obj) { return GTK_DIALOG(obj); }
 static inline GtkMessageDialog* to_GtkMessageDialog(void* obj) { return GTK_MESSAGE_DIALOG(obj); }
 static inline GtkInvisible* to_GtkInvisible(void* obj) { return GTK_INVISIBLE(obj); }
@@ -4633,6 +4634,177 @@ func (self *EntryCompletion) GetPopupSingleMatch() bool {
 }
 //////////////////////////////
 // END GtkEntryCompletion
+////////////////////////////// }}}
+
+// GtkScale {{{
+//////////////////////////////
+
+// GtkScale type
+type Scale struct {
+	object *C.GtkScale
+	*Range
+}
+
+func NewScale(gtk_Orientation int, adjustment *Adjustment) *Scale {
+	var adj *C.GtkAdjustment = nil
+	if adjustment != nil {
+		adj = adjustment.object
+	}
+
+	s := &Scale{}
+	o := C.gtk_scale_new(C.GtkOrientation(gtk_Orientation), adj)
+	s.object = C.to_GtkScale(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	}
+	s.Range = newRangeFromNative(unsafe.Pointer(o)).(*Range)
+	scaleFinalizer(s)
+
+	return s
+}
+
+func NewScaleWithRange(gtk_Orientation int, min, max, step float64) *Scale {
+	s := &Scale{}
+	o := C.gtk_scale_new_with_range(C.GtkOrientation(gtk_Orientation),
+		C.gdouble(min), C.gdouble(max), C.gdouble(step))
+	s.object = C.to_GtkScale(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	}
+	s.Range = newRangeFromNative(unsafe.Pointer(o)).(*Range)
+	scaleFinalizer(s)
+
+	return s
+}
+
+func NewHScale(adjustment *Adjustment) *Scale {
+	return NewScale(GtkOrientation.HORIZONTAL, adjustment)
+}
+
+func NewVScale(adjustment *Adjustment) *Scale {
+	return NewScale(GtkOrientation.VERTICAL, adjustment)
+}
+
+func NewHScaleWithRange(min, max, step float64) *Scale {
+	return NewScaleWithRange(GtkOrientation.HORIZONTAL, min, max, step)
+}
+
+func NewVScaleWithRange(min, max, step float64) *Scale {
+	return NewScaleWithRange(GtkOrientation.VERTICAL, min, max, step)
+}
+
+// Clear Scale struct when it goes out of reach
+func scaleFinalizer(s *Scale) {
+	runtime.SetFinalizer(s, func(s *Scale) { gobject.Unref(s) })
+}
+
+// Conversion function for gobject registration map
+func newScaleFromNative(obj unsafe.Pointer) interface{} {
+	s := &Scale{}
+	s.object = C.to_GtkScale(obj)
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	} else {
+		gobject.Ref(s)
+	}
+	s.Range = newRangeFromNative(obj).(*Range)
+	scaleFinalizer(s)
+
+	return s
+}
+
+func nativeFromScale(s interface{}) *gobject.GValue {
+	scale, ok := s.(*Scale)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.SCALE, scale.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object-like
+func (self Scale) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Scale) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Scale) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self Scale) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be Range-like
+func (self Scale) R() *Range {
+	return self.Range
+}
+
+// Scale interface
+
+func (self *Scale) SetDigits(digits int) {
+	C.gtk_scale_set_digits(self.object, C.gint(digits))
+}
+
+func (self *Scale) SetDrawValue(drawValue bool) {
+	b := gobject.GBool(drawValue)
+	defer b.Free()
+	C.gtk_scale_set_draw_value(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Scale) SetValuePos(gtk_Position int) {
+	C.gtk_scale_set_value_pos(self.object, C.GtkPositionType(gtk_Position))
+}
+
+func (self *Scale) GetDigits() int {
+	return int(C.gtk_scale_get_digits(self.object))
+}
+
+func (self *Scale) GetDrawValue() bool {
+	b := C.gtk_scale_get_draw_value(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Scale) GetValuePos() int {
+	return int(C.gtk_scale_get_value_pos(self.object))
+}
+
+//TODO: gtk_scale_get_layout
+
+func (self *Scale) GetLayoutOffsets() (x, y int) {
+	var cx, cy C.gint
+	C.gtk_scale_get_layout_offsets(self.object, &cx, &cy)
+	x = int(cx)
+	y = int(cy)
+	return
+}
+
+func (self *Scale) AddMark(value int64, gtk_Position int, markup interface{}) {
+	if markup == nil {
+		C.gtk_scale_add_mark(self.object, C.gdouble(value), C.GtkPositionType(gtk_Position), nil)
+		return
+	}
+
+	if m, ok := markup.(string); ok {
+		s := gobject.GString(m)
+		defer s.Free()
+		C.gtk_scale_add_mark(self.object, C.gdouble(value), C.GtkPositionType(gtk_Position), (*C.gchar)(s.GetPtr()))
+	}
+}
+
+func (self *Scale) ClearMarks() {
+	C.gtk_scale_clear_marks(self.object)
+}
+//////////////////////////////
+// END GtkScale
 ////////////////////////////// }}}
 
 // End Numeric/Text Data Entry }}}
@@ -13795,6 +13967,10 @@ func init() {
 	// Register GtkEntryCompletion type
 	gobject.RegisterCType(GtkType.ENTRY_COMPLETION, newEntryCompletionFromNative)
 	gobject.RegisterGoType(GtkType.ENTRY_COMPLETION, nativeFromEntryCompletion)
+
+	// Register GtkScale type
+	gobject.RegisterCType(GtkType.SCALE, newScaleFromNative)
+	gobject.RegisterGoType(GtkType.SCALE, nativeFromScale)
 
 	// Register GtkDialog type
 	gobject.RegisterCType(GtkType.DIALOG, newDialogFromNative)
