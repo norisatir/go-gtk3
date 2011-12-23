@@ -67,6 +67,7 @@ IMPLEMENTATION LIST:
 - ToggleButton
 - CheckButton
 - RadioButton
+- LinkButton
 
 #### NUMERIC/TEXT DATA ENTRY:
 - Entry

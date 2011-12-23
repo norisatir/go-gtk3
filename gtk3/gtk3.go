@@ -99,6 +99,7 @@ static inline GtkStatusbar* to_GtkStatusbar(void* obj) { return GTK_STATUSBAR(ob
 static inline GtkImage* to_GtkImage(void* obj) { return GTK_IMAGE(obj); }
 static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
+static inline GtkLinkButton* to_GtkLinkButton(void* obj) { return GTK_LINK_BUTTON(obj); }
 static inline GtkCheckButton* to_GtkCheckButton(void* obj) { return GTK_CHECK_BUTTON(obj); }
 static inline GtkRadioButton* to_GtkRadioButton(void* obj) { return GTK_RADIO_BUTTON(obj); }
 static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BUFFER(obj); }
@@ -3921,6 +3922,136 @@ func (self *RadioButton) JoinGroup(groupSource *RadioButton) {
 }
 //////////////////////////////
 // END GtkRadioButton
+////////////////////////////// }}}
+
+// GtkLinkButton {{{
+//////////////////////////////
+
+// GtkLinkButton type
+type LinkButton struct {
+	object *C.GtkLinkButton
+	*Button
+}
+
+// Create and return new link button
+func NewLinkButton(uri string) *LinkButton {
+	s := gobject.GString(uri)
+	defer s.Free()
+
+	b := &LinkButton{}
+	o := C.gtk_link_button_new((*C.gchar)(s.GetPtr()))
+	b.object = C.to_GtkLinkButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
+	linkButtonFinalizer(b)
+
+	return b
+}
+
+func NewLinkButtonWithLabel(uri, label string) *LinkButton {
+	b := &LinkButton{}
+
+	u := gobject.GString(uri)
+	defer u.Free()
+
+	l := gobject.GString(label)
+	defer l.Free()
+
+	o := C.gtk_link_button_new_with_label((*C.gchar)(u.GetPtr()), (*C.gchar)(l.GetPtr()))
+	b.object = C.to_GtkLinkButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
+	linkButtonFinalizer(b)
+
+	return b
+}
+
+// Clear LinkButton when it goes out of reach
+func linkButtonFinalizer(b *LinkButton) {
+	runtime.SetFinalizer(b, func(b *LinkButton) { gobject.Unref(b) })
+}
+
+// Conversion function for gobject registration map
+func newLinkButtonFromNative(obj unsafe.Pointer) interface{} {
+	b := &LinkButton{}
+	b.object = C.to_GtkLinkButton(obj)
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	} else {
+		gobject.Ref(b)
+	}
+	b.Button = newButtonFromNative(obj).(*Button)
+	linkButtonFinalizer(b)
+
+	return b
+}
+
+func nativeFromLinkButton(b interface{}) *gobject.GValue {
+	if but, ok := b.(*LinkButton); ok {
+		gv := gobject.CreateCGValue(GtkType.LINK_BUTTON, but.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self LinkButton) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self LinkButton) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self LinkButton) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self LinkButton) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be button-like
+func (self LinkButton) B() *Button {
+	return self.Button
+}
+
+// LinkButton interface
+
+func (self *LinkButton) GetURI() string {
+	s := C.gtk_link_button_get_uri(self.object)
+
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(C.g_strdup(s)))
+	}
+	return ""
+}
+
+func (self *LinkButton) SetURI(uri string) {
+	s := gobject.GString(uri)
+	defer s.Free()
+	C.gtk_link_button_set_uri(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *LinkButton) GetVisited() bool {
+	b := C.gtk_link_button_get_visited(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *LinkButton) SetVisited(visited bool) {
+	b := gobject.GBool(visited)
+	defer b.Free()
+	C.gtk_link_button_set_visited(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+//////////////////////////////
+// END GtkLinkButton
 ////////////////////////////// }}}
 
 // End Buttons and Toggles }}}
