@@ -945,11 +945,30 @@ func (self *Widget) QueueDraw() {
 	C.gtk_widget_queue_draw(self.object)
 }
 
-//TODO: gtk_widget_add_accelerator
-//TODO: gtk_widget_remove_accelerator
-//TODO: gtk_widget_set_accel_path
-//TODO: gtk_widget_list_accel_closures
-//TODO: gtk_widget_can_activate_accel
+func (self *Widget) AddAccelerator(accelSignal string, accelGroup *AccelGroup, accelKey uint,
+	gdk_Modifier int, gtk_AccelFlags int) {
+
+	ac := gobject.GString(accelSignal)
+	defer ac.Free()
+	C.gtk_widget_add_accelerator(self.object, (*C.gchar)(ac.GetPtr()), accelGroup.object,
+		C.guint(accelKey), C.GdkModifierType(gdk_Modifier), C.GtkAccelFlags(gtk_AccelFlags))
+}
+
+func (self *Widget) RemoveAccelerator(accelGroup *AccelGroup, accelKey uint, gdk_Modifier int) bool {
+	b := C.gtk_widget_remove_accelerator(self.object, accelGroup.object, C.guint(accelKey), C.GdkModifierType(gdk_Modifier))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Widget) SetAccelPath(accelPath string, accelGroup *AccelGroup) {
+	s := gobject.GString(accelPath)
+	defer s.Free()
+	C.gtk_widget_set_accel_path(self.object, (*C.gchar)(s.GetPtr()), accelGroup.object)
+}
+
+func (self *Widget) CanActivateAccel(signalId uint) bool {
+	b := C.gtk_widget_can_activate_accel(self.object, C.guint(signalId))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
 
 func (self *Widget) Activate() bool {
 	b := C.gtk_widget_activate(self.object)
@@ -1083,16 +1102,6 @@ func (self *Widget) GetPointer() (x, y int) {
 	return int(cx), int(cy)
 }
 
-func (self *Widget) GetParent() WidgetLike {
-	w := C.gtk_widget_get_parent(self.object)
-	if w != nil {
-		if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
-			return wid.(WidgetLike)
-		}
-	}
-	return nil
-}
-
 func (self *Widget) IsAncestor(ancestor WidgetLike) bool {
 	b := C.gtk_widget_is_ancestor(self.object, ancestor.W().object)
 	return gobject.GoBool(unsafe.Pointer(&b))
@@ -1105,6 +1114,114 @@ func (self *Widget) TranslateCoordinates(destWidget WidgetLike, srcX, srcY int) 
 	destX = int(cx)
 	destY = int(cy)
 	return
+}
+
+func (self *Widget) HideOnDelete() bool {
+	b := C.gtk_widget_hide_on_delete(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Widget) SetDirection(gtk_TextDirection int) {
+	C.gtk_widget_set_direction(self.object, C.GtkTextDirection(gtk_TextDirection))
+}
+
+func (self *Widget) GetDirection() int {
+	return int(C.gtk_widget_get_direction(self.object))
+}
+
+func (self *Widget) SetDefaultDirection(gtk_TextDirection int) {
+	C.gtk_widget_set_default_direction(C.GtkTextDirection(gtk_TextDirection))
+}
+
+func (self *Widget) GetDefaultDirection() int {
+	return int(C.gtk_widget_get_default_direction())
+}
+
+func (self *Widget) GetCompositeName() string {
+	s := C.gtk_widget_get_composite_name(self.object)
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+func (self *Widget) OverrideBackgroundColor(gtk_StateFlags int, color *gdk3.RGBA) {
+	if color == nil {
+		C.gtk_widget_override_background_color(self.object, C.GtkStateFlags(gtk_StateFlags), nil)
+		return
+	}
+	cl := gobject.ConvertToC(*color)
+	defer cl.Free()
+	C.gtk_widget_override_background_color(self.object, C.GtkStateFlags(gtk_StateFlags), (*C.GdkRGBA)(cl.GetPtr()))
+}
+
+func (self *Widget) OverrideColor(gtk_StateFlags int, color *gdk3.RGBA) {
+	if color == nil {
+		C.gtk_widget_override_color(self.object, C.GtkStateFlags(gtk_StateFlags), nil)
+		return
+	}
+	cl := gobject.ConvertToC(*color)
+	defer cl.Free()
+	C.gtk_widget_override_color(self.object, C.GtkStateFlags(gtk_StateFlags), (*C.GdkRGBA)(cl.GetPtr()))
+}
+
+func (self *Widget) OverrideSymbolicColor(name string, color *gdk3.RGBA) {
+	s := gobject.GString(name)
+	defer s.Free()
+	if color == nil {
+		C.gtk_widget_override_symbolic_color(self.object, (*C.gchar)(s.GetPtr()), nil)
+		return
+	}
+	cl := gobject.ConvertToC(*color)
+	defer cl.Free()
+	C.gtk_widget_override_symbolic_color(self.object, (*C.gchar)(s.GetPtr()), (*C.GdkRGBA)(cl.GetPtr()))
+}
+
+func (self *Widget) OverrideCursor(cursor, secondaryCursor *gdk3.RGBA) {
+	var c, sc *C.GdkRGBA
+	if cursor != nil {
+		cur := gobject.ConvertToC(*cursor)
+		defer cur.Free()
+		c = (*C.GdkRGBA)(cur.GetPtr())
+	}
+
+	if secondaryCursor != nil {
+		cur1 := gobject.ConvertToC(*secondaryCursor)
+		defer cur1.Free()
+		sc = (*C.GdkRGBA)(cur1.GetPtr())
+	}
+	C.gtk_widget_override_cursor(self.object, c, sc)
+}
+
+func (self *Widget) RenderIconPixbuf(stockId string, gtk_IconSize int) *gdkpixbuf.Pixbuf {
+	s := gobject.GString(stockId)
+	defer s.Free()
+	p := C.gtk_widget_render_icon_pixbuf(self.object, (*C.gchar)(s.GetPtr()), C.GtkIconSize(gtk_IconSize))
+
+	if p != nil {
+		if pix, err := gobject.ConvertToGo(unsafe.Pointer(p)); err == nil {
+			return pix.(*gdkpixbuf.Pixbuf)
+		}
+	}
+	return nil
+}
+
+func (self *Widget) PopCompositeChild() {
+	C.gtk_widget_pop_composite_child()
+}
+
+func (self *Widget) PushCompositeChild() {
+	C.gtk_widget_push_composite_child()
+}
+
+func (self *Widget) GetParent() WidgetLike {
+	w := C.gtk_widget_get_parent(self.object)
+	if w != nil {
+		if wid, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+			return wid.(WidgetLike)
+		}
+	}
+	return nil
 }
 
 func (self *Widget) GetHalign() int {
@@ -1141,31 +1258,6 @@ func (self *Widget) GetPreferredSize() (minimumSize, naturalSize Requisition) {
 	minimumSize = Requisition{int(min.width), int(min.height)}
 	naturalSize = Requisition{int(nat.width), int(nat.height)}
 	return
-}
-
-func (self *Widget) RenderIconPixbuf(stockId string, gtk_IconSize int) *gdkpixbuf.Pixbuf {
-	s := gobject.GString(stockId)
-	defer s.Free()
-	p := C.gtk_widget_render_icon_pixbuf(self.object, (*C.gchar)(s.GetPtr()), C.GtkIconSize(gtk_IconSize))
-
-	if p == nil {
-		return nil
-	}
-
-	if pix, err := gobject.ConvertToGo(unsafe.Pointer(p)); err == nil {
-		return pix.(*gdkpixbuf.Pixbuf)
-	}
-	return nil
-}
-
-func (self *Widget) OverrideColor(gtk_StateFlags int, color *gdk3.RGBA) {
-	if color == nil {
-		C.gtk_widget_override_color(self.object, C.GtkStateFlags(gtk_StateFlags), nil)
-		return
-	}
-	cl := gobject.ConvertToC(*color)
-	defer cl.Free()
-	C.gtk_widget_override_color(self.object, C.GtkStateFlags(gtk_StateFlags), (*C.GdkRGBA)(cl.GetPtr()))
 }
 
 //////////////////////////////
