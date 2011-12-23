@@ -813,6 +813,32 @@ type gtkPackDirection struct {
 }
 // End GtkPackDirection }}}
 
+// GtkSpinButtonUpdatePolicy {{{
+
+var GtkSpinButtonUpdatePolicy gtkSpinButtonUpdatePolicy
+
+type gtkSpinButtonUpdatePolicy struct {
+	ALWAYS   int
+	IF_VALID int
+}
+
+// End GtkSpinButtonUpdatePolicy }}}
+
+// GtkSpinType {{{
+
+var GtkSpinType gtkSpinType
+
+type gtkSpinType struct {
+	STEP_FORWARD  int
+	STEP_BACKWARD int
+	PAGE_FORWARD  int
+	PAGE_BACKWARD int
+	HOME          int
+	END           int
+	USER_DEFINED  int
+}
+// End GtkSpinType }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1428,4 +1454,17 @@ func init() {
 	GtkPackDirection.RTL = 1
 	GtkPackDirection.TTB = 2
 	GtkPackDirection.BTT = 3
+
+	// Initialize GtkSpinButtonUpdatePolicy
+	GtkSpinButtonUpdatePolicy.ALWAYS = 0
+	GtkSpinButtonUpdatePolicy.IF_VALID = 1
+
+	// Initialize GtkSpinType
+	GtkSpinType.STEP_FORWARD = 0
+	GtkSpinType.STEP_BACKWARD = 1
+	GtkSpinType.PAGE_FORWARD = 2
+	GtkSpinType.PAGE_BACKWARD = 3
+	GtkSpinType.HOME = 4
+	GtkSpinType.END = 5
+	GtkSpinType.USER_DEFINED = 6
 } /// }}}

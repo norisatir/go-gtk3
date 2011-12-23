@@ -106,6 +106,7 @@ static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BU
 static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
 static inline GtkEntryCompletion* to_GtkEntryCompletion(void* obj) { return GTK_ENTRY_COMPLETION(obj); }
 static inline GtkScale* to_GtkScale(void* obj) { return GTK_SCALE(obj); }
+static inline GtkSpinButton* to_GtkSpinButton(void* obj) { return GTK_SPIN_BUTTON(obj); }
 static inline GtkDialog* to_GtkDialog(void* obj) { return GTK_DIALOG(obj); }
 static inline GtkMessageDialog* to_GtkMessageDialog(void* obj) { return GTK_MESSAGE_DIALOG(obj); }
 static inline GtkInvisible* to_GtkInvisible(void* obj) { return GTK_INVISIBLE(obj); }
@@ -610,6 +611,11 @@ type MenuItemLike interface {
 // OrientableLike interface must have method IOrientable
 type OrientableLike interface {
 	IOrientable() *Orientable
+}
+
+// EntryLike interface must have method E()
+type EntryLike interface {
+	E() *Entry
 }
 //////////////////////////////
 // END Interfaces
@@ -4805,6 +4811,224 @@ func (self *Scale) ClearMarks() {
 }
 //////////////////////////////
 // END GtkScale
+////////////////////////////// }}}
+
+// GtkSpinButton {{{
+//////////////////////////////
+
+// GtkSpinButton type
+type SpinButton struct {
+	object *C.GtkSpinButton
+	*Entry
+}
+
+func NewSpinButton(adjustment *Adjustment, climbRate float64, digits uint) *SpinButton {
+	var adj *C.GtkAdjustment = nil
+	if adjustment != nil {
+		adj = adjustment.object
+	}
+
+	s := &SpinButton{}
+	o := C.gtk_spin_button_new(adj, C.gdouble(climbRate), C.guint(digits))
+	s.object = C.to_GtkSpinButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	}
+	s.Entry = newEntryFromNative(unsafe.Pointer(o)).(*Entry)
+	spinButtonFinalizer(s)
+
+	return s
+}
+
+func NewSpinButtonWithRange(min, max, step float64) *SpinButton {
+	s := &SpinButton{}
+	o := C.gtk_spin_button_new_with_range(C.gdouble(min), C.gdouble(max), C.gdouble(step))
+	s.object = C.to_GtkSpinButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	}
+	s.Entry = newEntryFromNative(unsafe.Pointer(o)).(*Entry)
+	spinButtonFinalizer(s)
+
+	return s
+}
+
+// Clear SpinButton struct when it goes out of reach
+func spinButtonFinalizer(s *SpinButton) {
+	runtime.SetFinalizer(s, func(s *SpinButton) { gobject.Unref(s) })
+}
+
+// Conversion function for gobject registration map
+func newSpinButtonFromNative(obj unsafe.Pointer) interface{} {
+	s := &SpinButton{}
+	s.object = C.to_GtkSpinButton(obj)
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	} else {
+		gobject.Ref(s)
+	}
+	s.Entry = newEntryFromNative(obj).(*Entry)
+	spinButtonFinalizer(s)
+
+	return s
+}
+
+func nativeFromSpinButton(s interface{}) *gobject.GValue {
+	spin, ok := s.(*SpinButton)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.SPIN_BUTTON, spin.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object-like
+func (self SpinButton) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self SpinButton) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self SpinButton) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self SpinButton) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be Entry-like
+func (self SpinButton) E() *Entry {
+	return self.Entry
+}
+
+// SpinButton interface
+
+func (self *SpinButton) Configure(adj *Adjustment, climbRate float64, digits uint) {
+	var cadj *C.GtkAdjustment = nil
+	if adj != nil {
+		cadj = adj.object
+	}
+
+	C.gtk_spin_button_configure(self.object, cadj, C.gdouble(climbRate), C.guint(digits))
+}
+
+func (self *SpinButton) SetAdjustment(adj *Adjustment) {
+	C.gtk_spin_button_set_adjustment(self.object, adj.object)
+}
+
+func (self *SpinButton) GetAdjustment() *Adjustment {
+	a := C.gtk_spin_button_get_adjustment(self.object)
+
+	if a != nil {
+		if adj, err := gobject.ConvertToGo(unsafe.Pointer(a)); err == nil {
+			return adj.(*Adjustment)
+		}
+	}
+	return nil
+}
+
+func (self *SpinButton) SetDigits(digits uint) {
+	C.gtk_spin_button_set_digits(self.object, C.guint(digits))
+}
+
+func (self *SpinButton) SetIncrements(step, page float64) {
+	C.gtk_spin_button_set_increments(self.object, C.gdouble(step), C.gdouble(page))
+}
+
+func (self *SpinButton) SetRange(min, max float64) {
+	C.gtk_spin_button_set_range(self.object, C.gdouble(min), C.gdouble(max))
+}
+
+func (self *SpinButton) GetValueAsInt() int {
+	return int(C.gtk_spin_button_get_value_as_int(self.object))
+}
+
+func (self *SpinButton) SetValue(value float64) {
+	C.gtk_spin_button_set_value(self.object, C.gdouble(value))
+}
+
+func (self *SpinButton) SetUpdatePolicy(gtk_SpinButtonUpdatePolicy int) {
+	C.gtk_spin_button_set_update_policy(self.object,
+		C.GtkSpinButtonUpdatePolicy(gtk_SpinButtonUpdatePolicy))
+}
+
+func (self *SpinButton) SetNumeric(numeric bool) {
+	b := gobject.GBool(numeric)
+	defer b.Free()
+	C.gtk_spin_button_set_numeric(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *SpinButton) Spin(gtk_SpinType int, increment float64) {
+	C.gtk_spin_button_spin(self.object, C.GtkSpinType(gtk_SpinType), C.gdouble(increment))
+}
+
+func (self *SpinButton) SetWrap(wrap bool) {
+	b := gobject.GBool(wrap)
+	defer b.Free()
+	C.gtk_spin_button_set_wrap(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *SpinButton) SetSnapToTicks(snapToTicks bool) {
+	b := gobject.GBool(snapToTicks)
+	defer b.Free()
+	C.gtk_spin_button_set_snap_to_ticks(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *SpinButton) Update() {
+	C.gtk_spin_button_update(self.object)
+}
+
+func (self *SpinButton) GetDigits() uint {
+	return uint(C.gtk_spin_button_get_digits(self.object))
+}
+
+func (self *SpinButton) GetIncrements() (step, page float64) {
+	var f, p C.gdouble
+	C.gtk_spin_button_get_increments(self.object, &f, &p)
+	step = float64(f)
+	page = float64(p)
+	return
+}
+
+func (self *SpinButton) GetNumeric() bool {
+	b := C.gtk_spin_button_get_numeric(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *SpinButton) GetRange() (min, max float64) {
+	var cmin, cmax C.gdouble
+	C.gtk_spin_button_get_range(self.object, &cmin, &cmax)
+	min = float64(cmin)
+	max = float64(cmax)
+	return
+}
+
+func (self *SpinButton) GetSnapToTicks() bool {
+	b := C.gtk_spin_button_get_snap_to_ticks(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *SpinButton) GetUpdatePolicy() int {
+	return int(C.gtk_spin_button_get_update_policy(self.object))
+}
+
+func (self *SpinButton) GetValue() float64 {
+	return float64(C.gtk_spin_button_get_value(self.object))
+}
+
+func (self *SpinButton) GetWrap() bool {
+	b := C.gtk_spin_button_get_wrap(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+//////////////////////////////
+// END GtkSpinButton
 ////////////////////////////// }}}
 
 // End Numeric/Text Data Entry }}}
@@ -13971,6 +14195,10 @@ func init() {
 	// Register GtkScale type
 	gobject.RegisterCType(GtkType.SCALE, newScaleFromNative)
 	gobject.RegisterGoType(GtkType.SCALE, nativeFromScale)
+
+	// Register GtkSpinButton type
+	gobject.RegisterCType(GtkType.SPIN_BUTTON, newSpinButtonFromNative)
+	gobject.RegisterGoType(GtkType.SPIN_BUTTON, nativeFromSpinButton)
 
 	// Register GtkDialog type
 	gobject.RegisterCType(GtkType.DIALOG, newDialogFromNative)

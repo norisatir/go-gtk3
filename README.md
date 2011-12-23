@@ -74,6 +74,7 @@ IMPLEMENTATION LIST:
 - EntryBuffer
 - EntryCompletion
 - Scale
+- SpinButton
 
 #### MULTILINE TEXT EDITOR:
 - TextTag
