@@ -100,6 +100,7 @@ static inline GtkImage* to_GtkImage(void* obj) { return GTK_IMAGE(obj); }
 static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
 static inline GtkCheckButton* to_GtkCheckButton(void* obj) { return GTK_CHECK_BUTTON(obj); }
+static inline GtkRadioButton* to_GtkRadioButton(void* obj) { return GTK_RADIO_BUTTON(obj); }
 static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BUFFER(obj); }
 static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
 static inline GtkEntryCompletion* to_GtkEntryCompletion(void* obj) { return GTK_ENTRY_COMPLETION(obj); }
@@ -3713,6 +3714,213 @@ func (self CheckButton) Get(properties []string) map[string]interface{} {
 }
 //////////////////////////////
 // END GtkCheckButton
+////////////////////////////// }}}
+
+// GtkRadioButton {{{
+//////////////////////////////
+
+// GtkRadioButton type
+type RadioButton struct {
+	object *C.GtkRadioButton
+	*CheckButton
+}
+
+// Clear RadioButton struct when it goes out of reach
+func radioButtonFinalizer(rb *RadioButton) {
+	runtime.SetFinalizer(rb, func(rb *RadioButton) { gobject.Unref(rb) })
+}
+
+func NewRadioButton(group *glib.GSList) *RadioButton {
+	var list *C.GSList = nil
+	if group != nil {
+		list = (*C.GSList)(group.ToNative())
+	}
+	rb := &RadioButton{}
+	o := C.gtk_radio_button_new(list)
+	rb.object = C.to_GtkRadioButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(rb) {
+		gobject.RefSink(rb)
+	}
+	rb.CheckButton = newCheckButtonFromNative(unsafe.Pointer(o)).(*CheckButton)
+	radioButtonFinalizer(rb)
+
+	return rb
+}
+
+func NewRadioButtonFromWidget(radioGroupMember *RadioButton) *RadioButton {
+	if radioGroupMember == nil {
+		return NewRadioButton(nil)
+	}
+
+	rb := &RadioButton{}
+	o := C.gtk_radio_button_new_from_widget(radioGroupMember.object)
+	rb.object = C.to_GtkRadioButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(rb) {
+		gobject.RefSink(rb)
+	}
+	rb.CheckButton = newCheckButtonFromNative(unsafe.Pointer(o)).(*CheckButton)
+	radioButtonFinalizer(rb)
+
+	return rb
+}
+
+func NewRadioButtonWithLabel(group *glib.GSList, label string) *RadioButton {
+	var list *C.GSList = nil
+	if group != nil {
+		list = (*C.GSList)(group.ToNative())
+	}
+	s := gobject.GString(label)
+	defer s.Free()
+
+	rb := &RadioButton{}
+
+	o := C.gtk_radio_button_new_with_label(list, (*C.gchar)(s.GetPtr()))
+	rb.object = C.to_GtkRadioButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(rb) {
+		gobject.RefSink(rb)
+	}
+	rb.CheckButton = newCheckButtonFromNative(unsafe.Pointer(o)).(*CheckButton)
+	radioButtonFinalizer(rb)
+
+	return rb
+}
+
+func NewRadioButtonWithLabelFromWidget(radioGroupMember *RadioButton, label string) *RadioButton {
+	if radioGroupMember == nil {
+		return NewRadioButtonWithLabel(nil, label)
+	}
+
+	s := gobject.GString(label)
+	defer s.Free()
+
+	rb := &RadioButton{}
+	o := C.gtk_radio_button_new_with_label_from_widget(radioGroupMember.object, (*C.gchar)(s.GetPtr()))
+	rb.object = C.to_GtkRadioButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(rb) {
+		gobject.RefSink(rb)
+	}
+	rb.CheckButton = newCheckButtonFromNative(unsafe.Pointer(o)).(*CheckButton)
+	radioButtonFinalizer(rb)
+
+	return rb
+}
+
+func NewRadioButtonWithMnemonic(group *glib.GSList, label string) *RadioButton {
+	var list *C.GSList = nil
+	if group != nil {
+		list = (*C.GSList)(group.ToNative())
+	}
+	s := gobject.GString(label)
+	defer s.Free()
+
+	rb := &RadioButton{}
+
+	o := C.gtk_radio_button_new_with_mnemonic(list, (*C.gchar)(s.GetPtr()))
+	rb.object = C.to_GtkRadioButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(rb) {
+		gobject.RefSink(rb)
+	}
+	rb.CheckButton = newCheckButtonFromNative(unsafe.Pointer(o)).(*CheckButton)
+	radioButtonFinalizer(rb)
+
+	return rb
+}
+
+func NewRadioButtonWithMnemonicFromWidget(radioGroupMember *RadioButton, label string) *RadioButton {
+	if radioGroupMember == nil {
+		return NewRadioButtonWithMnemonic(nil, label)
+	}
+
+	s := gobject.GString(label)
+	defer s.Free()
+
+	rb := &RadioButton{}
+	o := C.gtk_radio_button_new_with_mnemonic_from_widget(radioGroupMember.object, (*C.gchar)(s.GetPtr()))
+	rb.object = C.to_GtkRadioButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(rb) {
+		gobject.RefSink(rb)
+	}
+	rb.CheckButton = newCheckButtonFromNative(unsafe.Pointer(o)).(*CheckButton)
+	radioButtonFinalizer(rb)
+
+	return rb
+}
+
+// Conversion funcs
+func newRadioButtonFromNative(obj unsafe.Pointer) interface{} {
+	rb := &RadioButton{}
+	rb.object = C.to_GtkRadioButton(obj)
+
+	if gobject.IsObjectFloating(rb) {
+		gobject.RefSink(rb)
+	} else {
+		gobject.Ref(rb)
+	}
+	rb.CheckButton = newCheckButtonFromNative(obj).(*CheckButton)
+	radioButtonFinalizer(rb)
+
+	return rb
+}
+
+func nativeFromRadioButton(rb interface{}) *gobject.GValue {
+	radio, ok := rb.(*RadioButton)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.RADIO_BUTTON, radio.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self RadioButton) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self RadioButton) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self RadioButton) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self RadioButton) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// RadioButton interface
+
+func (self *RadioButton) SetGroup(group *glib.GSList) {
+	C.gtk_radio_button_set_group(self.object, (*C.GSList)(group.ToNative()))
+}
+
+func (self *RadioButton) GetGroup() *glib.GSList {
+	g := C.gtk_radio_button_get_group(self.object)
+
+	if g != nil {
+		goList := glib.NewGSListFromNative(unsafe.Pointer(g))
+		goList.GC_Free = false
+		goList.GC_FreeFull = false
+		goList.ConversionFunc = newRadioButtonFromNative
+		return goList
+	}
+	return nil
+}
+
+func (self *RadioButton) JoinGroup(groupSource *RadioButton) {
+	if groupSource == nil {
+		C.gtk_radio_button_join_group(self.object, nil)
+	}
+	C.gtk_radio_button_join_group(self.object, groupSource.object)
+}
+//////////////////////////////
+// END GtkRadioButton
 ////////////////////////////// }}}
 
 // End Buttons and Toggles }}}
@@ -13440,6 +13648,10 @@ func init() {
 	// Register GtkCheckButton type
 	gobject.RegisterCType(GtkType.CHECK_BUTTON, newCheckButtonFromNative)
 	gobject.RegisterGoType(GtkType.CHECK_BUTTON, nativeFromCheckButton)
+
+	// Register GtkRadioButton type
+	gobject.RegisterCType(GtkType.RADIO_BUTTON, newRadioButtonFromNative)
+	gobject.RegisterGoType(GtkType.RADIO_BUTTON, nativeFromRadioButton)
 
 	// Register GtkEntryBuffer type
 	gobject.RegisterCType(GtkType.ENTRY_BUFFER, newEntryBufferFromNative)
