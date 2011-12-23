@@ -839,6 +839,18 @@ type gtkSpinType struct {
 }
 // End GtkSpinType }}}
 
+// GtkTreeViewGridLines {{{
+
+var GtkTreeViewGridLines gtkTreeViewGridLines
+
+type gtkTreeViewGridLines struct {
+	NONE       int
+	HORIZONTAL int
+	VERTICAL   int
+	BOTH       int
+}
+// End GtkTreeViewGridLines }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1467,4 +1479,10 @@ func init() {
 	GtkSpinType.HOME = 4
 	GtkSpinType.END = 5
 	GtkSpinType.USER_DEFINED = 6
+
+	// Initialize GtkTreeViewGridLines
+	GtkTreeViewGridLines.NONE = 0
+	GtkTreeViewGridLines.HORIZONTAL = 1
+	GtkTreeViewGridLines.VERTICAL = 2
+	GtkTreeViewGridLines.BOTH = 3
 } /// }}}

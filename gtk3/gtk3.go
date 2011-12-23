@@ -9761,7 +9761,10 @@ func (self *TreeView) InsertColumn(colum *TreeViewColumn, position int) int {
 	return int(C.gtk_tree_view_insert_column(self.object, colum.object, C.gint(position)))
 }
 
-//TODO: gtk_tree_view_insert_column_with_attributes
+func (self *TreeView) InsertColumnWithAttributes(position int, title string, cell CellRendererLike, attrs A) int {
+	col := NewTreeViewColumnWithAttributes(title, cell, attrs)
+	return int(self.InsertColumn(col, position))
+}
 //TODO: gtk_tree_view_insert_column_with_data_func
 
 func (self *TreeView) GetColumn(n int) *TreeViewColumn {
@@ -9777,7 +9780,19 @@ func (self *TreeView) GetColumn(n int) *TreeViewColumn {
 	return nil
 }
 
-//TODO: gtk_tree_view_get_columns
+func (self *TreeView) GetColumns() *glib.GList {
+	l := C.gtk_tree_view_get_columns(self.object)
+
+	if l != nil {
+		goList := glib.NewGListFromNative(unsafe.Pointer(l))
+		goList.GC_Free = true
+		goList.GC_FreeFull = false
+		goList.ConversionFunc = newTreeViewColumnFromNative
+		glib.GListFinalizer(goList)
+		return goList
+	}
+	return nil
+}
 
 func (self *TreeView) MoveColumnAfter(column, baseColumn *TreeViewColumn) {
 	var base *C.GtkTreeViewColumn = nil
@@ -9803,7 +9818,6 @@ func (self *TreeView) GetExpanderColumn() *TreeViewColumn {
 		if err == nil {
 			return expanderCol.(*TreeViewColumn)
 		}
-		return nil
 	}
 	return nil
 }
@@ -9859,12 +9873,266 @@ func (self *TreeView) SetCursorOnCell(path *TreePath, focusColumn *TreeViewColum
 	C.gtk_tree_view_set_cursor_on_cell(self.object, path.object, c, r, *((*C.gboolean)(b.GetPtr())))
 }
 
-func (self *TreeView) SetSearchColumn(column int) {
-	C.gtk_tree_view_set_search_column(self.object, C.gint(column))
+func (self *TreeView) GetCursor() (path *TreePath, focusCol *TreeViewColumn) {
+	path, focusCol = nil, nil
+	var cpath *C.GtkTreePath
+	var ccol *C.GtkTreeViewColumn
+	C.gtk_tree_view_get_cursor(self.object, &cpath, &ccol)
+
+	if cpath != nil {
+		path = newTreePathFromNative(unsafe.Pointer(cpath)).(*TreePath)
+	}
+
+	if ccol != nil {
+		focusCol = newTreeViewColumnFromNative(unsafe.Pointer(ccol)).(*TreeViewColumn)
+	}
+	return
+}
+
+func (self *TreeView) RowActivated(path *TreePath, column *TreeViewColumn) {
+	C.gtk_tree_view_row_activated(self.object, path.object, column.object)
 }
 
 func (self *TreeView) ExpandAll() {
 	C.gtk_tree_view_expand_all(self.object)
+}
+
+func (self *TreeView) CollapseAll() {
+	C.gtk_tree_view_collapse_all(self.object)
+}
+
+func (self *TreeView) ExpandRow(path *TreePath, openAll bool) {
+	b := gobject.GBool(openAll)
+	defer b.GetPtr()
+	C.gtk_tree_view_expand_row(self.object, path.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) CollapseRow(path *TreePath) bool {
+	b := C.gtk_tree_view_collapse_row(self.object, path.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//TODO: gtk_tree_view_map_expanded_rows
+
+func (self *TreeView) RowExpanded(path *TreePath) bool {
+	b := C.gtk_tree_view_row_expanded(self.object, path.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetReorderable(reorderable bool) {
+	b := gobject.GBool(reorderable)
+	defer b.Free()
+	C.gtk_tree_view_set_reorderable(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) GetReorderable() bool {
+	b := C.gtk_tree_view_get_reorderable(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//TODO: gtk_tree_view_get_path_at_pos
+//TODO: gtk_tree_view_is_blank_at_pos
+
+func (self *TreeView) GetCellArea(path *TreePath, column *TreeViewColumn) gdk3.Rectangle {
+	var cpath *C.GtkTreePath = nil
+	var ccolumn *C.GtkTreeViewColumn = nil
+	var rec C.GdkRectangle
+
+	if path != nil {
+		cpath = path.object
+	}
+
+	if column != nil {
+		ccolumn = column.object
+	}
+	C.gtk_tree_view_get_cell_area(self.object, cpath, ccolumn, &rec)
+
+	if goRec, err := gobject.ConvertToGo(unsafe.Pointer(&rec), gdk3.GdkType.RECTANGLE); err == nil {
+		return goRec.(gdk3.Rectangle)
+	}
+	return gdk3.Rectangle{}
+}
+
+func (self *TreeView) GetBackgroundArea(path *TreePath, column *TreeViewColumn) gdk3.Rectangle {
+	var cpath *C.GtkTreePath = nil
+	var ccolumn *C.GtkTreeViewColumn = nil
+	var rec C.GdkRectangle
+
+	if path != nil {
+		cpath = path.object
+	}
+
+	if column != nil {
+		ccolumn = column.object
+	}
+	C.gtk_tree_view_get_background_area(self.object, cpath, ccolumn, &rec)
+
+	if goRec, err := gobject.ConvertToGo(unsafe.Pointer(&rec), gdk3.GdkType.RECTANGLE); err == nil {
+		return goRec.(gdk3.Rectangle)
+	}
+	return gdk3.Rectangle{}
+}
+
+func (self *TreeView) GetVisibleRect() gdk3.Rectangle {
+	var rec C.GdkRectangle
+
+	C.gtk_tree_view_get_visible_rect(self.object, &rec)
+
+	if goRec, err := gobject.ConvertToGo(unsafe.Pointer(&rec), gdk3.GdkType.RECTANGLE); err == nil {
+		return goRec.(gdk3.Rectangle)
+	}
+	return gdk3.Rectangle{}
+}
+
+func (self *TreeView) GetVisibleRange() (pathsValid bool, start, end *TreePath) {
+	start, end = nil, nil
+	var cstart, cend *C.GtkTreePath
+	b := C.gtk_tree_view_get_visible_range(self.object, &cstart, &cend)
+	pathsValid = gobject.GoBool(unsafe.Pointer(&b))
+
+	if cstart != nil {
+		start = newTreePathFromNative(unsafe.Pointer(cstart)).(*TreePath)
+	}
+
+	if cend != nil {
+		end = newTreePathFromNative(unsafe.Pointer(cend)).(*TreePath)
+	}
+	return
+}
+
+func (self *TreeView) GetBinWindow() *gdk3.Window {
+	w := C.gtk_tree_view_get_bin_window(self.object)
+	if w != nil {
+		if win, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+			return win.(*gdk3.Window)
+		}
+	}
+	return nil
+}
+
+//TODO: gtk_tree_view_convert_bin_window_to_tree_coords
+//TODO: gtk_tree_view_convert_bin_window_to_widget_coords
+//TODO: gtk_tree_view_convert_tree_to_widget_coords
+//TODO: gtk_tree_view_convert_tree_to_bin_window_coords
+
+func (self *TreeView) SetEnableSearch(enableSearch bool) {
+	b := gobject.GBool(enableSearch)
+	defer b.Free()
+	C.gtk_tree_view_set_enable_search(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) GetEnableSearch() bool {
+	b := C.gtk_tree_view_get_enable_search(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) GetSearchColumn() int {
+	return int(C.gtk_tree_view_get_search_column(self.object))
+}
+
+func (self *TreeView) SetSearchColumn(column int) {
+	C.gtk_tree_view_set_search_column(self.object, C.gint(column))
+}
+
+//TODO: gtk_tree_view_set_search_equal_func
+
+func (self *TreeView) GetSearchEntry() *Entry {
+	e := C.gtk_tree_view_get_search_entry(self.object)
+	if e != nil {
+		return newEntryFromNative(unsafe.Pointer(e)).(*Entry)
+	}
+	return nil
+}
+
+func (self *TreeView) SetSearchEntry(entry *Entry) {
+	if entry == nil {
+		C.gtk_tree_view_set_search_entry(self.object, nil)
+	}
+	C.gtk_tree_view_set_search_entry(self.object, entry.object)
+}
+
+//TODO: gtk_tree_view_set_search_position_func
+
+func (self *TreeView) GetFixedHeightMode() bool {
+	b := C.gtk_tree_view_get_fixed_height_mode(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetFixedHeightMode(enable bool) {
+	b := gobject.GBool(enable)
+	defer b.Free()
+	C.gtk_tree_view_set_fixed_height_mode(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) GetHoverSelection() bool {
+	b := C.gtk_tree_view_get_hover_selection(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetHoverSelection(hover bool) {
+	b := gobject.GBool(hover)
+	defer b.Free()
+	C.gtk_tree_view_set_hover_selection(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) GetHoverExpand() bool {
+	b := C.gtk_tree_view_get_hover_expand(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetHoverExpand(expand bool) {
+	b := gobject.GBool(expand)
+	defer b.Free()
+	C.gtk_tree_view_set_hover_expand(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+//TODO: gtk_tree_view_set_row_seperator_func
+
+func (self *TreeView) GetRubberBanding() bool {
+	b := C.gtk_tree_view_get_rubber_banding(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetRubberBanding(expand bool) {
+	b := gobject.GBool(expand)
+	defer b.Free()
+	C.gtk_tree_view_set_rubber_banding(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) IsRubberBandingActive() bool {
+	b := C.gtk_tree_view_is_rubber_banding_active(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) GetEnableTreeLines() bool {
+	b := C.gtk_tree_view_get_enable_tree_lines(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *TreeView) SetEnableTreeLines(enabled bool) {
+	b := gobject.GBool(enabled)
+	defer b.Free()
+	C.gtk_tree_view_set_enable_tree_lines(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *TreeView) GetGridLines() int {
+	return int(C.gtk_tree_view_get_grid_lines(self.object))
+}
+
+func (self *TreeView) SetGridLines(gtk_TreeViewGridLines int) {
+	C.gtk_tree_view_set_grid_lines(self.object, C.GtkTreeViewGridLines(gtk_TreeViewGridLines))
+}
+
+//TODO: set_tooltip_row
+//TODO: set_tooltip_cell
+//TODO: get_tooltip_context
+
+func (self *TreeView) GetTooltipColumn() int {
+	return int(C.gtk_tree_view_get_tooltip_column(self.object))
+}
+
+func (self *TreeView) SetTooltipColumn(column int) {
+	C.gtk_tree_view_set_tooltip_column(self.object, C.gint(column))
 }
 //////////////////////////////
 // End GtkTreeView
