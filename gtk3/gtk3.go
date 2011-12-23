@@ -9862,6 +9862,10 @@ func (self *TreeView) SetCursorOnCell(path *TreePath, focusColumn *TreeViewColum
 func (self *TreeView) SetSearchColumn(column int) {
 	C.gtk_tree_view_set_search_column(self.object, C.gint(column))
 }
+
+func (self *TreeView) ExpandAll() {
+	C.gtk_tree_view_expand_all(self.object)
+}
 //////////////////////////////
 // End GtkTreeView
 ////////////////////////////// }}}
