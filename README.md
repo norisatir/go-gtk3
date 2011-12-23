@@ -128,8 +128,8 @@ IMPLEMENTATION LIST:
 
 #### APP:
 - Application
+</p>
 
 AUTHOR
-------
-
+-------
 - Matej Knific
