@@ -4492,8 +4492,252 @@ func (self *Entry) GetOverwriteMode() bool {
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
+//TODO: gtk_entry_get_layout
+
+func (self *Entry) GetLayoutOffsets() (x, y int) {
+	var cx, cy C.gint
+	C.gtk_entry_get_layout_offsets(self.object, &cx, &cy)
+	x = int(cx)
+	y = int(cy)
+	return
+}
+
+func (self *Entry) LayoutIndexToTextIndex(layoutIndex int) {
+	C.gtk_entry_layout_index_to_text_index(self.object, C.gint(layoutIndex))
+}
+
+func (self *Entry) TextIndexToLayoutIndex(textIndex int) {
+	C.gtk_entry_text_index_to_layout_index(self.object, C.gint(textIndex))
+}
+
+func (self *Entry) GetMaxLength() int {
+	return int(C.gtk_entry_get_max_length(self.object))
+}
+
+func (self *Entry) GetVisibility() bool {
+	b := C.gtk_entry_get_visibility(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
 func (self *Entry) SetCompletion(completion *EntryCompletion) {
 	C.gtk_entry_set_completion(self.object, completion.object)
+}
+
+func (self *Entry) GetCompletion() *EntryCompletion {
+	c := C.gtk_entry_get_completion(self.object)
+
+	if c != nil {
+		if com, err := gobject.ConvertToGo(unsafe.Pointer(c)); err == nil {
+			return com.(*EntryCompletion)
+		}
+	}
+	return nil
+}
+
+func (self *Entry) SetCursorHadjustment(adj *Adjustment) {
+	if adj == nil {
+		C.gtk_entry_set_cursor_hadjustment(self.object, nil)
+		return
+	}
+	C.gtk_entry_set_cursor_hadjustment(self.object, adj.object)
+}
+
+func (self *Entry) GetCursorHadjustment() *Adjustment {
+	h := C.gtk_entry_get_cursor_hadjustment(self.object)
+	if h != nil {
+		if adj, err := gobject.ConvertToGo(unsafe.Pointer(h)); err == nil {
+			return adj.(*Adjustment)
+		}
+	}
+	return nil
+}
+
+func (self *Entry) SetProgressFraction(fraction float64) {
+	C.gtk_entry_set_progress_fraction(self.object, C.gdouble(fraction))
+}
+
+func (self *Entry) GetProgressFraction() float64 {
+	return float64(C.gtk_entry_get_progress_fraction(self.object))
+}
+
+func (self *Entry) SetProgressPulseStep(fraction float64) {
+	C.gtk_entry_set_progress_pulse_step(self.object, C.gdouble(fraction))
+}
+
+func (self *Entry) GetProgressPulseStep() float64 {
+	return float64(C.gtk_entry_get_progress_pulse_step(self.object))
+}
+
+func (self *Entry) ProgressPulse() {
+	C.gtk_entry_progress_pulse(self.object)
+}
+
+//TODO: gkt_entry_im_context_filter_keypress
+
+func (self *Entry) ResetImContext() {
+	C.gtk_entry_reset_im_context(self.object)
+}
+
+func (self *Entry) SetIconFromPixbuf(gtk_EntryIconPosition int, pixbuf *gdkpixbuf.Pixbuf) {
+	if pixbuf == nil {
+		C.gtk_entry_set_icon_from_pixbuf(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition), nil)
+		return
+	}
+	C.gtk_entry_set_icon_from_pixbuf(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+		(*C.GdkPixbuf)(pixbuf.ToNative()))
+}
+
+func (self *Entry) SetIconFromStock(gtk_EntryIconPosition int, stockId interface{}) {
+	if stockId == nil {
+		C.gtk_entry_set_icon_from_stock(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition), nil)
+		return
+	}
+
+	if sId, ok := stockId.(string); ok {
+		s := gobject.GString(sId)
+		defer s.Free()
+		C.gtk_entry_set_icon_from_stock(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+			(*C.gchar)(s.GetPtr()))
+	}
+}
+
+func (self *Entry) SetIconFromIconName(gtk_EntryIconPosition int, iconName interface{}) {
+	if iconName == nil {
+		C.gtk_entry_set_icon_from_icon_name(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition), nil)
+		return
+	}
+	if name, ok := iconName.(string); ok {
+		s := gobject.GString(name)
+		defer s.Free()
+		C.gtk_entry_set_icon_from_stock(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+			(*C.gchar)(s.GetPtr()))
+	}
+}
+
+//TODO: gtk_entry_set_icon_from_gicon
+
+func (self *Entry) GetIconStorageType(gtk_EntryIconPosition int) int {
+	return int(C.gtk_entry_get_icon_storage_type(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition)))
+}
+
+func (self *Entry) GetIconPixbuf(gtk_EntryIconPosition int) *gdkpixbuf.Pixbuf {
+	p := C.gtk_entry_get_icon_pixbuf(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition))
+
+	if p != nil {
+		if pix, err := gobject.ConvertToGo(unsafe.Pointer(p)); err == nil {
+			return pix.(*gdkpixbuf.Pixbuf)
+		}
+	}
+	return nil
+}
+
+func (self *Entry) GetIconStock(gtk_EntryIconPosition int) string {
+	s := C.gtk_entry_get_icon_stock(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition))
+
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+func (self *Entry) GetIconName(gtk_EntryIconPosition int) string {
+	s := C.gtk_entry_get_icon_name(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition))
+
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+//TODO: gtk_entry_get_icon_gicon
+
+func (self *Entry) SetIconActivatable(gtk_EntryIconPosition int, activatable bool) {
+	b := gobject.GBool(activatable)
+	defer b.Free()
+	C.gtk_entry_set_icon_activatable(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+		*((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Entry) GetIconActivatable(gtk_EntryIconPosition int) bool {
+	b := C.gtk_entry_get_icon_activatable(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Entry) SetIconSensitive(gtk_EntryIconPosition int, sensitive bool) {
+	b := gobject.GBool(sensitive)
+	defer b.Free()
+	C.gtk_entry_set_icon_sensitive(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+		*((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Entry) GetIconSensitive(gtk_EntryIconPosition int) bool {
+	b := C.gtk_entry_get_icon_sensitive(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition))
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Entry) GetIconAtPos(x, y int) int {
+	return int(C.gtk_entry_get_icon_at_pos(self.object, C.gint(x), C.gint(y)))
+}
+
+func (self *Entry) SetIconTooltipText(gtk_EntryIconPosition int, tooltip interface{}) {
+	if tooltip == nil {
+		C.gtk_entry_set_icon_tooltip_text(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition), nil)
+		return
+	}
+
+	if tt, ok := tooltip.(string); ok {
+		s := gobject.GString(tt)
+		defer s.Free()
+		C.gtk_entry_set_icon_tooltip_text(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+			(*C.gchar)(s.GetPtr()))
+	}
+}
+
+func (self *Entry) GetIconTooltipText(gtk_EntryIconPosition int) string {
+	s := C.gtk_entry_get_icon_tooltip_text(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition))
+
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+func (self *Entry) SetIconTooltipMarkup(gtk_EntryIconPosition int, tooltip interface{}) {
+	if tooltip == nil {
+		C.gtk_entry_set_icon_tooltip_markup(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition), nil)
+		return
+	}
+
+	if tt, ok := tooltip.(string); ok {
+		s := gobject.GString(tt)
+		defer s.Free()
+		C.gtk_entry_set_icon_tooltip_markup(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+			(*C.gchar)(s.GetPtr()))
+	}
+}
+
+func (self *Entry) GetIconTooltipMarkup(gtk_EntryIconPosition int) string {
+	s := C.gtk_entry_get_icon_tooltip_markup(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition))
+
+	if s != nil {
+		return gobject.GoString(unsafe.Pointer(s))
+	}
+	return ""
+}
+
+//TODO: gtk_entry_set_icon_drag_source
+//TODO: gtk_entry_get_current_icon_drag_source
+
+func (self *Entry) GetIconArea(gtk_EntryIconPosition int) gdk3.Rectangle {
+	var crec C.GdkRectangle
+	C.gtk_entry_get_icon_area(self.object, C.GtkEntryIconPosition(gtk_EntryIconPosition),
+		&crec)
+
+	if rec, err := gobject.ConvertToGo(unsafe.Pointer(&crec), gdk3.GdkType.RECTANGLE); err == nil {
+		return rec.(gdk3.Rectangle)
+	}
+
+	return gdk3.Rectangle{}
 }
 //////////////////////////////
 // END GtkEntry

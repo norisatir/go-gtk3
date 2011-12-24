@@ -851,6 +851,31 @@ type gtkTreeViewGridLines struct {
 }
 // End GtkTreeViewGridLines }}}
 
+// GtkEntryIconPosition {{{
+
+var GtkEntryIconPosition gtkEntryIconPosition
+
+type gtkEntryIconPosition struct {
+	PRIMARY   int
+	SECONDARY int
+}
+// End GtkEntryIconPosition }}}
+
+// GtkImageType {{{
+
+var GtkImageType gtkImageType
+
+type gtkImageType struct {
+	EMPTY     int
+	PIXBUF    int
+	STOCK     int
+	ICON_SET  int
+	ANIMATION int
+	ICON_NAME int
+	GICON     int
+}
+// End GtkImageType }}}
+
 // GTK3 module init func {{{
 func init() {
 	GtkType.ABOUT_DIALOG = g.GType(C.gtk_about_dialog_get_type())
@@ -1485,4 +1510,17 @@ func init() {
 	GtkTreeViewGridLines.HORIZONTAL = 1
 	GtkTreeViewGridLines.VERTICAL = 2
 	GtkTreeViewGridLines.BOTH = 3
+
+	// Initialize GtkEntryIconPosition
+	GtkEntryIconPosition.PRIMARY = 0
+	GtkEntryIconPosition.SECONDARY = 1
+
+	// Initialize GtkImageType
+	GtkImageType.EMPTY = 0
+	GtkImageType.PIXBUF = 1
+	GtkImageType.STOCK = 2
+	GtkImageType.ICON_SET = 3
+	GtkImageType.ANIMATION = 4
+	GtkImageType.ICON_NAME = 5
+	GtkImageType.GICON = 6
 } /// }}}
