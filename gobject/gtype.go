@@ -138,6 +138,15 @@ func ConvertToGo(obj unsafe.Pointer, typeid ...GType) (interface{}, error) {
 		return res, nil
 	}
 
+	if IsFlagsType(id) {
+		return uint(*((*C.guint)(obj))), nil
+	}
+
+	if IsEnumType(id) {
+		e := *((*C.gint)(obj))
+		return int(e), nil
+	}
+
 	return nil, GValueError{"Unknown Type"}
 }
 
@@ -194,7 +203,7 @@ func (self GValue) GetPtr() unsafe.Pointer {
 		return unsafe.Pointer(&f)
 	case IsBoxedType(t):
 		b := C.g_value_get_boxed(self.value)
-		return unsafe.Pointer(&b)
+		return unsafe.Pointer(b)
 	case t == G_TYPE_STRING:
 		return unsafe.Pointer(C.g_value_get_string(self.value))
 	case t == G_TYPE_BOOLEAN:
