@@ -31,6 +31,7 @@ func ThreadsEnter() {
 func ThreadsLeave() {
 	C.gdk_threads_leave()
 }
+
 // End Threads }}}
 
 // GdkDisplay {{{
@@ -85,6 +86,7 @@ func (self Display) Set(properties map[string]interface{}) {
 func (self Display) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // End GdkDisplay
 ////////////////////////////// }}}
@@ -141,6 +143,7 @@ func (self Device) Set(properties map[string]interface{}) {
 func (self Device) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // End GdkDevice
 ////////////////////////////// }}}
@@ -197,6 +200,7 @@ func (self Screen) Set(properties map[string]interface{}) {
 func (self Screen) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // End GdkScreen
 ////////////////////////////// }}}
@@ -253,6 +257,7 @@ func (self Window) Set(properties map[string]interface{}) {
 func (self Window) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // End GdkWindow
 ////////////////////////////// }}}
@@ -275,4 +280,5 @@ func init() {
 	gobject.RegisterCType(GdkType.WINDOW, newWindowFromNative)
 	gobject.RegisterGoType(GdkType.WINDOW, nativeFromWindow)
 }
+
 // End GDK3 INIT FUNCS }}}

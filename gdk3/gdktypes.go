@@ -28,6 +28,7 @@ type gdkTypes struct {
 	WINDOW        g.GType
 	MODIFIER_TYPE g.GType
 }
+
 // End GdkType }}}
 
 // Basic Types
@@ -147,6 +148,7 @@ func (self RGBA) ToNative() unsafe.Pointer {
 
 	return unsafe.Pointer(crgba)
 }
+
 // End RGBA type }}}
 
 // GdkColor {{{
@@ -195,6 +197,7 @@ func (self Color) ToNative() unsafe.Pointer {
 
 	return unsafe.Pointer(&cColor)
 }
+
 // End Color type }}}
 
 // GdkAtom {{{
@@ -273,6 +276,7 @@ type gdkModifier struct {
 func gdkModifierFromNative(m unsafe.Pointer) interface{} {
 	return int(*((*C.gint)(m)))
 }
+
 // End GdkModifier }}}
 
 // GDK3 INIT FUNC {{{
@@ -319,4 +323,5 @@ func init() {
 	GdkModifier.RELEASE_MASK = 1 << 30
 	GdkModifier.MODIFIER_MASK = 0x5c001fff
 }
+
 // End GDK3 INIT FUNC }}}

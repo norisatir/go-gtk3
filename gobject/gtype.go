@@ -1,6 +1,7 @@
 // gtype.go
 // This file contains gobject type definition
 package gobject
+
 /*
 #include <glib-object.h>
 
@@ -90,16 +91,19 @@ func IsObjectType(t GType) bool {
 	b := C.is_type_object(C.GType(t))
 	return GoBool(unsafe.Pointer(&b))
 }
+
 // IsEnumType returns true if given type is derived from GEnum
 func IsEnumType(t GType) bool {
 	b := C._is_type_enum(C.GType(t))
 	return GoBool(unsafe.Pointer(&b))
 }
+
 // IsFlagsType returns true if given type is derived from GFlags
 func IsFlagsType(t GType) bool {
 	b := C._is_type_flags(C.GType(t))
 	return GoBool(unsafe.Pointer(&b))
 }
+
 // IsBoxedType returns true if given type is derived from GBoxed
 func IsBoxedType(t GType) bool {
 	b := C.is_type_boxed(C.GType(t))

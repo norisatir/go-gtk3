@@ -5,6 +5,7 @@ package pango
 */
 // #cgo pkg-config: pango
 import "C"
+
 /*import "unsafe"
 import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
@@ -27,6 +28,7 @@ type pangoWeight struct {
 	HEAVY      int
 	ULTRAHEAVY int
 }
+
 // PangoWeight }}}
 
 // PangoStyle {{{
@@ -55,6 +57,7 @@ type pangoScale struct {
 	X_LARGE  float64
 	XX_LARGE float64
 }
+
 // End PangoScale }}}
 
 // PangoUnderline {{{

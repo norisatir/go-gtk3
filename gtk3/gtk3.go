@@ -523,6 +523,7 @@ func StockLookup(stockId string) (bool, StockItem) {
 
 	return gb, NewStockItemFromNative(unsafe.Pointer(&ci))
 }
+
 // End StockItem }}}
 
 ////////////////////////////// }}}
@@ -617,6 +618,7 @@ type OrientableLike interface {
 type EntryLike interface {
 	E() *Entry
 }
+
 //////////////////////////////
 // END Interfaces
 ////////////////////////////// }}}
@@ -1409,6 +1411,7 @@ func (self *Container) GetBorderWidth() uint {
 func (self *Container) SetBorderWidth(width uint) {
 	C.gtk_container_set_border_width(self.object, C.guint(width))
 }
+
 //////////////////////////////
 // END GtkContainer
 ////////////////////////////// }}}
@@ -1491,6 +1494,7 @@ func (self *Bin) GetChild() WidgetLike {
 	}
 	return nil
 }
+
 //////////////////////////////
 // End GtkBin
 ////////////////////////////// }}}
@@ -1690,6 +1694,7 @@ func (self *Range) SetSliderSizeFixed(sizeFixed bool) {
 	defer b.Free()
 	C.gtk_range_set_slider_size_fixed(self.object, *((*C.gboolean)(b.GetPtr())))
 }
+
 //////////////////////////////
 // END GtkRange
 ////////////////////////////// }}}
@@ -2057,6 +2062,7 @@ func (self *Window) GetApplication() *Application {
 
 	return nil
 }
+
 //////////////////////////////
 // END GtkWindow
 ////////////////////////////// }}}
@@ -2250,6 +2256,7 @@ func (self *Dialog) GetContentArea() WidgetLike {
 	}
 	return nil
 }
+
 //////////////////////////////
 // END GtkDialog
 ////////////////////////////// }}}
@@ -2401,6 +2408,7 @@ func (self *MessageDialog) FormatSecondaryMarkup(format string, args ...interfac
 
 	C._gtk_message_dialog_format_secondary_markup(self.object, (*C.gchar)(cmessage.GetPtr()))
 }
+
 //////////////////////////////
 // END GtkMessageDialog
 ////////////////////////////// }}}
@@ -2508,6 +2516,7 @@ func (self *Invisible) GetScreen() *gdk3.Screen {
 	}
 	return nil
 }
+
 //////////////////////////////
 // END GtkInvisible
 ////////////////////////////// }}}
@@ -3001,6 +3010,7 @@ func (self *Label) GetTrackVisitedLinks() bool {
 	b := C.gtk_label_get_track_visited_links(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // END GtkLabel
 ////////////////////////////// }}}
@@ -3155,6 +3165,7 @@ func (self *ProgressBar) SetPulseStep(fraction float64) {
 func (self *ProgressBar) GetPulseStep() float64 {
 	return float64(C.gtk_progress_bar_get_pulse_step(self.object))
 }
+
 //////////////////////////////
 // End GtkProgressBar
 ////////////////////////////// }}}
@@ -3256,6 +3267,7 @@ func (self Image) Get(properties []string) map[string]interface{} {
 func (self Image) W() *Widget {
 	return self.Widget
 }
+
 //////////////////////////////
 // END GtkImage
 ////////////////////////////// }}}
@@ -3373,6 +3385,7 @@ func (self *Statusbar) GetMessageArea() WidgetLike {
 	}
 	return nil
 }
+
 //////////////////////////////
 // End GtkStatusBar
 ////////////////////////////// }}}
@@ -3570,6 +3583,7 @@ func (self *Button) GetImagePosition() int {
 func (self *Button) Clicked() {
 	C.gtk_button_clicked(self.object)
 }
+
 //TODO: gtk_button_get_event_window
 //////////////////////////////
 // END GtkButton
@@ -3705,6 +3719,7 @@ func (self *ToggleButton) SetInconsistent(setting bool) {
 	defer b.Free()
 	C.gtk_toggle_button_set_inconsistent(self.object, *((*C.gboolean)(b.GetPtr())))
 }
+
 //////////////////////////////
 // END GtkToggleButton
 ////////////////////////////// }}}
@@ -3812,6 +3827,7 @@ func (self CheckButton) Set(properties map[string]interface{}) {
 func (self CheckButton) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // END GtkCheckButton
 ////////////////////////////// }}}
@@ -4019,6 +4035,7 @@ func (self *RadioButton) JoinGroup(groupSource *RadioButton) {
 	}
 	C.gtk_radio_button_join_group(self.object, groupSource.object)
 }
+
 //////////////////////////////
 // END GtkRadioButton
 ////////////////////////////// }}}
@@ -4149,6 +4166,7 @@ func (self *LinkButton) SetVisited(visited bool) {
 	defer b.Free()
 	C.gtk_link_button_set_visited(self.object, *((*C.gboolean)(b.GetPtr())))
 }
+
 //////////////////////////////
 // END GtkLinkButton
 ////////////////////////////// }}}
@@ -4269,6 +4287,7 @@ func (self *EntryBuffer) InsertText(position uint, chars string) {
 func (self *EntryBuffer) DeleteText(position uint, num_chars int) {
 	C.gtk_entry_buffer_delete_text(self.object, C.guint(position), C.gint(num_chars))
 }
+
 //////////////////////////////
 // END GtkEntryBuffer
 ////////////////////////////// }}}
@@ -4739,6 +4758,7 @@ func (self *Entry) GetIconArea(gtk_EntryIconPosition int) gdk3.Rectangle {
 
 	return gdk3.Rectangle{}
 }
+
 //////////////////////////////
 // END GtkEntry
 ////////////////////////////// }}}
@@ -4974,6 +4994,7 @@ func (self *EntryCompletion) GetPopupSingleMatch() bool {
 	b := C.gtk_entry_completion_get_popup_single_match(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // END GtkEntryCompletion
 ////////////////////////////// }}}
@@ -5145,6 +5166,7 @@ func (self *Scale) AddMark(value int64, gtk_Position int, markup interface{}) {
 func (self *Scale) ClearMarks() {
 	C.gtk_scale_clear_marks(self.object)
 }
+
 //////////////////////////////
 // END GtkScale
 ////////////////////////////// }}}
@@ -5363,6 +5385,7 @@ func (self *SpinButton) GetWrap() bool {
 	b := C.gtk_spin_button_get_wrap(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // END GtkSpinButton
 ////////////////////////////// }}}
@@ -5561,6 +5584,7 @@ func (self *TextTagTable) Foreach(f interface{}, data ...interface{}) {
 func (self *TextTagTable) GetSize() int {
 	return int(C.gtk_text_tag_table_get_size(self.object))
 }
+
 //////////////////////////////
 // End GtkTextTagTable
 ////////////////////////////// }}}
@@ -6262,6 +6286,7 @@ func (self *TextIter) InRange(start, end *TextIter) bool {
 func (self *TextIter) Order(second *TextIter) {
 	C.gtk_text_iter_order(&self.object, &second.object)
 }
+
 //////////////////////////////
 // End GtkTextIter
 ////////////////////////////// }}}
@@ -6733,6 +6758,7 @@ func (self *TextBuffer) AddSelectionClipboard(clipboard *Clipboard) {
 func (self *TextBuffer) RemoveSelectionClipboard(clipboard *Clipboard) {
 	C.gtk_text_buffer_remove_selection_clipboard(self.object, clipboard.object)
 }
+
 //////////////////////////////
 // End GtkTextBuffer
 ////////////////////////////// }}}
@@ -7209,6 +7235,7 @@ func (self *TextView) GetAcceptsTab() bool {
 func (self *TextView) ResetIMContext() {
 	C.gtk_text_view_reset_im_context(self.object)
 }
+
 //////////////////////////////
 // End GtkTextView
 ////////////////////////////// }}}
@@ -7340,6 +7367,7 @@ func (self *TreePath) IsDescendant(ancestor *TreePath) bool {
 	b := C.gtk_tree_path_is_descendant(self.object, ancestor.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // END GtkTreePath
 ////////////////////////////// }}}
@@ -7363,6 +7391,7 @@ func treeRowReferenceFinalizer(trr *TreeRowReference) {
 func (self *TreeRowReference) free() {
 	C.gtk_tree_row_reference_free(self.object)
 }
+
 //////////////////////////////
 // END TreeRowReference
 ////////////////////////////// }}}
@@ -7737,6 +7766,7 @@ func (self *ListStore) MoveBefore(iter, position *TreeIter) {
 func (self *ListStore) MoveAfter(iter, position *TreeIter) {
 	C.gtk_list_store_move_after(self.object, &iter.object, &position.object)
 }
+
 //////////////////////////////
 // END GtkListStore
 ////////////////////////////// }}}
@@ -7967,6 +7997,7 @@ func (self *TreeStore) MoveBefore(iter, position *TreeIter) {
 func (self *TreeStore) MoveAfter(iter, position *TreeIter) {
 	C.gtk_tree_store_move_after(self.object, &iter.object, &position.object)
 }
+
 //////////////////////////////
 // END GtkTreeStore
 ////////////////////////////// }}}
@@ -8046,6 +8077,7 @@ func (self *CellArea) Foreach(callback interface{}, data ...interface{}) {
 	C._gtk_cell_area_foreach(self.object, C.gint64(id))
 	delete(_closures, id)
 }
+
 //////////////////////////////
 // End GtkCellArea
 ////////////////////////////// }}}
@@ -8171,6 +8203,7 @@ func (self *CellAreaContext) PushPreferredWidth(minimumWidth, naturalWidth int) 
 func (self *CellAreaContext) PushPreferredHeight(minimumHeight, naturalHeight int) {
 	C.gtk_cell_area_context_push_preferred_height(self.object, C.gint(minimumHeight), C.gint(naturalHeight))
 }
+
 //////////////////////////////
 // End GtkCellAreaContext
 ////////////////////////////// }}}
@@ -8539,6 +8572,7 @@ func (self *CellView) GetFitModel() bool {
 	b := C.gtk_cell_view_get_fit_model(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // End GtkCellView
 ////////////////////////////// }}}
@@ -8737,6 +8771,7 @@ func (self *CellRenderer) GetPreferredWidthForHeight(w WidgetLike, height int) (
 func (self *CellRenderer) GetRequestMode() int {
 	return int(C.gtk_cell_renderer_get_request_mode(self.object))
 }
+
 //////////////////////////////
 // END GtkCellRenderer
 ////////////////////////////// }}}
@@ -8908,6 +8943,7 @@ func (self CellRendererProgress) CRenderer() *CellRenderer {
 func (self CellRendererProgress) IOrientable() *Orientable {
 	return self.Orientable
 }
+
 //////////////////////////////
 // END GtkCellRendererProgress
 ////////////////////////////// }}}
@@ -8986,6 +9022,7 @@ func (self CellRendererSpinner) Get(properties []string) map[string]interface{} 
 func (self CellRendererSpinner) CRenderer() *CellRenderer {
 	return self.CellRenderer
 }
+
 //////////////////////////////
 // END GtkCellRendererSpinner
 ////////////////////////////// }}}
@@ -9099,6 +9136,7 @@ func (self *CellRendererToggle) SetActivatable(setting bool) {
 	defer b.Free()
 	C.gtk_cell_renderer_toggle_set_activatable(self.object, *((*C.gboolean)(b.GetPtr())))
 }
+
 //////////////////////////////
 // END GtkCellRendererToggle
 ////////////////////////////// }}}
@@ -9177,6 +9215,7 @@ func (self CellRendererPixbuf) Get(properties []string) map[string]interface{} {
 func (self CellRendererPixbuf) CRenderer() *CellRenderer {
 	return self.CellRenderer
 }
+
 //////////////////////////////
 // END GtkCellRendererPixbuf
 ////////////////////////////// }}}
@@ -9250,6 +9289,7 @@ func (self CellRendererAccel) Set(properties map[string]interface{}) {
 func (self CellRendererAccel) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // END GtkCellRendererAccel
 ////////////////////////////// }}}
@@ -9323,6 +9363,7 @@ func (self CellRendererCombo) Set(properties map[string]interface{}) {
 func (self CellRendererCombo) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // END GtkCellRendererCombo
 ////////////////////////////// }}}
@@ -9396,6 +9437,7 @@ func (self CellRendererSpin) Set(properties map[string]interface{}) {
 func (self CellRendererSpin) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // END GtkCellRendererSpin
 ////////////////////////////// }}}
@@ -9419,6 +9461,7 @@ func NewTreeViewColumn() *TreeViewColumn {
 
 	return tc
 }
+
 // TODO: gtk_tree_column_new_with_area
 
 func NewTreeViewColumnWithAttributes(title string, cell CellRendererLike, attr A) *TreeViewColumn {
@@ -9751,6 +9794,7 @@ func (self *TreeViewColumn) GetTreeView() WidgetLike {
 func (self *TreeViewColumn) GetXOffset() int {
 	return int(C.gtk_tree_view_column_get_x_offset(self.object))
 }
+
 //////////////////////////////
 // End GtkTreeViewColumn
 ////////////////////////////// }}}
@@ -9907,6 +9951,7 @@ func (self *TreeSelection) SelectRange(startPath, endPath *TreePath) {
 func (self *TreeSelection) UnselectRange(startPath, endPath *TreePath) {
 	C.gtk_tree_selection_unselect_range(self.object, startPath.object, endPath.object)
 }
+
 //////////////////////////////
 // End GtkTreeSelection
 ////////////////////////////// }}}
@@ -10101,6 +10146,7 @@ func (self *TreeView) InsertColumnWithAttributes(position int, title string, cel
 	col := NewTreeViewColumnWithAttributes(title, cell, attrs)
 	return int(self.InsertColumn(col, position))
 }
+
 //TODO: gtk_tree_view_insert_column_with_data_func
 
 func (self *TreeView) GetColumn(n int) *TreeViewColumn {
@@ -10470,6 +10516,7 @@ func (self *TreeView) GetTooltipColumn() int {
 func (self *TreeView) SetTooltipColumn(column int) {
 	C.gtk_tree_view_set_tooltip_column(self.object, C.gint(column))
 }
+
 //////////////////////////////
 // End GtkTreeView
 ////////////////////////////// }}}
@@ -10813,6 +10860,7 @@ func (self *ComboBox) GetPopupFixedWidth() bool {
 	b := C.gtk_combo_box_get_popup_fixed_width(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // End GtkComboBox
 ////////////////////////////// }}}
@@ -10965,6 +11013,7 @@ func (self *ComboBoxText) GetActiveText() string {
 	s := C.gtk_combo_box_text_get_active_text(self.object)
 	return gobject.GoString(unsafe.Pointer(s))
 }
+
 //////////////////////////////
 // End GtkComboBoxText
 ////////////////////////////// }}}
@@ -11393,6 +11442,7 @@ func (self *Menu) GetForAttachWidget(w WidgetLike) *glib.GList {
 
 	return goList
 }
+
 //////////////////////////////
 // END GtkMenu
 ////////////////////////////// }}}
@@ -11698,6 +11748,7 @@ func (self *MenuItem) SetReserveIndicator(reserve bool) {
 	defer b.Free()
 	C.gtk_menu_item_set_reserve_indicator(self.object, *((*C.gboolean)(b.GetPtr())))
 }
+
 //////////////////////////////
 // END GtkMenuItem
 ////////////////////////////// }}}
@@ -11847,6 +11898,7 @@ func (self *CheckMenuItem) GetDrawAsRadio() bool {
 	b := C.gtk_check_menu_item_get_draw_as_radio(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // END GtkCheckMenuItem
 ////////////////////////////// }}}
@@ -11979,6 +12031,7 @@ func (self *RadioMenuItem) GetGroup() *glib.GSList {
 	}
 	return nil
 }
+
 //////////////////////////////
 // END GtkRadioMenuItem
 ////////////////////////////// }}}
@@ -12156,6 +12209,7 @@ func (self *ImageMenuItem) SetAlwaysShowImage(alwaysShow bool) {
 func (self *ImageMenuItem) SetAccelGroup(accelGroup *AccelGroup) {
 	C.gtk_image_menu_item_set_accel_group(self.object, accelGroup.object)
 }
+
 //////////////////////////////
 // END GtkImageMenuItem
 ////////////////////////////// }}}
@@ -12234,6 +12288,7 @@ func (self SeparatorMenuItem) Get(properties []string) map[string]interface{} {
 func (self SeparatorMenuItem) MItem() *MenuItem {
 	return self.MenuItem
 }
+
 //////////////////////////////
 // END GtkSeparatorMenuItem
 ////////////////////////////// }}}
@@ -12312,6 +12367,7 @@ func (self TearoffMenuItem) Get(properties []string) map[string]interface{} {
 func (self TearoffMenuItem) MItem() *MenuItem {
 	return self.MenuItem
 }
+
 //////////////////////////////
 // END GtkTearoffMenuItem
 ////////////////////////////// }}}
@@ -12675,6 +12731,7 @@ func (self *Action) GetIsImportant() bool {
 	b := C.gtk_action_get_is_important(self.object)
 	return gobject.GoBool(unsafe.Pointer(&b))
 }
+
 //////////////////////////////
 // End GtkAction
 ////////////////////////////// }}}
@@ -12756,6 +12813,7 @@ func (self Grid) Set(properties map[string]interface{}) {
 func (self Grid) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 // To be container-like
 func (self Grid) C() *Container {
 	return self.Container
@@ -12840,6 +12898,7 @@ func (self *Grid) SetColumnSpacing(spacing uint) {
 func (self *Grid) GetColumnSpacing() uint {
 	return uint(C.gtk_grid_get_column_spacing(self.object))
 }
+
 //////////////////////////////
 // END GtkGrid
 ////////////////////////////// }}}
@@ -12881,6 +12940,7 @@ func NewVBox(spacing int) *Box {
 func boxFinalizer(box *Box) {
 	runtime.SetFinalizer(box, func(box *Box) { gobject.Unref(box) })
 }
+
 // Conversion function for gobject registration map
 func newBoxFromNative(obj unsafe.Pointer) interface{} {
 	box := &Box{}
@@ -12992,6 +13052,7 @@ func (self *Box) SetChildPacking(w WidgetLike, expand bool, fill bool, padding i
 	C.gtk_box_set_child_packing(self.object, w.W().object, *((*C.gboolean)(e.GetPtr())), *((*C.gboolean)(f.GetPtr())),
 		C.guint(padding), C.GtkPackType(ptype))
 }
+
 //////////////////////////////
 // END GtkBox
 ////////////////////////////// }}}
@@ -13108,6 +13169,7 @@ func (self *ButtonBox) SetChildNonHomogeneous(w WidgetLike, nonHomogeneous bool)
 	defer cb.Free()
 	C._gtk_button_box_set_child_non_homogeneous(self.object, w.W().object, *((*C.gboolean)(cb.GetPtr())))
 }
+
 //////////////////////////////
 // END GtkButtonBox
 ////////////////////////////// }}}
@@ -13275,6 +13337,7 @@ func (self *Paned) GetHandleWindow() *gdk3.Window {
 	}
 	return nil
 }
+
 //////////////////////////////
 // END GtkPaned
 ////////////////////////////// }}}
@@ -13647,6 +13710,7 @@ func (self *Notebook) GetActionWidget(gtk_Pack int) WidgetLike {
 	}
 	return nil
 }
+
 //////////////////////////////
 // End GtkNotebook
 ////////////////////////////// }}}
@@ -13714,6 +13778,7 @@ func (self *Orientable) GetOrientation() int {
 func (self *Orientable) SetOrientation(gtk_Orientation int) {
 	C.gtk_orientable_set_orientation(self.object, C.GtkOrientation(gtk_Orientation))
 }
+
 //////////////////////////////
 // End GtkOrientable interface
 ////////////////////////////// }}}
@@ -13845,6 +13910,7 @@ func (self *Frame) GetLabelWidget() WidgetLike {
 func (self *Frame) GetShadowType() int {
 	return int(C.gtk_frame_get_shadow_type(self.object))
 }
+
 //////////////////////////////
 // END GtkFrame
 ////////////////////////////// }}}
@@ -13941,6 +14007,7 @@ func (self Separator) W() *Widget {
 func (self Separator) IOrientable() *Orientable {
 	return self.Orientable
 }
+
 //////////////////////////////
 // END GtkSeparator
 ////////////////////////////// }}}
@@ -14039,6 +14106,7 @@ func (self Scrollbar) R() *Range {
 func (self Scrollbar) IOrientable() *Orientable {
 	return self.Orientable
 }
+
 //////////////////////////////
 // END GtkScrollbar
 ////////////////////////////// }}}
@@ -14224,6 +14292,7 @@ func (self *ScrolledWindow) GetMinContentHeight() int {
 func (self *ScrolledWindow) SetMinContentHeight(height int) {
 	C.gtk_scrolled_window_set_min_content_height(self.object, C.gint(height))
 }
+
 //////////////////////////////
 // END GtkScrolledWindow
 ////////////////////////////// }}}
@@ -14370,6 +14439,7 @@ func (self *Adjustment) SetStepIncrement(stepIncrement float64) {
 func (self *Adjustment) SetUpper(upper float64) {
 	C.gtk_adjustment_set_upper(self.object, C.gdouble(upper))
 }
+
 //////////////////////////////
 // GtkAdjustment
 ////////////////////////////// }}}
@@ -14386,6 +14456,7 @@ func removeFromClosures(key int64) {
 		delete(_closures, key)
 	}
 }
+
 //////////////////////////////
 // End Closure add/remove
 ////////////////////////////// }}}
@@ -14484,6 +14555,7 @@ func (self *Application) RemoveWindow(window *Window) {
 func (self *Application) Run() {
 	C.run_app(self.object)
 }
+
 //////////////////////////////
 // END GtkApplication
 ////////////////////////////// }}}
@@ -14697,6 +14769,7 @@ func _gtk_tree_selection_func(selection, model, path unsafe.Pointer,
 
 	return *((*C.gboolean)(cret.GetPtr()))
 }
+
 //////////////////////////////
 // END Exported functions
 ////////////////////////////// }}}
@@ -14994,4 +15067,5 @@ func init() {
 	gobject.RegisterCType(GtkType.ACTION, newActionFromNative)
 	gobject.RegisterGoType(GtkType.ACTION, nativeFromAction)
 }
+
 // End init function }}}

@@ -26,6 +26,7 @@ type gdkInterp struct {
 	BILINEAR int
 	HYPER    int
 }
+
 // End GdkInterp }}}
 
 // GdkPixbuf {{{
@@ -78,6 +79,7 @@ func (self Pixbuf) Set(properties map[string]interface{}) {
 func (self Pixbuf) Get(properties []string) map[string]interface{} {
 	return gobject.Get(self, properties)
 }
+
 //////////////////////////////
 // END GdkPixbuf
 ////////////////////////////// }}}

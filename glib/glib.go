@@ -30,6 +30,7 @@ static guint _g_idle_add_full(gint priority, gint64 id) {
 import "C"
 import "unsafe"
 import "runtime"
+
 //import "reflect"
 import "github.com/norisatir/go-gtk3/gobject"
 
@@ -243,6 +244,7 @@ func (self *GList) Foreach(f interface{}, data ...interface{}) {
 		}
 	}
 }
+
 //////////////////////////////
 // End GList
 ////////////////////////////// }}}

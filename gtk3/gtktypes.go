@@ -328,6 +328,7 @@ type gtkShadow struct {
 	ETCHED_IN  int
 	ETCHED_OUT int
 }
+
 // End GtkShadow }}}
 
 // GtkStock {{{
@@ -440,6 +441,7 @@ type gtkStock struct {
 	ZOOM_IN                       string
 	ZOOM_OUT                      string
 }
+
 // End GtkStock  }}}
 
 // GtkPositionType  {{{
@@ -451,6 +453,7 @@ type gtkPosition struct {
 	TOP    int
 	BOTTOM int
 }
+
 // End GtkPositionType }}}
 
 // GtkDialogFlags {{{
@@ -460,6 +463,7 @@ type gtkDialogFlags struct {
 	MODAL               int
 	DESTROY_WITH_PARENT int
 }
+
 // End GtkDialogFlags }}}
 
 // GtkResponse {{{
@@ -478,6 +482,7 @@ type gtkResponse struct {
 	APPLY        int
 	HELP         int
 }
+
 // End GtkResponse }}}
 
 // GtkMessageType {{{
@@ -490,6 +495,7 @@ type gtkMessage struct {
 	ERROR    int
 	OTHER    int
 }
+
 // End GtkMessageType }}}
 
 // GtkButtons {{{
@@ -503,6 +509,7 @@ type gtkButtons struct {
 	YES_NO    int
 	OK_CANCEL int
 }
+
 // End GtkButtons }}}
 
 // GtkOrientation {{{
@@ -512,6 +519,7 @@ type gtkOrientation struct {
 	HORIZONTAL int
 	VERTICAL   int
 }
+
 // End GtkOrientation }}}
 
 // GtkPackType {{{
@@ -521,6 +529,7 @@ type gtkPack struct {
 	PACK_START int
 	PACK_END   int
 }
+
 // End GtkPackType }}}
 
 // GtkButtonBoxStyle {{{
@@ -533,6 +542,7 @@ type gtkButtonBoxStyle struct {
 	END    int
 	CENTER int
 }
+
 // End GtkButtonBoxStyle }}}
 
 // GtkIconSize {{{
@@ -547,6 +557,7 @@ type gtkIconSize struct {
 	DND           int
 	DIALOG        int
 }
+
 // End GtkIconSize  }}}
 
 // GApplicatonFlags {{{
@@ -561,6 +572,7 @@ type gApplicationFlags struct {
 	SEND_ENVIRONMENT     int
 	NON_UNIQUE           int
 }
+
 // End GApplicationFlags }}}
 
 // GtkJustification {{{
@@ -572,6 +584,7 @@ type gtkJustification struct {
 	CENTER int
 	FILL   int
 }
+
 // End GtkJustification }}}
 
 // GtkWindowType {{{
@@ -581,6 +594,7 @@ type gtkWindowType struct {
 	TOPLEVEL int
 	POPUP    int
 }
+
 // End GtkWindowType }}}
 
 // GtkSensitivityType {{{
@@ -591,6 +605,7 @@ type gtkSensitivity struct {
 	ON   int
 	OFF  int
 }
+
 // End GtkSensitivity }}}
 
 // GtkPolicyType {{{
@@ -601,6 +616,7 @@ type gtkPolicy struct {
 	AUTOMATIC int
 	NEVER     int
 }
+
 // End GtkPolicyType }}}
 
 // GtkCornerType {{{
@@ -612,6 +628,7 @@ type gtkCorner struct {
 	TOP_RIGHT    int
 	BOTTOM_RIGHT int
 }
+
 // End GtkCornerType }}}
 
 // GtkTreeModelFlags  {{{
@@ -621,6 +638,7 @@ type gtkTreeModelFlags struct {
 	ITERS_PERSIST int
 	LIST_ONLY     int
 }
+
 // End GtkTreeModelFlags  }}}
 
 // GtkCellRendererState {{{
@@ -633,6 +651,7 @@ type gtkCellRendererState struct {
 	SORTED      int
 	FOCUSED     int
 }
+
 // End GtkCellRendererState }}}
 
 // GtkCellRendererMode {{{
@@ -643,6 +662,7 @@ type gtkCellRendererMode struct {
 	ACTIVATABLE int
 	EDITABLE    int
 }
+
 // End GtkCellRendererMode }}}
 
 // GtkSizeRequestMode {{{
@@ -653,6 +673,7 @@ type gtkSizeRequestMode struct {
 	WIDTH_FOR_HEIGHT int
 	CONSTANT_SIZE    int
 }
+
 // End GtkSizeRequestMode  }}}
 
 // GtkCellRendererAccelMode {{{
@@ -662,6 +683,7 @@ type gtkCellRendererAccelMode struct {
 	GTK   int
 	OTHER int
 }
+
 // End GtkCellRendererAccelMode }}}
 
 // GtkTreeViewColumnSizing {{{
@@ -672,6 +694,7 @@ type gtkTreeViewColumnSizing struct {
 	AUTOSIZE  int
 	FIXED     int
 }
+
 // End GtkTreeViewColumnSizing }}}
 
 // GtkSortType {{{
@@ -681,6 +704,7 @@ type gtkSortType struct {
 	ASCENDING  int
 	DESCENDING int
 }
+
 // End GtkSortType }}}
 
 // GtkSelectionMode {{{
@@ -692,6 +716,7 @@ type gtkSelectionMode struct {
 	BROWSE   int
 	MULTIPLE int
 }
+
 // End GtkSelectionMode }}}
 
 // GtkResizeMode {{{
@@ -701,6 +726,7 @@ type gtkResizeMode struct {
 	PARENT int
 	QUEUE  int
 }
+
 // End GtkResizeMode }}}
 
 // GtkAssistantPage {{{
@@ -714,6 +740,7 @@ type gtkAssistantPage struct {
 	PROGRESS int
 	CUSTOM   int
 }
+
 // End GtkAssistantPageType }}}
 
 // GtkAlign {{{
@@ -725,6 +752,7 @@ type gtkAlign struct {
 	END    int
 	CENTER int
 }
+
 // End GtkAlign }}}
 
 // GtkTextSearchFlags {{{
@@ -752,6 +780,7 @@ type gtkTextWindowType struct {
 	TOP     int
 	BOTTOM  int
 }
+
 // End GtkTextWindowType }}}
 
 // GtkWrapMode {{{
@@ -776,6 +805,7 @@ type gtkTextDirection struct {
 	LTR  int
 	RTL  int
 }
+
 // End GtkTextDirection }}}
 
 // GtkAccelFlags {{{
@@ -787,6 +817,7 @@ type gtkAccelFlags struct {
 	LOCKED  int
 	MASK    int
 }
+
 // End GtkAccelFlags }}}
 
 // GtkMenuDirection {{{
@@ -799,6 +830,7 @@ type gtkMenuDirection struct {
 	NEXT   int
 	PREV   int
 }
+
 // End GtkMenuDirection }}}
 
 // GtkPackDirection {{{
@@ -811,6 +843,7 @@ type gtkPackDirection struct {
 	TTB int
 	BTT int
 }
+
 // End GtkPackDirection }}}
 
 // GtkSpinButtonUpdatePolicy {{{
@@ -837,6 +870,7 @@ type gtkSpinType struct {
 	END           int
 	USER_DEFINED  int
 }
+
 // End GtkSpinType }}}
 
 // GtkTreeViewGridLines {{{
@@ -849,6 +883,7 @@ type gtkTreeViewGridLines struct {
 	VERTICAL   int
 	BOTH       int
 }
+
 // End GtkTreeViewGridLines }}}
 
 // GtkEntryIconPosition {{{
@@ -859,6 +894,7 @@ type gtkEntryIconPosition struct {
 	PRIMARY   int
 	SECONDARY int
 }
+
 // End GtkEntryIconPosition }}}
 
 // GtkImageType {{{
@@ -874,6 +910,7 @@ type gtkImageType struct {
 	ICON_NAME int
 	GICON     int
 }
+
 // End GtkImageType }}}
 
 // GTK3 module init func {{{
