@@ -11,6 +11,7 @@ all:
 	cd combobox && gomake
 	cd textview && gomake
 	cd menu && gomake
+	cd search_entry && gomake
 
 clean:
 	cd gtkapplication && gomake clean
@@ -25,3 +26,4 @@ clean:
 	cd combobox && gomake clean
 	cd textview && gomake clean
 	cd menu && gomake clean
+	cd search_entry && gomake clean
