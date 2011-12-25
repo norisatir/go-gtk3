@@ -48,6 +48,7 @@ import "unsafe"
 import "reflect"
 import "runtime"
 import "time"
+import "strings"
 
 func GetTypeFromInstance(obj unsafe.Pointer) GType {
 	return GType(C._get_type_from_instance(obj))
@@ -169,7 +170,12 @@ func Unref(obj ObjectLike) {
 }
 
 func SignalLookup(name string, objectType GType) uint32 {
-	n := GString(name)
+	// If exists, remove detail part of the signal
+	var canonicalName string = name
+	if index := strings.Index(name, ":"); index != -1 {
+		canonicalName = name[:index]
+	}
+	n := GString(canonicalName)
 	defer n.Free()
 	s := C.g_signal_lookup((*C.gchar)(n.GetPtr()), C.GType(objectType))
 	return uint32(s)
