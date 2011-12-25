@@ -81,8 +81,10 @@ func createEventButton(obj unsafe.Pointer) EventButton {
 	eventButton.Y = float64(eb.y)
 	eventButton.State = uint(eb.state)
 	eventButton.Button = uint(eb.button)
-	gd, _ := gobject.ConvertToGo(unsafe.Pointer(eb.device), GdkType.DEVICE)
-	eventButton.Device = gd.(*Device)
+	eventButton.Device = nil
+	if gd, err := gobject.ConvertToGo(unsafe.Pointer(eb.device), GdkType.DEVICE); err == nil {
+		eventButton.Device = gd.(*Device)
+	}
 	eventButton.X_Root = float64(eb.x_root)
 	eventButton.Y_Root = float64(eb.y_root)
 	return eventButton
