@@ -7,16 +7,22 @@ package glib
 extern gboolean _g_source_func(gpointer user_data);
 extern void _g_destroy_notify(gpointer user_data);
 
-static void _g_timeout_add_full(gint priority, guint interval, gint64 id) {
+static guint _g_timeout_add_full(gint priority, guint interval, gint64 id) {
 	gint64* uid = (gint64*)malloc(sizeof(gint64));
 	*uid = id;
-	g_timeout_add_full(priority, interval, _g_source_func, (gpointer)uid, _g_destroy_notify);
+	return g_timeout_add_full(priority, interval, _g_source_func, (gpointer)uid, _g_destroy_notify);
 }
 
-static void _g_idle_add_full(gint priority, gint64 id) {
+static guint _g_timeout_add_seconds_full(gint priority, guint interval, gint64 id) {
 	gint64* uid = (gint64*)malloc(sizeof(gint64));
 	*uid = id;
-	g_idle_add_full(priority, _g_source_func, (gpointer)uid, _g_destroy_notify);
+	return g_timeout_add_seconds_full(priority, interval, _g_source_func, (gpointer)uid, _g_destroy_notify);
+}
+
+static guint _g_idle_add_full(gint priority, gint64 id) {
+	gint64* uid = (gint64*)malloc(sizeof(gint64));
+	*uid = id;
+	return g_idle_add_full(priority, _g_source_func, (gpointer)uid, _g_destroy_notify);
 }
 
 */
@@ -241,16 +247,27 @@ func (self *GList) Foreach(f interface{}, data ...interface{}) {
 // End GList
 ////////////////////////////// }}}
 
-func GTimeoutAddFull(priority int, interval uint, callback interface{}, data ...interface{}) {
+func GTimeoutAddFull(priority int, interval uint, callback interface{}, data ...interface{}) uint {
 	cl, id := gobject.CreateCustomClosure(callback, data...)
 	_closures[id] = cl
-	C._g_timeout_add_full(C.gint(priority), C.guint(interval), C.gint64(id))
+	return uint(C._g_timeout_add_full(C.gint(priority), C.guint(interval), C.gint64(id)))
 }
 
-func GIdleAddFull(priority int, callback interface{}, data ...interface{}) {
+func GTimeoutAddSecondsFull(priority int, interval uint, callback interface{}, data ...interface{}) uint {
 	cl, id := gobject.CreateCustomClosure(callback, data...)
 	_closures[id] = cl
-	C._g_idle_add_full(C.gint(priority), C.gint64(id))
+	return uint(C._g_timeout_add_seconds_full(C.gint(priority), C.guint(interval), C.gint64(id)))
+}
+
+func GIdleAddFull(priority int, callback interface{}, data ...interface{}) uint {
+	cl, id := gobject.CreateCustomClosure(callback, data...)
+	_closures[id] = cl
+	return uint(C._g_idle_add_full(C.gint(priority), C.gint64(id)))
+}
+
+func GSourceRemove(tag uint) bool {
+	b := C.g_source_remove(C.guint(tag))
+	return gobject.GoBool(unsafe.Pointer(&b))
 }
 
 // Exported functions
