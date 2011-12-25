@@ -3,6 +3,11 @@ package gobject
 /*
 #include <glib-object.h>
 
+static inline GParamSpec* to_GParamSpec(void* obj) { return G_PARAM_SPEC(obj); }
+static inline GType get_type(GParamSpec *spec) {
+	return G_PARAM_SPEC_VALUE_TYPE(spec);
+}
+
 */
 import "C"
 
@@ -87,6 +92,10 @@ func init() {
 	// Object
 	RegisterGoType(G_TYPE_OBJECT, GObject)
 	RegisterCType(G_TYPE_OBJECT, to_GoObject)
+
+	// GParamSpec
+	RegisterCType(G_TYPE_PARAM, newGParamSpecFromNative)
+	RegisterGoType(G_TYPE_PARAM, nativeFromGParamSpec)
 }
 
 // Foundamental types
@@ -278,4 +287,59 @@ func GoObject(obj unsafe.Pointer) ObjectLike {
 
 func to_GoObject(obj unsafe.Pointer) interface{} {
 	return GoObject(obj)
+}
+
+// Definition of GParamSpec Type
+type GParamSpec struct {
+	object *C.GParamSpec
+}
+
+// Conversion funcs
+func newGParamSpecFromNative(obj unsafe.Pointer) interface{} {
+	p := &GParamSpec{}
+	p.object = C.to_GParamSpec(obj)
+
+	return p
+}
+
+func nativeFromGParamSpec(ps interface{}) *GValue {
+	if p, ok := ps.(*GParamSpec); ok {
+		gv := CreateCGValue(G_TYPE_PARAM, p.ToNative())
+		return gv
+	}
+	return nil
+}
+
+func (self GParamSpec) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self GParamSpec) ValueSetDefaults(val *GValue) {
+	C.g_param_value_set_default((*C.GParamSpec)(self.ToNative()),
+		(*C.GValue)(val.ToCGValue()))
+}
+
+func (self GParamSpec) ValueDefaults(val *GValue) bool {
+	v := C.g_param_value_defaults((*C.GParamSpec)(self.ToNative()),
+		(*C.GValue)(val.ToCGValue()))
+	return GoBool(unsafe.Pointer(&v))
+}
+
+func (self GParamSpec) ValueValidate(val *GValue) bool {
+	v := C.g_param_value_validate((*C.GParamSpec)(self.ToNative()),
+		(*C.GValue)(val.ToCGValue()))
+	return GoBool(unsafe.Pointer(&v))
+}
+
+func (self GParamSpec) ValueConvert(src, dest *GValue, strict_validation bool) bool {
+	sv := GBool(strict_validation)
+	res := C.g_param_value_convert((*C.GParamSpec)(self.ToNative()),
+		(*C.GValue)(src.ToCGValue()),
+		(*C.GValue)(dest.ToCGValue()),
+		*((*C.gboolean)(sv.GetPtr())))
+	return GoBool(unsafe.Pointer(&res))
+}
+
+func (self GParamSpec) GetType() GType {
+	return GType(C.get_type(self.object))
 }

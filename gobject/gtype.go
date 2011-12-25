@@ -239,6 +239,9 @@ func (self GValue) GetPtr() unsafe.Pointer {
 	case t == G_TYPE_DOUBLE:
 		d := C.g_value_get_double(self.value)
 		return unsafe.Pointer(&d)
+	case t == G_TYPE_PARAM:
+		p := C.g_value_get_param(self.value)
+		return unsafe.Pointer(p)
 	}
 
 	p := C.g_value_get_pointer(self.value)
@@ -261,7 +264,6 @@ func CreateCGValue(tn GType, object ...unsafe.Pointer) *GValue {
 	obj := object[0]
 
 	// Foundamental types are special
-	// TODO: Handle more cases, like creating GValue from GdkEvents
 	switch {
 	case IsObjectType(tn):
 		C.g_value_set_object(&cv, C.gpointer(obj))
@@ -295,6 +297,8 @@ func CreateCGValue(tn GType, object ...unsafe.Pointer) *GValue {
 		C.g_value_set_float(&cv, *((*C.gfloat)(obj)))
 	case tn == G_TYPE_DOUBLE:
 		C.g_value_set_double(&cv, *((*C.gdouble)(obj)))
+	case tn == G_TYPE_PARAM:
+		C.g_value_set_param(&cv, (*C.GParamSpec)(obj))
 	case tn == G_TYPE_POINTER:
 		C.g_value_set_pointer(&cv, C.gpointer(obj))
 	}
@@ -330,6 +334,8 @@ func ConvertToC(gotype interface{}) *GValue {
 		return ctypes[G_TYPE_FLOAT](gotype.(float32))
 	case float64:
 		return ctypes[G_TYPE_DOUBLE](gotype.(float64))
+	case *GParamSpec:
+		return ctypes[G_TYPE_PARAM](gotype.(*GParamSpec))
 	case ObjectLike:
 		o := gotype.(ObjectLike)
 		t := GetTypeFromInstance(o.ToNative())
