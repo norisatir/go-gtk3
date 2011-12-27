@@ -431,6 +431,7 @@ import "github.com/norisatir/go-gtk3/gobject"
 import "github.com/norisatir/go-gtk3/gdkpixbuf"
 import "github.com/norisatir/go-gtk3/gdk3"
 import "github.com/norisatir/go-gtk3/glib"
+import "github.com/norisatir/go-gtk3/pango"
 
 // General types and functions {{{
 
@@ -1165,6 +1166,14 @@ func (self *Widget) OverrideColor(gtk_StateFlags int, color *gdk3.RGBA) {
 	cl := gobject.ConvertToC(*color)
 	defer cl.Free()
 	C.gtk_widget_override_color(self.object, C.GtkStateFlags(gtk_StateFlags), (*C.GdkRGBA)(cl.GetPtr()))
+}
+
+func (self *Widget) OverrideFont(fontDesc *pango.FontDescription) {
+	if fontDesc == nil {
+		C.gtk_widget_override_font(self.object, nil)
+		return
+	}
+	C.gtk_widget_override_font(self.object, (*C.PangoFontDescription)(fontDesc.ToNative()))
 }
 
 func (self *Widget) OverrideSymbolicColor(name string, color *gdk3.RGBA) {
