@@ -1235,6 +1235,28 @@ func (self *Widget) GetParent() WidgetLike {
 	return nil
 }
 
+func (self *Widget) GetScreen() *gdk3.Screen {
+	s := C.gtk_widget_get_screen(self.object)
+
+	if s != nil {
+		if scr, err := gobject.ConvertToGo(unsafe.Pointer(s)); err == nil {
+			return scr.(*gdk3.Screen)
+		}
+	}
+	return nil
+}
+
+func (self *Widget) GetVisible() bool {
+	b := C.gtk_widget_get_visible(self.object)
+	return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *Widget) SetVisible(visible bool) {
+	b := gobject.GBool(visible)
+	defer b.Free()
+	C.gtk_widget_set_visible(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
 func (self *Widget) GetHalign() int {
 	return int(C.gtk_widget_get_halign(self.object))
 }
@@ -6309,8 +6331,12 @@ type TextBuffer struct {
 }
 
 func NewTextBuffer(table *TextTagTable) *TextBuffer {
+	var ttt *C.GtkTextTagTable = nil
+	if table != nil {
+		ttt = table.object
+	}
 	t := &TextBuffer{}
-	t.object = C.gtk_text_buffer_new(table.object)
+	t.object = C.gtk_text_buffer_new(ttt)
 
 	if gobject.IsObjectFloating(t) {
 		gobject.RefSink(t)
