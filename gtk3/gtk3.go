@@ -1078,7 +1078,7 @@ func (self *Widget) GetDeviceEnabled(device *gdk3.Device) bool {
 
 func (self *Widget) GetTopLevel() WidgetLike {
 	w := C.gtk_widget_get_toplevel(self.object)
-	if tl, err := gobject.ConvertToGo(unsafe.Pointer(&w)); err == nil {
+	if tl, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
 		return tl.(WidgetLike)
 	}
 	return nil
@@ -1989,6 +1989,12 @@ func (self *Window) IsActive() bool {
 	b := C.gtk_window_is_active(self.object)
 	cb, _ := gobject.ConvertToGo(unsafe.Pointer(&b), gobject.G_TYPE_BOOLEAN)
 	return cb.(bool)
+}
+
+func (self *Window) SetScreen(screen *gdk3.Screen) {
+	if screen != nil {
+		C.gtk_window_set_screen(self.object, (*C.GdkScreen)(screen.ToNative()))
+	}
 }
 
 func (self *Window) HasTopLevelFocus() bool {
@@ -14968,6 +14974,8 @@ func init() {
 	gobject.RegisterCType(GtkType.TEXT_VIEW, newTextViewFromNative)
 	gobject.RegisterGoType(GtkType.TEXT_VIEW, nativeFromTextView)
 
+	// Register TreePath type
+	gobject.RegisterCType(GtkType.TREE_PATH, newTreePathFromNative)
 	// Register GtkTreeModel type
 	gobject.RegisterCType(GtkType.TREE_MODEL, newTreeModelFromNative)
 	gobject.RegisterGoType(GtkType.TREE_MODEL, nativeFromTreeModel)
