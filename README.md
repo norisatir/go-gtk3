@@ -25,7 +25,7 @@ INSTALL:
   For demo:
   
     gomake demo
-    cd demo_apps
+    cd demo && demo
     (Demo apps are taken from gtk3 demo apps, translated to go)
 LICENSE:
 --------
