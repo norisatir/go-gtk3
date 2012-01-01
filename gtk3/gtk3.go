@@ -97,6 +97,7 @@ static inline GtkLabel* to_GtkLabel(void* obj) { return GTK_LABEL(obj); }
 static inline GtkProgressBar* to_GtkProgressBar(void* obj) { return GTK_PROGRESS_BAR(obj); }
 static inline GtkStatusbar* to_GtkStatusbar(void* obj) { return GTK_STATUSBAR(obj); }
 static inline GtkImage* to_GtkImage(void* obj) { return GTK_IMAGE(obj); }
+static inline GtkSpinner* to_GtkSpinner(void* obj) { return GTK_SPINNER(obj); }
 static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
 static inline GtkLinkButton* to_GtkLinkButton(void* obj) { return GTK_LINK_BUTTON(obj); }
@@ -1748,10 +1749,8 @@ func NewWindow(windowType int) (w *Window) {
 	w = &Window{}
 	o := C.gtk_window_new(C.GtkWindowType(windowType))
 	w.object = C.to_GtkWindow(unsafe.Pointer(o))
+	gobject.RefSink(w)
 
-	if gobject.IsObjectFloating(w) {
-		gobject.RefSink(w)
-	}
 	w.Bin = NewBin(unsafe.Pointer(o))
 	windowFinalizer(w)
 
@@ -3425,6 +3424,96 @@ func (self *Statusbar) GetMessageArea() WidgetLike {
 
 //////////////////////////////
 // End GtkStatusBar
+////////////////////////////// }}}
+
+// GtkSpinner {{{
+//////////////////////////////
+
+// Spinner type
+type Spinner struct {
+	object *C.GtkSpinner
+	*Widget
+}
+
+func NewSpinner() *Spinner {
+	s := &Spinner{}
+	o := C.gtk_spinner_new()
+	s.object = C.to_GtkSpinner(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	}
+	s.Widget = NewWidget(unsafe.Pointer(o))
+	spinnerFinalizer(s)
+
+	return s
+}
+
+// Clear Spinner struct when it goes out of reach
+func spinnerFinalizer(s *Spinner) {
+	runtime.SetFinalizer(s, func(s *Spinner) { gobject.Unref(s) })
+}
+
+// Conversion function for gobject registration map
+func newSpinnerFromNative(obj unsafe.Pointer) interface{} {
+	s := &Spinner{}
+	s.object = C.to_GtkSpinner(obj)
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	} else {
+		gobject.Ref(s)
+	}
+	s.Widget = NewWidget(obj)
+	spinnerFinalizer(s)
+
+	return s
+}
+
+func nativeFromSpinner(sp interface{}) *gobject.GValue {
+	spinner, ok := sp.(*Spinner)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.SPINNER, spinner.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object like
+func (self Spinner) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Spinner) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Spinner) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+
+}
+
+func (self Spinner) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be widget-like
+func (self Spinner) W() *Widget {
+	return self.Widget
+}
+
+// Spinner interface
+
+func (self *Spinner) Start() {
+	C.gtk_spinner_start(self.object)
+}
+
+func (self *Spinner) Stop() {
+	C.gtk_spinner_stop(self.object)
+}
+
+//////////////////////////////
+// END GtkSpinner
 ////////////////////////////// }}}
 
 // End Display Widgets }}}
@@ -13870,7 +13959,7 @@ func newFrameFromNative(obj unsafe.Pointer) interface{} {
 	} else {
 		gobject.Ref(f)
 	}
-	f.Bin = NewBin(unsafe.Pointer(f.object))
+	f.Bin = NewBin(obj)
 	frameFinalizer(f)
 
 	return f

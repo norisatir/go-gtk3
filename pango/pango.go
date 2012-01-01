@@ -19,14 +19,14 @@ import "runtime"
 import "github.com/norisatir/go-gtk3/gobject"
 
 type pangoTypes struct {
-	CONTEXT gobject.GType
-	FONT gobject.GType
-	FONT_FAMILY gobject.GType
-	FONT_FACE gobject.GType
-	FONT_MAP gobject.GType
-	FONTSET gobject.GType
+	CONTEXT          gobject.GType
+	FONT             gobject.GType
+	FONT_FAMILY      gobject.GType
+	FONT_FACE        gobject.GType
+	FONT_MAP         gobject.GType
+	FONTSET          gobject.GType
 	FONT_DESCRIPTION gobject.GType
-	LAYOUT gobject.GType
+	LAYOUT           gobject.GType
 }
 
 var PangoTypes pangoTypes
@@ -99,9 +99,10 @@ type pangoUnderline struct {
 var PangoVariant pangoVariant
 
 type pangoVariant struct {
-	NORMAL int
+	NORMAL     int
 	SMALL_CAPS int
 }
+
 // End PangoVariant }}}
 
 // PangoStretch {{{
@@ -111,14 +112,15 @@ var PangoStretch pangoStretch
 type pangoStretch struct {
 	ULTRA_CONDENSED int
 	EXTRA_CONDENSED int
-	CONDENSED int
-	SEMI_CONDENSED int
-	NORMAL int
-	SEMI_EXPANDED int
-	EXPANDED int
-	EXTRA_EXPANDED int
-	ULTRA_EXPANDED int
+	CONDENSED       int
+	SEMI_CONDENSED  int
+	NORMAL          int
+	SEMI_EXPANDED   int
+	EXPANDED        int
+	EXTRA_EXPANDED  int
+	ULTRA_EXPANDED  int
 }
+
 // End PangoStretch }}}
 
 // PangoGravity {{{
@@ -127,11 +129,12 @@ var PangoGravity pangoGravity
 
 type pangoGravity struct {
 	SOUTH int
-	EAST int
+	EAST  int
 	NORTH int
-	WEST int
-	AUTO int
+	WEST  int
+	AUTO  int
 }
+
 // End PangoGravity }}}
 
 // PangoFontMask {{{
@@ -139,14 +142,15 @@ type pangoGravity struct {
 var PangoFontMask pangoFontMask
 
 type pangoFontMask struct {
-	FAMILY int
-	STYLE int
+	FAMILY  int
+	STYLE   int
 	VARIANT int
-	WEIGHT int
+	WEIGHT  int
 	STRETCH int
-	SIZE int
+	SIZE    int
 	GRAVITY int
 }
+
 // End PangoFontMask }}}
 
 // Rendering {{{
@@ -552,7 +556,7 @@ func nativeFromFontDescription(fd interface{}) *gobject.GValue {
 	if f, ok := fd.(*FontDescription); ok {
 		gv := gobject.CreateCGValue(PangoTypes.FONT_DESCRIPTION, f.ToNative())
 		return gv
-	}                                           
+	}
 	return nil
 }
 
@@ -674,7 +678,7 @@ func (self *FontDescription) BetterMatch(oldMatch, newMatch *FontDescription) bo
 
 func (self *FontDescription) ToString() string {
 	s := C.pango_font_description_to_string(self.object)
-	
+
 	if s != nil {
 		return gobject.GoString(unsafe.Pointer(s))
 	}
@@ -683,12 +687,13 @@ func (self *FontDescription) ToString() string {
 
 func (self *FontDescription) ToFilename() string {
 	s := C.pango_font_description_to_filename(self.object)
-	
+
 	if s != nil {
 		return gobject.GoString(unsafe.Pointer(s))
 	}
 	return ""
 }
+
 //////////////////////////////
 // End FontDescription
 ////////////////////////////// }}}
