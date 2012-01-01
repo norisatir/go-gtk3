@@ -61,6 +61,7 @@ IMPLEMENTATION LIST:
 - ProgressBar
 - Image
 - Statusbar
+- Spinner
 
 #### BUTTONS AND TOGGLES:
 - Button
