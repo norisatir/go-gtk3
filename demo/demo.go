@@ -1,25 +1,25 @@
 package main
 
 import (
-	"github.com/norisatir/go-gtk3/gtk3"
-	"github.com/norisatir/go-gtk3/pango"
-	"github.com/norisatir/go-gtk3/gobject"
 	"./assistant"
 	"./button_box"
 	"./combobox"
+	"./dialog"
 	"./entry_buffer"
 	"./entry_completion"
-	"./search_entry"
-	"./dialog"
+	"./list_store"
 	"./menu"
+	"./search_entry"
 	"./spinner"
 	"./textview"
-	"./list_store"
 	"./tree_store"
+	"github.com/norisatir/go-gtk3/gobject"
+	"github.com/norisatir/go-gtk3/gtk3"
+	"github.com/norisatir/go-gtk3/pango"
 )
 
 type Demo struct {
-	Title string
+	Title    string
 	Filename string
 	CallBack func(gtk3.WidgetLike) gtk3.WidgetLike
 	Children []Demo
@@ -50,7 +50,6 @@ const (
 	TitleColumn = iota
 	StyleColumn
 )
-
 
 func CreateText(buffer **gtk3.TextBuffer, isSource bool) gtk3.WidgetLike {
 	scrolledW := gtk3.NewScrolledWindow(nil, nil)
@@ -90,9 +89,9 @@ func windowClosed(model *gtk3.TreeStore, path *gtk3.TreePath) {
 	}
 }
 
-func rowActivated(model *gtk3.TreeStore, 
-		treeView *gtk3.TreeView, path *gtk3.TreePath, 
-		column *gtk3.TreeViewColumn, data ...interface{}) {
+func rowActivated(model *gtk3.TreeStore,
+	treeView *gtk3.TreeView, path *gtk3.TreePath,
+	column *gtk3.TreeViewColumn, data ...interface{}) {
 
 	var iter gtk3.TreeIter
 	var call func(gtk3.WidgetLike) gtk3.WidgetLike
@@ -107,7 +106,7 @@ func rowActivated(model *gtk3.TreeStore,
 		call = Demos[indices[0]].CallBack
 	}
 
-	if (call != nil) {
+	if call != nil {
 		if style == pango.PangoStyle.ITALIC {
 			style = pango.PangoStyle.NORMAL
 		} else {
@@ -131,19 +130,18 @@ func CreateTree() gtk3.WidgetLike {
 
 	var iter gtk3.TreeIter
 
-	for _,demo := range Demos {
+	for _, demo := range Demos {
 		model.Append(&iter, nil)
-		model.SetValues(&iter, gtk3.V{TitleColumn:demo.Title, StyleColumn:pango.PangoStyle.NORMAL})
+		model.SetValues(&iter, gtk3.V{TitleColumn: demo.Title, StyleColumn: pango.PangoStyle.NORMAL})
 
 		if len(demo.Children) > 0 {
 			var childIter gtk3.TreeIter
 			for _, childDemo := range demo.Children {
 				model.Append(&childIter, &iter)
-				model.SetValues(&childIter, gtk3.V{TitleColumn:childDemo.Title, StyleColumn:pango.PangoStyle.NORMAL})
+				model.SetValues(&childIter, gtk3.V{TitleColumn: childDemo.Title, StyleColumn: pango.PangoStyle.NORMAL})
 			}
 		}
 	}
-
 
 	cell := gtk3.NewCellRendererText()
 	column := gtk3.NewTreeViewColumnWithAttributes("Widget (double click for demo)",
@@ -154,7 +152,7 @@ func CreateTree() gtk3.WidgetLike {
 
 	model.GetIterFirst(&iter)
 	selection.SelectIter(&iter)
-	
+
 	treeView.Connect("row_activated", rowActivated, model)
 
 	treeView.CollapseAll()
@@ -174,7 +172,6 @@ func CreateTree() gtk3.WidgetLike {
 	return box
 }
 
-
 func main() {
 	gtk3.Init()
 
@@ -184,7 +181,6 @@ func main() {
 	window.SetTitle("Gtk+ Code Demos")
 	window.Connect("destroy", gtk3.MainQuit)
 
-
 	hbox := gtk3.NewHBox(0)
 	window.Add(hbox)
 
@@ -192,17 +188,16 @@ func main() {
 	tree := CreateTree()
 	hbox.PackStart(tree, false, false, 0)
 
-
 	notebook := gtk3.NewNotebook()
-	hbox.PackStart(notebook, true ,true, 0)
+	hbox.PackStart(notebook, true, true, 0)
 
 	notebook.AppendPage(CreateText(&infoBuf, false), gtk3.NewLabelWithMnemonic("_Info"))
 
-	infoBuf.CreateTag("title", gtk3.P{"font":"Sans 18"})
+	infoBuf.CreateTag("title", gtk3.P{"font": "Sans 18"})
 
 	notebook.AppendPage(CreateText(&sourceBuf, true), gtk3.NewLabelWithMnemonic("_Source"))
 
-	sourceBuf.CreateTag("comment", gtk3.P{"foreground":"DodgerBlue"})
+	sourceBuf.CreateTag("comment", gtk3.P{"foreground": "DodgerBlue"})
 	window.SetDefaultSize(600, 400)
 	window.ShowAll()
 

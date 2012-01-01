@@ -220,18 +220,18 @@ func DoListStore(w gtk3.WidgetLike) gtk3.WidgetLike {
 
 	if !window.GetVisible() {
 		window.ShowAll()
-		timeout = glib.GTimeoutAddFull(glib.GPriority.DEFAULT, 80, 
-		  func() {
-			  var sIter gtk3.TreeIter
-			  model.GetIterFirst(&sIter)
-			  pulse := model.GetValue(&sIter, ColumnPulse).(uint)
+		timeout = glib.GTimeoutAddFull(glib.GPriority.DEFAULT, 80,
+			func() {
+				var sIter gtk3.TreeIter
+				model.GetIterFirst(&sIter)
+				pulse := model.GetValue(&sIter, ColumnPulse).(uint)
 
-			  if pulse == ^uint(0) {
-				pulse = 0
-			  } else {
-				pulse++
-			  }
-			  model.SetValues(&sIter, gtk3.V{ColumnPulse: pulse, ColumnActive: true})
+				if pulse == ^uint(0) {
+					pulse = 0
+				} else {
+					pulse++
+				}
+				model.SetValues(&sIter, gtk3.V{ColumnPulse: pulse, ColumnActive: true})
 			})
 
 	} else {

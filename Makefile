@@ -25,7 +25,7 @@ clean:
 	cd gdkpixbuf && gomake clean
 	cd pango && gomake clean
 	cd gtk3 && gomake clean
-	cd demo_apps && gomake clean
+	cd demo && gomake clean
 
 fmt_all:
 	gofmt -w ./gobject/*.go
@@ -34,6 +34,7 @@ fmt_all:
 	gofmt -w ./gdkpixbuf/*.go
 	gofmt -w ./pango/*.go
 	gofmt -w ./gtk3/*.go
+	gofmt -w ./demo/*.go
 
 demo: install
-	cd demo_apps && gomake
+	cd demo && gomake

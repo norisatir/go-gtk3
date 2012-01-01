@@ -15,7 +15,7 @@ func createBBox(orientation int, title string, spacing int, layout int) *gtk3.Fr
 	bbox.Add(button)
 
 	button = gtk3.NewButtonFromStock(gtk3.GtkStock.CANCEL)
-	bbox.Add(button) 
+	bbox.Add(button)
 	button = gtk3.NewButtonFromStock(gtk3.GtkStock.HELP)
 	bbox.Add(button)
 
@@ -27,17 +27,17 @@ func createBBox(orientation int, title string, spacing int, layout int) *gtk3.Fr
 func DoButtonBox(doWidget gtk3.WidgetLike) gtk3.WidgetLike {
 	if window == nil {
 		window = gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL)
-	    window.SetScreen(doWidget.W().GetScreen())
-	
+		window.SetScreen(doWidget.W().GetScreen())
+
 		window.SetTitle("Button Boxes")
 		window.Connect("destroy", func() { window.Destroy(); window = nil })
 
 		main_vbox := gtk3.NewVBox(0)
 		window.Add(main_vbox)
-        
+
 		frame_horz := gtk3.NewFrame("Horizontal Button Boxes")
 		main_vbox.PackStart(frame_horz, true, true, 10)
-        
+
 		vbox := gtk3.NewVBox(0)
 		frame_horz.Add(vbox)
 
@@ -56,7 +56,7 @@ func DoButtonBox(doWidget gtk3.WidgetLike) gtk3.WidgetLike {
 		hbox.PackStart(createBBox(gtk3.GtkOrientation.VERTICAL, "Edge", 30, gtk3.GtkButtonBoxStyle.EDGE), true, true, 5)
 		hbox.PackStart(createBBox(gtk3.GtkOrientation.VERTICAL, "Start", 30, gtk3.GtkButtonBoxStyle.START), true, true, 5)
 		hbox.PackStart(createBBox(gtk3.GtkOrientation.VERTICAL, "End", 30, gtk3.GtkButtonBoxStyle.END), true, true, 5)
-        
+
 	}
 
 	if !window.GetVisible() {

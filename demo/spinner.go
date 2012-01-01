@@ -4,12 +4,11 @@ import "github.com/norisatir/go-gtk3/gtk3"
 
 var window *gtk3.Dialog = nil
 
-
 func DoSpinner(w gtk3.WidgetLike) gtk3.WidgetLike {
 	if window == nil {
 		window = gtk3.NewDialogWithButtons("GtkSpinner", w.(*gtk3.Window), 0,
 			gtk3.B{{gtk3.GtkStock.CLOSE, gtk3.GtkResponse.NONE}})
-		
+
 		window.SetResizable(false)
 		window.Connect("response", func() { window.Destroy() })
 		window.Connect("destroy", func() { window = nil })

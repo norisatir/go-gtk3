@@ -20,9 +20,9 @@ func createMenu(depth int, tearoff bool) gtk3.WidgetLike {
 		mt.Show()
 	}
 
-	for i, j := 0, 1; i < 5; i, j = i+1,j+1 {
+	for i, j := 0, 1; i < 5; i, j = i+1, j+1 {
 		mi := gtk3.NewRadioMenuItemWithLabel(group, fmt.Sprintf("item %2d - %d", depth, j))
-		group = mi.GetGroup()		
+		group = mi.GetGroup()
 
 		menu.Append(mi)
 		mi.Show()
@@ -30,7 +30,7 @@ func createMenu(depth int, tearoff bool) gtk3.WidgetLike {
 		if i == 3 {
 			mi.SetSensitive(false)
 		}
-		mi.SetSubmenu(createMenu(depth - 1, true))
+		mi.SetSubmenu(createMenu(depth-1, true))
 	}
 
 	return menu
@@ -112,6 +112,6 @@ func DoMenu(w gtk3.WidgetLike) gtk3.WidgetLike {
 		window = nil
 		return nil
 	}
-	
+
 	return window
 }

@@ -170,7 +170,7 @@ func DoComboBox(w gtk3.WidgetLike) gtk3.WidgetLike {
 		window = gtk3.NewWindow(gtk3.GtkWindowType.TOPLEVEL)
 		window.SetScreen(w.W().GetScreen())
 		window.SetTitle("Combo boxes")
-		window.Connect("destroy", func() { window.Destroy(); window = nil} )
+		window.Connect("destroy", func() { window.Destroy(); window = nil })
 		window.SetBorderWidth(10)
 
 		vbox := gtk3.NewVBox(2)
