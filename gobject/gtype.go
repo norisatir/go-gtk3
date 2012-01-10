@@ -123,6 +123,9 @@ func GetTypeName(obj unsafe.Pointer) string {
 }
 
 func RegisterCType(typename GType, f FuncToGo) {
+	if gtypes == nil {
+		gtypes = make(map[GType]FuncToGo)
+	}
 	gtypes[typename] = f
 }
 
@@ -160,6 +163,9 @@ type FuncToC func(interface{}) *GValue
 var ctypes map[GType]FuncToC
 
 func RegisterGoType(typeid GType, f FuncToC) {
+	if ctypes == nil {
+		ctypes = make(map[GType]FuncToC)
+	}
 	ctypes[typeid] = f
 }
 
@@ -358,6 +364,10 @@ func ConvertToC(gotype interface{}) *GValue {
 
 func init() {
 	C.g_type_init()
-	gtypes = make(map[GType]FuncToGo)
-	ctypes = make(map[GType]FuncToC)
+	if gtypes == nil {
+		gtypes = make(map[GType]FuncToGo)
+	}
+	if ctypes == nil {
+		ctypes = make(map[GType]FuncToC)
+	}
 }
