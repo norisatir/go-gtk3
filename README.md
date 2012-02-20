@@ -56,6 +56,7 @@ IMPLEMENTATION LIST:
 - Image
 - Statusbar
 - Spinner
+- InfoBar
 
 #### BUTTONS AND TOGGLES:
 - Button

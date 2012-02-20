@@ -99,6 +99,7 @@ static inline GtkProgressBar* to_GtkProgressBar(void* obj) { return GTK_PROGRESS
 static inline GtkStatusbar* to_GtkStatusbar(void* obj) { return GTK_STATUSBAR(obj); }
 static inline GtkImage* to_GtkImage(void* obj) { return GTK_IMAGE(obj); }
 static inline GtkSpinner* to_GtkSpinner(void* obj) { return GTK_SPINNER(obj); }
+static inline GtkInfoBar* to_GtkInfoBar(void* obj) { return GTK_INFO_BAR(obj); }
 static inline GtkButton* to_GtkButton(void* obj) { return GTK_BUTTON(obj); }
 static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE_BUTTON(obj); }
 static inline GtkLinkButton* to_GtkLinkButton(void* obj) { return GTK_LINK_BUTTON(obj); }
@@ -3516,6 +3517,177 @@ func (self *Spinner) Stop() {
 
 //////////////////////////////
 // END GtkSpinner
+////////////////////////////// }}}
+
+// GtkInfoBar {{{
+//////////////////////////////
+
+// InfoBar type
+type InfoBar struct {
+	object *C.GtkInfoBar
+	*Box
+}
+
+func NewInfoBar() *InfoBar {
+    ib := &InfoBar{}
+    o := C.gtk_info_bar_new()
+    ib.object = C.to_GtkInfoBar(unsafe.Pointer(o))
+
+    if gobject.IsObjectFloating(ib) {
+        gobject.RefSink(ib)
+    }
+    ib.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
+    infoBarFinalizer(ib)
+
+    return ib
+}
+
+func NewInfoBarWithButtons(buttons B) *InfoBar {
+    ib := &InfoBar{}
+    o := C.gtk_info_bar_new()
+    ib.object = C.to_GtkInfoBar(unsafe.Pointer(o))
+
+    if gobject.IsObjectFloating(ib) {
+        gobject.RefSink(ib)
+    }
+    ib.Box = newBoxFromNative(unsafe.Pointer(o)).(*Box)
+    infoBarFinalizer(ib)
+
+    for _, butt := range buttons {
+        ib.AddButton(butt.Text, butt.Response)
+    }
+
+    return ib
+}
+
+// Clear InfoBar struct when it goes out of reach
+func infoBarFinalizer(ib *InfoBar) {
+	runtime.SetFinalizer(ib, func(ib *InfoBar) { gobject.Unref(ib) })
+}
+
+// Conversion function for gobject registration map
+func newInfoBarFromNative(obj unsafe.Pointer) interface{} {
+	ib := &InfoBar{}
+	ib.object = C.to_GtkInfoBar(obj)
+
+	if gobject.IsObjectFloating(ib) {
+		gobject.RefSink(ib)
+	} else {
+		gobject.Ref(ib)
+	}
+    ib.Box = newBoxFromNative(obj).(*Box)
+    infoBarFinalizer(ib)
+
+	return ib
+}
+
+func nativeFromInfoBar(ib interface{}) *gobject.GValue {
+	info, ok := ib.(*InfoBar)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.INFO_BAR, info.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object like
+func (self InfoBar) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self InfoBar) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self InfoBar) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+
+}
+
+func (self InfoBar) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be box-like
+func (self InfoBar) B() *Box {
+    return self.Box
+}
+
+// InfoBar interface
+
+func (self *InfoBar) AddButton(text string, responseId int) WidgetLike {
+    s := gobject.GString(text)
+    defer s.Free()
+    w := C.gtk_info_bar_add_button(self.object, (*C.gchar)(s.GetPtr()), C.gint(responseId))
+
+    if w != nil {
+        if button, err := gobject.ConvertToGo(unsafe.Pointer(w)); err != nil {
+            return button.(WidgetLike)
+        }
+    }
+
+    return nil
+}
+
+func (self *InfoBar) AddButtons(buttons B) {
+    for _, butt := range buttons {
+        self.AddButton(butt.Text, butt.Response)
+    }
+}
+
+func (self *InfoBar) AddActionWidget(child WidgetLike, responseId int) {
+    C.gtk_info_bar_add_action_widget(self.object, child.W().object, C.gint(responseId))
+}
+
+func (self *InfoBar) SetResponseSensitive(responseId int, setting bool) {
+    b := gobject.GBool(setting)
+    defer b.Free()
+    C.gtk_info_bar_set_response_sensitive(self.object, C.gint(responseId), *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *InfoBar) SetDefaultResponse(responseId int) {
+    C.gtk_info_bar_set_default_response(self.object, C.gint(responseId))
+}
+
+func (self *InfoBar) Response(responseId int) {
+    C.gtk_info_bar_response(self.object, C.gint(responseId))
+}
+
+func (self *InfoBar) SetMessageType(gtk_MessageType int) {
+    C.gtk_info_bar_set_message_type(self.object, C.GtkMessageType(gtk_MessageType))
+}
+
+func (self *InfoBar) GetMessageType() int {
+    i := C.gtk_info_bar_get_message_type(self.object)
+    return int(i)
+}
+
+func (self *InfoBar) GetActionArea() WidgetLike {
+    a := C.gtk_info_bar_get_action_area(self.object)
+
+    if a != nil {
+        if area, err := gobject.ConvertToGo(unsafe.Pointer(a)); err == nil {
+            return area.(WidgetLike)
+        }
+    }
+
+    return nil
+}
+
+func (self *InfoBar) GetContentArea() WidgetLike {
+    c := C.gtk_info_bar_get_content_area(self.object)
+
+    if c != nil {
+        if area, err := gobject.ConvertToGo(unsafe.Pointer(c)); err == nil {
+            return area.(WidgetLike)
+        }
+    }
+
+    return nil
+}
+
+//////////////////////////////
+// END GtkInfoBar
 ////////////////////////////// }}}
 
 // End Display Widgets }}}
@@ -16529,6 +16701,14 @@ func init() {
 	// Register GtkStatusbar type
 	gobject.RegisterCType(GtkType.STATUSBAR, newStatusbarFromNative)
 	gobject.RegisterGoType(GtkType.STATUSBAR, nativeFromStatusbar)
+
+    // Register GtkSpinner
+    gobject.RegisterCType(GtkType.SPINNER, newSpinnerFromNative)
+    gobject.RegisterGoType(GtkType.SPINNER, nativeFromSpinner)
+
+    // Register GtkInfoBar
+    gobject.RegisterCType(GtkType.INFO_BAR, newInfoBarFromNative)
+    gobject.RegisterGoType(GtkType.INFO_BAR, nativeFromInfoBar)
 
 	// Register GtkImage type
 	gobject.RegisterCType(GtkType.IMAGE, newImageFromNative)
