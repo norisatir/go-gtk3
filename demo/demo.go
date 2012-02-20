@@ -1,18 +1,18 @@
 package main
 
 import (
-	"./assistant"
-	"./button_box"
-	"./combobox"
-	"./dialog"
-	"./entry_buffer"
-	"./entry_completion"
-	"./list_store"
-	"./menu"
-	"./search_entry"
-	"./spinner"
-	"./textview"
-	"./tree_store"
+	"github.com/norisatir/go-gtk3/demo/assistant"
+	"github.com/norisatir/go-gtk3/demo/button_box"
+	"github.com/norisatir/go-gtk3/demo/combobox"
+	"github.com/norisatir/go-gtk3/demo/dialog"
+	"github.com/norisatir/go-gtk3/demo/entry_buffer"
+	"github.com/norisatir/go-gtk3/demo/entry_completion"
+	"github.com/norisatir/go-gtk3/demo/list_store"
+	"github.com/norisatir/go-gtk3/demo/menu"
+	"github.com/norisatir/go-gtk3/demo/search_entry"
+	"github.com/norisatir/go-gtk3/demo/spinner"
+	"github.com/norisatir/go-gtk3/demo/textview"
+	"github.com/norisatir/go-gtk3/demo/tree_store"
 	"github.com/norisatir/go-gtk3/gobject"
 	"github.com/norisatir/go-gtk3/gtk3"
 	"github.com/norisatir/go-gtk3/pango"
@@ -126,6 +126,9 @@ func CreateTree() gtk3.WidgetLike {
 
 	treeView := gtk3.NewTreeViewWithModel(model)
 	selection := treeView.GetSelection()
+    if selection == nil {
+        panic("Selection object nil")
+    }
 	selection.SetMode(gtk3.GtkSelectionMode.BROWSE)
 
 	var iter gtk3.TreeIter
