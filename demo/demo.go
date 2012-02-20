@@ -11,6 +11,7 @@ import (
 	"github.com/norisatir/go-gtk3/demo/menu"
 	"github.com/norisatir/go-gtk3/demo/search_entry"
 	"github.com/norisatir/go-gtk3/demo/spinner"
+	"github.com/norisatir/go-gtk3/demo/infobar"
 	"github.com/norisatir/go-gtk3/demo/textview"
 	"github.com/norisatir/go-gtk3/demo/tree_store"
 	"github.com/norisatir/go-gtk3/gobject"
@@ -39,6 +40,7 @@ func init() {
 		{"Dialog with Message Boxes", "dialog.go", dialog.DoDialog, nil},
 		{"Menus", "menu.go", menu.DoMenu, nil},
 		{"Spinner", "spinner.go", spinner.DoSpinner, nil},
+		{"InfoBar", "infobar.go", infobar.DoInfoBar, nil},
 		{"Text Widget", "", nil, []Demo{
 			{"Multiple Views", "textview.go", textview.DoTextView, nil}}},
 		{"TreeView", "", nil, []Demo{
