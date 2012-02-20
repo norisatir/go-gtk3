@@ -18,8 +18,10 @@ INSTALL:
 
   For demo:
   
-    gomake demo
-    cd demo && demo
+    cd $GOPATH/src/github.com/norisatir/go-gtk3/demo
+    go build
+    ./demo
+  
     (Demo apps are taken from gtk3 demo apps, translated to go)
 LICENSE:
 --------
