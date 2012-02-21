@@ -16826,6 +16826,9 @@ func init() {
 	gobject.RegisterCType(GtkType.RADIO_BUTTON, newRadioButtonFromNative)
 	gobject.RegisterGoType(GtkType.RADIO_BUTTON, nativeFromRadioButton)
 
+    gobject.RegisterCType(GtkType.SWITCH, newSwitchFromNative)
+    gobject.RegisterGoType(GtkType.SWITCH, nativeFromSwitch)
+
 	// Register GtkEntryBuffer type
 	gobject.RegisterCType(GtkType.ENTRY_BUFFER, newEntryBufferFromNative)
 	gobject.RegisterGoType(GtkType.ENTRY_BUFFER, nativeFromEntryBuffer)
