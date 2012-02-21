@@ -64,6 +64,7 @@ IMPLEMENTATION LIST:
 - CheckButton
 - RadioButton
 - LinkButton
+- Switch
 
 #### NUMERIC/TEXT DATA ENTRY:
 - Entry
