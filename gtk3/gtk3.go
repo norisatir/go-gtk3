@@ -105,6 +105,7 @@ static inline GtkToggleButton* to_GtkToggleButton(void* obj) { return GTK_TOGGLE
 static inline GtkLinkButton* to_GtkLinkButton(void* obj) { return GTK_LINK_BUTTON(obj); }
 static inline GtkCheckButton* to_GtkCheckButton(void* obj) { return GTK_CHECK_BUTTON(obj); }
 static inline GtkRadioButton* to_GtkRadioButton(void* obj) { return GTK_RADIO_BUTTON(obj); }
+static inline GtkSwitch* to_GtkSwitch(void* obj) { return GTK_SWITCH(obj); }
 static inline GtkEntryBuffer* to_GtkEntryBuffer(void* obj) { return GTK_ENTRY_BUFFER(obj); }
 static inline GtkEntry* to_GtkEntry(void* obj) { return GTK_ENTRY(obj); }
 static inline GtkEntryCompletion* to_GtkEntryCompletion(void* obj) { return GTK_ENTRY_COMPLETION(obj); }
@@ -4469,6 +4470,101 @@ func (self *LinkButton) SetVisited(visited bool) {
 
 //////////////////////////////
 // END GtkLinkButton
+////////////////////////////// }}}
+
+// GtkSwitch {{{
+//////////////////////////////
+
+// GtkSwitch type
+type Switch struct {
+	object *C.GtkSwitch
+	*Widget
+}
+
+func NewSwitch() *Switch {
+	s := &Switch{}
+
+	o := C.gtk_switch_new()
+	s.object = C.to_GtkSwitch(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	}
+	s.Widget = NewWidget(unsafe.Pointer(o))
+	switchFinalizer(s)
+
+	return s
+}
+
+// Clear switch struct when it goes out of reach
+func switchFinalizer(s *Switch) {
+	runtime.SetFinalizer(s, func(s *Switch) { gobject.Unref(s) })
+}
+
+// Conversion function for gobject registration map
+func newSwitchFromNative(obj unsafe.Pointer) interface{} {
+	s := &Switch{}
+	s.object = C.to_GtkSwitch(obj)
+
+	if gobject.IsObjectFloating(s) {
+		gobject.RefSink(s)
+	} else {
+		gobject.Ref(s)
+	}
+	s.Widget = NewWidget(unsafe.Pointer(s.object))
+	switchFinalizer(s)
+
+	return s
+}
+
+func nativeFromSwitch(sw interface{}) *gobject.GValue {
+	s, ok := sw.(*Switch)
+	if ok {
+		gv := gobject.CreateCGValue(GtkType.SWITCH, s.ToNative())
+		return gv
+	}
+
+	return nil
+}
+
+// To be object like
+func (self Switch) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self Switch) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self Switch) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+
+}
+
+func (self Switch) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be widget-like
+func (self Switch) W() *Widget {
+	return self.Widget
+}
+
+// Switch interface
+
+func (self *Switch) SetActive(isActive bool) {
+    b := gobject.GBool(isActive)
+    defer b.Free()
+    C.gtk_switch_set_active(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *Switch) GetActive() bool {
+    b := C.gtk_switch_get_active(self.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+//////////////////////////////
+// END GtkSwitch
 ////////////////////////////// }}}
 
 // End Buttons and Toggles }}}
