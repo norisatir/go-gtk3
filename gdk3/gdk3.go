@@ -18,6 +18,11 @@ static GdkRGBA* _new_rgba(void) {
 	return r;
 }
 
+static GdkColor* _new_color(void) {
+	GdkColor* c = (GdkColor*)malloc(sizeof(GdkColor));
+	return c;
+}
+
 static inline guint getModifiers(GdkEventKey* ke) {
 	return ke->is_modifier;
 }
@@ -203,14 +208,14 @@ func (self Color) GetBoxType() gobject.GType {
 }
 
 func (self Color) ToNative() unsafe.Pointer {
-	var cColor C.GdkColor
+	var cColor *C.GdkColor = C._new_color()
 
 	cColor.pixel = C.guint32(self.Pixel)
 	cColor.red = C.guint16(self.Red)
 	cColor.green = C.guint16(self.Green)
 	cColor.blue = C.guint16(self.Blue)
 
-	return unsafe.Pointer(&cColor)
+	return unsafe.Pointer(cColor)
 }
 
 // End Color type }}}
