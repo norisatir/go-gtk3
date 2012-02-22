@@ -153,6 +153,7 @@ static inline GtkImageMenuItem* to_GtkImageMenuItem(void* obj) { return GTK_IMAG
 static inline GtkSeparatorMenuItem* to_GtkSeparatorMenuItem(void* obj) { return GTK_SEPARATOR_MENU_ITEM(obj); }
 static inline GtkRadioMenuItem* to_GtkRadioMenuItem(void* obj) { return GTK_RADIO_MENU_ITEM(obj); }
 static inline GtkTearoffMenuItem* to_GtkTearoffMenuItem(void* obj) { return GTK_TEAROFF_MENU_ITEM(obj); }
+static inline GtkColorButton* to_GtkColorButton(void* obj) { return GTK_COLOR_BUTTON(obj); }
 static inline GtkTreeSelection* to_GtkTreeSelection(void* obj) { return GTK_TREE_SELECTION(obj); }
 static inline GtkNotebook* to_GtkNotebook(void* obj) { return GTK_NOTEBOOK(obj); }
 static inline GtkOrientable* to_GtkOrientable(void* obj) { return GTK_ORIENTABLE(obj); }
@@ -12774,6 +12775,179 @@ func (self TearoffMenuItem) MItem() *MenuItem {
 
 // End Menus, Combo Box, Toolbar }}}
 
+// Selectors (Color/File/Font) {{{
+
+// GtkColorButton {{{
+//////////////////////////////
+
+// GtkColorButton type
+type ColorButton struct {
+	object *C.GtkColorButton
+	*Button
+}
+
+// Create and return new color button
+func NewColorButton() *ColorButton {
+	b := &ColorButton{}
+	o := C.gtk_color_button_new()
+	b.object = C.to_GtkColorButton(unsafe.Pointer(o))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
+	colorButtonFinalizer(b)
+
+	return b
+}
+
+func NewColorButtonWithColor(color gdk3.Color) *ColorButton {
+    b := &ColorButton{}
+    o := C.gtk_color_button_new_with_color((*C.GdkColor)(color.ToNative()))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
+	colorButtonFinalizer(b)
+
+	return b
+}
+
+func NewColorButtonWithRGBA(rgba gdk3.RGBA) *ColorButton {
+    b := &ColorButton{}
+    o := C.gtk_color_button_new_with_rgba((*C.GdkRGBA)(rgba.ToNative()))
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	}
+	b.Button = newButtonFromNative(unsafe.Pointer(o)).(*Button)
+	colorButtonFinalizer(b)
+
+	return b
+}
+
+// Clear ColorButton when it goes out of reach
+func colorButtonFinalizer(b *ColorButton) {
+	runtime.SetFinalizer(b, func(b *ColorButton) { gobject.Unref(b) })
+}
+
+// Conversion function for gobject registration map
+func newColorButtonFromNative(obj unsafe.Pointer) interface{} {
+	b := &ColorButton{}
+	b.object = C.to_GtkColorButton(obj)
+
+	if gobject.IsObjectFloating(b) {
+		gobject.RefSink(b)
+	} else {
+		gobject.Ref(b)
+	}
+	b.Button = newButtonFromNative(obj).(*Button)
+	colorButtonFinalizer(b)
+
+	return b
+}
+
+func nativeFromColorButton(b interface{}) *gobject.GValue {
+	if but, ok := b.(*ColorButton); ok {
+		gv := gobject.CreateCGValue(GtkType.COLOR_BUTTON, but.ToNative())
+		return gv
+	}
+	return nil
+}
+
+// To be object-like
+func (self ColorButton) ToNative() unsafe.Pointer {
+	return unsafe.Pointer(self.object)
+}
+
+func (self ColorButton) Connect(name string, f interface{}, data ...interface{}) (*gobject.ClosureElement, *gobject.SignalError) {
+	return gobject.Connect(self, name, f, data...)
+}
+
+func (self ColorButton) Set(properties map[string]interface{}) {
+	gobject.Set(self, properties)
+}
+
+func (self ColorButton) Get(properties []string) map[string]interface{} {
+	return gobject.Get(self, properties)
+}
+
+// To be button-like
+func (self ColorButton) B() *Button {
+	return self.Button
+}
+
+// ColorButton interface
+
+func (self *ColorButton) SetColor(color gdk3.Color) {
+    C.gtk_color_button_set_color(self.object, (*C.GdkColor)(color.ToNative()))
+}
+
+func (self *ColorButton) GetColor() gdk3.Color {
+    var cl C.GdkColor
+    C.gtk_color_button_get_color(self.object, &cl)
+
+    if gdkColor, err := gobject.ConvertToGo(unsafe.Pointer(&cl), gdk3.GdkType.COLOR); err == nil {
+        return gdkColor.(gdk3.Color)
+    }
+
+    return gdk3.Color{}
+}
+
+func (self *ColorButton) SetAlpha(alpha uint16) {
+    C.gtk_color_button_set_alpha(self.object, C.guint16(alpha))
+}
+
+func (self *ColorButton) GetAlpha() uint16 {
+    a := C.gtk_color_button_get_alpha(self.object)
+    return uint16(a)
+}
+
+func (self *ColorButton) SetRGBA(rgba gdk3.RGBA) {
+    C.gtk_color_button_set_rgba(self.object, (*C.GdkRGBA)(rgba.ToNative()))
+}
+
+func (self *ColorButton) GetRGBA() gdk3.RGBA {
+    var cl C.GdkRGBA
+    C.gtk_color_button_get_rgba(self.object, &cl)
+
+    if gdkRGBA, err := gobject.ConvertToGo(unsafe.Pointer(&cl), gdk3.GdkType.RGBA); err == nil {
+        return gdkRGBA.(gdk3.RGBA)
+    }
+
+    return gdk3.RGBA{}
+}
+
+func (self *ColorButton) SetUseAlpha(useAlpha bool) {
+    b := gobject.GBool(useAlpha)
+    defer b.Free()
+    C.gtk_color_button_set_use_alpha(self.object, *((*C.gboolean)(b.GetPtr())))
+}
+
+func (self *ColorButton) GetUseAlpha() bool {
+    b := C.gtk_color_button_get_use_alpha(self.object)
+    return gobject.GoBool(unsafe.Pointer(&b))
+}
+
+func (self *ColorButton) SetTitle(title string) {
+    s := gobject.GString(title)
+    defer s.Free()
+    C.gtk_color_button_set_title(self.object, (*C.gchar)(s.GetPtr()))
+}
+
+func (self *ColorButton) GetTitle() string {
+    s := C.gtk_color_button_get_title(self.object)
+    return gobject.GoString(unsafe.Pointer(C.g_strdup(s)))
+}
+
+
+//////////////////////////////
+// END GtkColorButton
+////////////////////////////// }}}
+
+// Selectors (Color/File/Font) }}}
+
 // Action-based menus and toolbars {{{
 
 // GtkAction {{{
@@ -17024,6 +17198,10 @@ func init() {
 	// Register GtkTearoffMenuitem type
 	gobject.RegisterCType(GtkType.TEAROFF_MENU_ITEM, newTearoffMenuItemFromNative)
 	gobject.RegisterGoType(GtkType.TEAROFF_MENU_ITEM, nativeFromTearoffMenuItem)
+
+    // Register GtkColorbutton type
+    gobject.RegisterCType(GtkType.COLOR_BUTTON, newColorButtonFromNative)
+    gobject.RegisterGoType(GtkType.COLOR_BUTTON, nativeFromColorButton)
 
 	// Register GtkNotebook type
 	gobject.RegisterCType(GtkType.NOTEBOOK, newNotebookFromNative)
