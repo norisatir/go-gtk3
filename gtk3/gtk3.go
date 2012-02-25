@@ -1,40 +1,7 @@
 package gtk3
 
 /*
-#include <gtk/gtk.h>
-#include <gtk/gtkx.h>
-#include <stdlib.h>
-
-// Exported funcs from our module {{{
-extern void _gtk_callback(GtkWidget* widget, gpointer data);
-extern gboolean _gtk_entry_completion_match_func(GtkEntryCompletion* completion,
-											 const gchar* key,
-											 GtkTreeIter* iter,
-											 gpointer user_data);
-extern void _gtk_text_tag_table_foreach_func(GtkTextTag* tag, gpointer data);
-extern gboolean _gtk_text_char_predicate(gunichar ch, gpointer data);
-extern gboolean _gtk_cell_callback(GtkCellRenderer* renderer, gpointer data);
-extern void _gtk_cell_layout_data_func(GtkCellLayout* cell_layout,
-									GtkCellRenderer* cell,
-									GtkTreeModel* tree_model,
-									GtkTreeIter* iter,
-									gpointer data);
-extern void _g_gtk_destroy_notify(gpointer data);
-extern gboolean _gtk_tree_view_row_separator_func(GtkTreeModel* model,
-									GtkTreeIter* iter,
-									gpointer data);
-extern void _gtk_closure_destroy_id(gpointer data, GClosure* closure);
-extern void _gtk_marshal(GClosure *closure,
-							  GValue* returnValue,
-							  guint n_param_values,
-							  const GValue *paramValues,
-							  gpointer invocationHint,
-							  gpointer marshalData);
-extern void _gtk_menu_position_func(GtkMenu* menu, gint* x, gint* y, gboolean* push_in, gpointer user_data);
-extern void _gtk_menu_detach_func(GtkWidget* attach_widget, GtkMenu* menu);
-extern gboolean _gtk_tree_selection_func(GtkTreeSelection*, GtkTreeModel*, GtkTreePath*,
-	gboolean, gpointer);
-// End Exported funcs }}}
+#include "go-gtk3.h"
 
 static void _gtk_init(void* argc, void* argv) {
 	gtk_init((int*)argc, (char***)argv);
@@ -244,16 +211,6 @@ static const gchar* _gtk_entry_get_placeholder_text(GtkEntry* entry) {
 }
 // End GtkEntry funcs }}}
 
-// GtkEntryCompletion funcs {{{
-
-void _gtk_entry_completion_set_match_func(GtkEntryCompletion* completion, gint64 func_data) {
-	gint64* data = (gint64*)malloc(sizeof(gint64));
-	*data = func_data;
-
-	gtk_entry_completion_set_match_func(completion, _gtk_entry_completion_match_func, (gpointer)data, _g_gtk_destroy_notify);
-}
-
-// End GtkEntryCompletion funcs }}}
 
 // GtkDialog funcs {{{
 static inline GtkDialog* _dialog_new_with_buttons(const gchar* title,
@@ -15138,8 +15095,8 @@ func (self *Application) Run() {
 //////////////////////////////
 
 //export _gtk_callback
-func _gtk_callback(widget, data unsafe.Pointer) {
-	if w, err := gobject.ConvertToGo(widget); err == nil {
+func _gtk_callback(widget *C.GtkWidget, data C.gpointer) {
+	if w, err := gobject.ConvertToGo(unsafe.Pointer(widget)); err == nil {
 		id := int64(*((*C.gint64)(data)))
 		_closures[id]([]interface{}{w})
 	}
@@ -15147,10 +15104,11 @@ func _gtk_callback(widget, data unsafe.Pointer) {
 }
 
 //export _gtk_entry_completion_match_func
-func _gtk_entry_completion_match_func(completion, key, iter, userData unsafe.Pointer) C.gboolean {
-	entryCompletion, _ := gobject.ConvertToGo(completion)
-	s := gobject.GoString(key)
-	inIter := &TreeIter{*((*C.GtkTreeIter)(iter))}
+func _gtk_entry_completion_match_func(completion *C.GtkEntryCompletion, key C.constgchar,
+                iter *C.GtkTreeIter, userData C.gpointer) C.gboolean {
+	entryCompletion, _ := gobject.ConvertToGo(unsafe.Pointer(completion))
+	s := gobject.GoString(unsafe.Pointer(key))
+	inIter := &TreeIter{*iter}
 
 	closureId := *((*C.gint64)(userData))
 
@@ -15165,8 +15123,8 @@ func _gtk_entry_completion_match_func(completion, key, iter, userData unsafe.Poi
 }
 
 //export _gtk_text_tag_table_foreach_func
-func _gtk_text_tag_table_foreach_func(tag, data unsafe.Pointer) {
-	if t, err := gobject.ConvertToGo(tag); err == nil {
+func _gtk_text_tag_table_foreach_func(tag *C.GtkTextTag, data C.gpointer) {
+	if t, err := gobject.ConvertToGo(unsafe.Pointer(tag)); err == nil {
 		id := int64(*((*C.gint64)(data)))
 		_closures[id]([]interface{}{t})
 	}
@@ -15174,7 +15132,7 @@ func _gtk_text_tag_table_foreach_func(tag, data unsafe.Pointer) {
 }
 
 //export _gtk_text_char_predicate
-func _gtk_text_char_predicate(ch C.gunichar, data unsafe.Pointer) C.gboolean {
+func _gtk_text_char_predicate(ch C.gunichar, data C.gpointer) C.gboolean {
 	id := int64(*((*C.gint64)(data)))
 
 	var res bool
@@ -15188,13 +15146,13 @@ func _gtk_text_char_predicate(ch C.gunichar, data unsafe.Pointer) C.gboolean {
 }
 
 //export _gtk_cell_callback
-func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
-	id := *((*C.gint64)(data))
+func _gtk_cell_callback(renderer *C.GtkCellRenderer, data C.gpointer) C.gboolean {
+	id := int64(*((*C.gint64)(data)))
 
-	rend, _ := gobject.ConvertToGo(renderer)
+	rend, _ := gobject.ConvertToGo(unsafe.Pointer(renderer))
 
 	var res bool
-	if c, ok := _closures[int64(id)]; ok {
+	if c, ok := _closures[id]; ok {
 		res = c([]interface{}{rend})
 	}
 	b := gobject.GBool(res)
@@ -15204,13 +15162,14 @@ func _gtk_cell_callback(renderer, data unsafe.Pointer) C.gboolean {
 }
 
 //export _gtk_cell_layout_data_func
-func _gtk_cell_layout_data_func(cellLayout, cell, treeModel, iter, data unsafe.Pointer) {
+func _gtk_cell_layout_data_func(cellLayout C.goCellLayout, cell *C.GtkCellRenderer, treeModel C.goTreeModel,
+                    iter *C.GtkTreeIter, data C.gpointer) {
 	id := *((*C.gint64)(data))
 
-	goCellLayout, _ := gobject.ConvertToGo(cellLayout)
-	goCell, _ := gobject.ConvertToGo(cell)
-	goTreeModel, _ := gobject.ConvertToGo(treeModel)
-	inIter := &TreeIter{*((*C.GtkTreeIter)(iter))}
+	goCellLayout, _ := gobject.ConvertToGo(unsafe.Pointer(cellLayout))
+	goCell, _ := gobject.ConvertToGo(unsafe.Pointer(cell))
+	goTreeModel, _ := gobject.ConvertToGo(unsafe.Pointer(treeModel))
+	inIter := &TreeIter{*iter}
 
 	if c, ok := _closures[int64(id)]; ok {
 		c([]interface{}{goCellLayout, goCell, goTreeModel, inIter})
@@ -15218,10 +15177,10 @@ func _gtk_cell_layout_data_func(cellLayout, cell, treeModel, iter, data unsafe.P
 }
 
 //export _gtk_tree_view_row_separator_func
-func _gtk_tree_view_row_separator_func(model, iter, data unsafe.Pointer) C.gboolean {
+func _gtk_tree_view_row_separator_func(model C.goTreeModel, iter *C.GtkTreeIter, data C.gpointer) C.gboolean {
 	id := *((*C.gint64)(data))
-	m, _ := gobject.ConvertToGo(model)
-	inIter := &TreeIter{*((*C.GtkTreeIter)(iter))}
+	m, _ := gobject.ConvertToGo(unsafe.Pointer(model))
+	inIter := &TreeIter{*iter}
 
 	var res bool
 	if c, ok := _closures[int64(id)]; ok {
@@ -15234,27 +15193,26 @@ func _gtk_tree_view_row_separator_func(model, iter, data unsafe.Pointer) C.gbool
 }
 
 //export _g_gtk_destroy_notify
-func _g_gtk_destroy_notify(data unsafe.Pointer) {
+func _g_gtk_destroy_notify(data C.gpointer) {
 	id := *((*C.gint64)(data))
 	if _, ok := _closures[int64(id)]; ok {
 		delete(_closures, int64(id))
 	}
-	C.free(data)
+	C.free(unsafe.Pointer(data))
 }
 
 //export _gtk_marshal
-func _gtk_marshal(closure unsafe.Pointer,
-	returnValue unsafe.Pointer,
+func _gtk_marshal(closure *C.GClosure,
+	returnValue *C.GValue,
 	n_param_values C.guint,
-	paramValues unsafe.Pointer,
-	invocationHint unsafe.Pointer,
-	marshalData unsafe.Pointer) {
+	paramValues C.constgvalue,
+	invocationHint C.gpointer,
+	marshalData C.gpointer) {
 
-	c := (*C.GClosure)(closure)
-	id := int64(*((*C.gint64)(c.data)))
+	id := int64(*((*C.gint64)(closure.data)))
 
 	argslice := make([]interface{}, int(n_param_values))
-	array := C.g_array_from_GValues(paramValues, n_param_values)
+	array := C.g_array_from_GValues(unsafe.Pointer(paramValues), n_param_values)
 	for i := 0; i < int(n_param_values); i++ {
 		v := C.get_index(array, C.guint(i))
 		gv := gobject.NewGValueFromNative(unsafe.Pointer(&v))
@@ -15275,20 +15233,20 @@ func _gtk_marshal(closure unsafe.Pointer,
 }
 
 //export _gtk_closure_destroy_id
-func _gtk_closure_destroy_id(data unsafe.Pointer, closure unsafe.Pointer) {
+func _gtk_closure_destroy_id(data C.gpointer, closure *C.GClosure) {
 	id := int64(*((*C.gint64)(data)))
 	if _, ok := _closures[id]; ok {
 		delete(_closures, id)
 	}
 
-	C.free(data)
+	C.free(unsafe.Pointer(data))
 }
 
 //export _gtk_menu_position_func
-func _gtk_menu_position_func(menu, x, y, pushIn, userData unsafe.Pointer) {
+func _gtk_menu_position_func(menu *C.GtkMenu, x, y *C.gint, pushIn *C.gboolean, userData C.gpointer) {
 	id := int64(*((*C.gint64)(userData)))
 
-	goMenu := newMenuFromNative(menu).(*Menu)
+	goMenu := newMenuFromNative(unsafe.Pointer(menu)).(*Menu)
 
 	var retX, retY int
 	var retPush bool
@@ -15296,26 +15254,26 @@ func _gtk_menu_position_func(menu, x, y, pushIn, userData unsafe.Pointer) {
 	if c, ok := _closures[id]; ok {
 		c([]interface{}{goMenu, &retX, &retY, &retPush})
 
-		*((*C.gint)(x)) = C.gint(retX)
-		*((*C.gint)(y)) = C.gint(retY)
+		*x = C.gint(retX)
+		*y = C.gint(retY)
 
 		b := gobject.GBool(retPush)
 		defer b.Free()
-		*((*C.gboolean)(pushIn)) = *((*C.gboolean)(b.GetPtr()))
+		*pushIn = *((*C.gboolean)(b.GetPtr()))
 	}
 }
 
 //export _gtk_menu_detach_func
-func _gtk_menu_detach_func(attachWidget, menu unsafe.Pointer) {
+func _gtk_menu_detach_func(attachWidget *C.GtkWidget, menu *C.GtkMenu) {
 	// Get id
 	s := gobject.GString("detachFunc")
 	defer s.Free()
-	o := C.to_GObject(menu)
+	o := C.to_GObject(unsafe.Pointer(menu))
 	pId := C.g_object_get_data(o, (*C.gchar)(s.GetPtr()))
 	id := int64(*((*C.gint64)(pId)))
 
-	w, _ := gobject.ConvertToGo(attachWidget)
-	m, _ := gobject.ConvertToGo(menu)
+	w, _ := gobject.ConvertToGo(unsafe.Pointer(attachWidget))
+	m, _ := gobject.ConvertToGo(unsafe.Pointer(menu))
 
 	if c, ok := _closures[id]; ok {
 		c([]interface{}{w, m})
@@ -15323,14 +15281,14 @@ func _gtk_menu_detach_func(attachWidget, menu unsafe.Pointer) {
 }
 
 //export _gtk_tree_selection_func
-func _gtk_tree_selection_func(selection, model, path unsafe.Pointer,
-	pathCurrSelected C.gboolean, data unsafe.Pointer) C.gboolean {
+func _gtk_tree_selection_func(selection *C.GtkTreeSelection, model C.goTreeModel, path C.goTreePath,
+	pathCurrSelected C.gboolean, data C.gpointer) C.gboolean {
 
 	id := int64(*((*C.gint64)(data)))
 
-	goSelection := newTreeSelectionFromNative(selection).(*TreeSelection)
-	goModel := newTreeModelFromNative(model).(TreeModelLike)
-	goPath := newTreePathFromNative(path).(*TreePath)
+	goSelection := newTreeSelectionFromNative(unsafe.Pointer(selection)).(*TreeSelection)
+	goModel := newTreeModelFromNative(unsafe.Pointer(model)).(TreeModelLike)
+	goPath := newTreePathFromNative(unsafe.Pointer(path)).(*TreePath)
 	goCurrSel := gobject.GoBool(unsafe.Pointer(&pathCurrSelected))
 
 	var res bool = true
