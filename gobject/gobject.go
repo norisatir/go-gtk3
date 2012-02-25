@@ -1,162 +1,9 @@
 package gobject
 
-/*
-#ifndef uintptr
-#define uintptr unsigned int*
-#endif
-#include <glib.h>
-#include <glib-object.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-// CGO STUFF {{{
-
-static inline GObject* to_GObject(void* o) { return G_OBJECT(o); }
-static inline void* new_GObject(GType typ) { return g_object_new(typ, NULL); }
-
-static inline const gchar* getTypeName(void * o) { return G_OBJECT_TYPE_NAME(o); }
-
-static inline GObjectClass* get_object_class(void* o) {
-	return G_OBJECT_GET_CLASS(o);
-}
-
-static inline GType _get_type_from_instance(void* o) {
-    return G_TYPE_FROM_INSTANCE(o);
-}
-
-extern void weak_ref_callback(gpointer data, GObject* object);
-
-static void _g_object_weak_ref(GObject* object, gint64 data) {
-	gint64* intdata = (gint64*)malloc(sizeof(gint64));
-	*intdata = data;
-	g_object_weak_ref(object, weak_ref_callback, (gpointer)intdata);
-}
-
-static void destroy_data(gpointer data) {
-	free(data);
-}
-
-static void _g_clear_object(void* object) {
-	GObject* o = G_OBJECT(object);
-	g_clear_object(o);
-}
-
-static GBinding* to_GBinding(void* obj) { return G_BINDING(obj); }
-
-static inline GParamSpec* to_GParamSpec(void* obj) { return G_PARAM_SPEC(obj); }
-static inline GType get_type(GParamSpec *spec) {
-	return G_PARAM_SPEC_VALUE_TYPE(spec);
-}
-
-extern void simple_go_marshal(GClosure *closure,
-							  GValue* returnValue,
-							  guint n_param_values,
-							  const GValue *paramValues,
-							  gpointer invocationHint,
-							  gpointer marshalData);
-
-// Dummy callback function
-// needed for simple_go_marshal function
-// which is our true callback
-static gboolean func_handler(void* id, ...) {
-	return TRUE;
-}
-
-static inline void destroy_id(gpointer data, GClosure* closure) {
-	free(data);
-}
-
-static inline gulong connect_to_signal(void* obj, gchar* name, gint64 id) {
-	gint64 *pgint64 = (gint64*)malloc(sizeof(gint64));
-	*pgint64 = id;
-	GClosure* c = g_cclosure_new_swap(G_CALLBACK(func_handler),
-									(gpointer)pgint64,
-									destroy_id);
-
-	g_closure_set_marshal(c, simple_go_marshal);
-
-	gulong handler_id = g_signal_connect_closure((gpointer)obj,
-										   name,
-										   c,
-										   TRUE);
-	return handler_id;
-}
-
-static inline GArray* g_array_from_GValues(void* val, guint num_elements) {
-	GValue* values = (GValue*)val;
-	GArray* na = g_array_new(TRUE, TRUE, sizeof(GValue));
-	guint i;
-	for(i = 0; i < num_elements; i++) {
-		g_array_append_val(na, *(values + i));
-	}
-	return na;
-}
-
-static inline GValue get_index(GArray* ar, guint i) {
-	return g_array_index(ar, GValue, i);
-}
-
-static inline void free_array(GArray* ar) {
-	g_array_free(ar, TRUE);
-}
-
-static inline const gchar* get_type_name(GValue v) { return G_VALUE_TYPE_NAME(&v); }
-
-static inline GType getTypeId(void * o) { return G_OBJECT_TYPE(o); }
-
-static inline GType getGValueType(GValue* v) {
-	return G_VALUE_TYPE(v);
-}
-
-static inline const gchar* getGValueTypeName(GValue* v) {
-	return G_VALUE_TYPE_NAME(v);
-}
-
-static inline gboolean is_type_object(GType t) {
-	return G_TYPE_IS_OBJECT(t);
-}
-
-static inline gboolean _is_type_enum(GType t) {
-	return G_TYPE_IS_ENUM(t);
-}
-
-static inline gboolean _is_type_flags(GType t) {
-	return G_TYPE_IS_FLAGS(t);
-}
-
-static inline gboolean is_type_boxed(GType t) {
-	return G_TYPE_IS_BOXED(t);
-}
-
-static inline gboolean boxed_in_gvalue(GValue* v) {
-	return G_VALUE_HOLDS_BOXED(v);
-}
-
-static inline gboolean pointer_in_gvalue(GValue* v) {
-	return G_VALUE_HOLDS_POINTER(v);
-}
-
-static inline gboolean object_in_gvalue(GValue* v) {
-	return G_VALUE_HOLDS_OBJECT(v);
-}
-
-static inline gboolean _enum_in_gvalue(GValue* v) {
-	return G_VALUE_HOLDS_ENUM(v);
-}
-
-static inline gboolean _flags_in_gvalue(GValue* v) {
-	return G_VALUE_HOLDS_FLAGS(v);
-}
-
-static inline gboolean _pointer_in_gvalue(GValue* v) {
-	return G_VALUE_HOLDS_POINTER(v);
-}
-
-// END CGO STUFF }}}
-
-*/
+/*#include "go-gobject.h" */
 // #cgo pkg-config: gobject-2.0
 import "C"
+
 import "unsafe"
 import "reflect"
 import "runtime"
@@ -400,7 +247,7 @@ func WeakRef(obj ObjectLike, f WeakClosureFunc) int64 {
 }
 
 //export weak_ref_callback
-func weak_ref_callback(data unsafe.Pointer, obj unsafe.Pointer) {
+func weak_ref_callback(data C.gpointer, obj *C.GObject) {
 	cint := int64(*((*C.gint64)(data)))
 
 	if f, ok := _weakClosures[cint]; ok {
@@ -1172,15 +1019,15 @@ func init() {
 // for all connected signals.
 // It call appropriate closure which it finds in closures map
 //export simple_go_marshal
-func simple_go_marshal(closure unsafe.Pointer,
-	returnValue unsafe.Pointer,
+func simple_go_marshal(closure *C.GClosure,
+	returnValue *C.GValue,
 	n_param_values C.guint,
-	paramValues unsafe.Pointer,
-	invocationHint unsafe.Pointer,
-	marshalData unsafe.Pointer) {
+	paramValues C.constgvalue,
+	invocationHint C.gpointer,
+	marshalData C.gpointer) {
 
-	c := (*C.GClosure)(closure)
-	id := int64(*((*C.gint64)(c.data)))
+//	c := (*C.GClosure)(closure)
+	id := int64(*((*C.gint64)(closure.data)))
 
 	argslice := make([]interface{}, int(n_param_values))
 	array := C.g_array_from_GValues(paramValues, n_param_values)
