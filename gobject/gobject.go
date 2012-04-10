@@ -792,7 +792,7 @@ func (self GValue) GetPtr() unsafe.Pointer {
 		b := C.g_value_get_boolean(self.value)
 		return unsafe.Pointer(&b)
 	case t == G_TYPE_CHAR:
-		c := C.g_value_get_char(self.value)
+		c := C.g_value_get_schar(self.value)
 		return unsafe.Pointer(&c)
 	case t == G_TYPE_INT:
 		i := C.g_value_get_int(self.value)
@@ -860,7 +860,7 @@ func CreateCGValue(tn GType, object ...unsafe.Pointer) *GValue {
 	case tn == G_TYPE_BOOLEAN:
 		C.g_value_set_boolean(&cv, *((*C.gboolean)(obj)))
 	case tn == G_TYPE_CHAR:
-		C.g_value_set_char(&cv, *((*C.gchar)(obj)))
+		C.g_value_set_schar(&cv, *((*C.gint8)(obj)))
 	case tn == G_TYPE_INT:
 		C.g_value_set_int(&cv, *((*C.gint)(obj)))
 	case tn == G_TYPE_LONG:
