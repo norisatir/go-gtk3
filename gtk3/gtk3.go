@@ -410,6 +410,15 @@ func MainQuit() {
 	C.gtk_main_quit()
 }
 
+func GetCurrentEventDevice() *gdk3.Device {
+    if d := C.gtk_get_current_event_device(); d != nil {
+        if dev, err := gobject.ConvertToGo(unsafe.Pointer(&d)); err == nil {
+            return dev.(*gdk3.Device)
+        }
+    }
+    return nil
+}
+
 // Map variable for custom closures required by some gtk funcs
 var _closures map[int64]gobject.ClosureFunc
 
@@ -1061,13 +1070,6 @@ func (self *Widget) GetAncestor(widget_type gobject.GType) WidgetLike {
 //TODO: gdk_widget_get_visual
 //TODO: gdk_widget_set_visual
 
-func (self *Widget) GetPointer() (x, y int) {
-	var cx, cy C.gint
-	C.gtk_widget_get_pointer(self.object, &cx, &cy)
-
-	return int(cx), int(cy)
-}
-
 func (self *Widget) IsAncestor(ancestor WidgetLike) bool {
 	b := C.gtk_widget_is_ancestor(self.object, ancestor.W().object)
 	return gobject.GoBool(unsafe.Pointer(&b))
@@ -1207,6 +1209,16 @@ func (self *Widget) GetScreen() *gdk3.Screen {
 		}
 	}
 	return nil
+}
+
+func (self *Widget) GetWindow() *gdk3.Window {
+    w := C.gtk_widget_get_window(self.object)
+    if w != nil {
+        if win, err := gobject.ConvertToGo(unsafe.Pointer(w)); err == nil {
+            return win.(*gdk3.Window)
+        }
+    }
+    return nil
 }
 
 func (self *Widget) GetVisible() bool {
