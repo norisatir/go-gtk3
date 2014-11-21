@@ -20,7 +20,7 @@ void destroy_data(gpointer data) {
 
 void _g_clear_object(void* object) {
 	GObject* o = G_OBJECT(object);
-	g_clear_object(o);
+	g_clear_object(&o);
 }
 
 GBinding* to_GBinding(void* obj) { return G_BINDING(obj); }
